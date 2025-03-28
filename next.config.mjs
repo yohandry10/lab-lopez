@@ -9,7 +9,6 @@ try {
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
-    appDir: true,
     optimizeCss: true,
     optimizePackageImports: ['lucide-react'],
   },
@@ -18,7 +17,6 @@ const nextConfig = {
     unoptimized: true,
     formats: ['image/avif', 'image/webp'],
   },
-  swcMinify: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },

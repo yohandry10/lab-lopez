@@ -286,6 +286,11 @@ export const analysisData: Analysis[] = [
   }
 ]
 
+export const articles = analysisData.map(analysis => ({
+  ...analysis,
+  date: new Date().toISOString()
+}))
+
 export default function DigitalLibrary() {
   const [currentIndex, setCurrentIndex] = useState(0)
 

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useMemo, Suspense, lazy } from "react"
-import { use } from 'react'
 import Link from "next/link"
 import { ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -19,8 +18,11 @@ const AnalysisForm = dynamic(() => import("@/components/analysis-form"), {
   ssr: false
 })
 
-interface PageProps {
-  params: { slug: string }
+type Props = {
+  params: {
+    slug: string
+  }
+  searchParams?: { [key: string]: string | string[] | undefined }
 }
 
 interface CartItem {
@@ -97,14 +99,13 @@ const ExpandableSection = ({ section, index, expandedSection, setExpandedSection
   </div>
 )
 
-export default function AnalysisPage({ params }: PageProps) {
+export default function AnalysisPage({ params, searchParams }: Props) {
   const router = useRouter()
   const [expandedSection, setExpandedSection] = useState<number | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const { addItem } = useCart()
   
-  const resolvedParams = use(params)
-  const slug = resolvedParams.slug
+  const { slug } = params
   if (!slug) {
     router.push('/analisis')
     return null
