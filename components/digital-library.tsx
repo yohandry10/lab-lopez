@@ -286,6 +286,36 @@ export const analysisData: Analysis[] = [
   }
 ]
 
+export const articles = [
+  {
+    id: 1,
+    title: "Avances en Medicina Preventiva",
+    description: "Descubre los últimos avances en medicina preventiva y cómo pueden mejorar tu salud.",
+    category: "Medicina Preventiva",
+    image: "/images/medicina-preventiva.jpg",
+    date: "2024-03-15",
+    slug: "avances-medicina-preventiva"
+  },
+  {
+    id: 2,
+    title: "Nutrición y Bienestar",
+    description: "Guía completa sobre nutrición balanceada y su impacto en el bienestar general.",
+    category: "Nutrición",
+    image: "/images/nutricion.jpg",
+    date: "2024-03-14",
+    slug: "nutricion-bienestar"
+  },
+  {
+    id: 3,
+    title: "Ejercicio y Salud Mental",
+    description: "Cómo el ejercicio regular puede mejorar tu salud mental y reducir el estrés.",
+    category: "Salud Mental",
+    image: "/images/ejercicio.jpg",
+    date: "2024-03-13",
+    slug: "ejercicio-salud-mental"
+  }
+];
+
 export default function DigitalLibrary() {
   const [currentIndex, setCurrentIndex] = useState(0)
 
