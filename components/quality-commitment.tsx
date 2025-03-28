@@ -4,7 +4,7 @@ import Image from "next/image"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 
-export function QualityCommitment() {
+export default function QualityCommitment() {
   return (
     <section className="w-full py-12 md:py-16 bg-[#f3f9fe]">
       <div className="container px-4 md:px-6">
@@ -18,17 +18,17 @@ export function QualityCommitment() {
               viewport={{ once: true }}
             >
               <div className="space-y-4">
-                <div className="text-sm text-blue-600 uppercase tracking-wider">LABORATORIO CLÍNICO LOPEZ</div>
+                <div className="text-sm text-[#1e5fad] uppercase tracking-wider">LABORATORIO CLÍNICO LOPEZ</div>
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-black font-sans">
                   Compromiso con la calidad
                 </h2>
                 <p className="text-gray-600">
                   Proporcionamos a nuestros pacientes y usuarios una{" "}
-                  <span className="text-blue-600">excelente atención, calidez, oportunidad y confiabilidad</span> en
+                  <span className="text-[#1e5fad]">excelente atención, calidez, oportunidad y confiabilidad</span> en
                   nuestros resultados.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                  <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                  <Button asChild className="bg-[#1e5fad] hover:bg-[#1e5fad]/90">
                     <Link href="/nosotros">Nuestra política de calidad</Link>
                   </Button>
                 </div>

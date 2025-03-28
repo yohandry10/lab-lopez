@@ -208,7 +208,7 @@ export default function ServicePage() {
           >
             <div className="text-sm text-blue-300 mb-4">Perfiles de bienestar ROE</div>
             <h1 className="text-4xl md:text-5xl font-light mb-4">{profile.title}</h1>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-[#1e5fad] hover:bg-[#1e5fad]/90">
               Agenda tu perfil
               <span className="ml-2 text-sm">en sede o en domicilio</span>
             </Button>

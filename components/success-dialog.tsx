@@ -27,22 +27,22 @@ export function SuccessDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <div className="text-center py-6">
-          <div className="mx-auto w-24 h-24 bg-[#1E5FAD]/10 rounded-full flex items-center justify-center mb-4">
-            <Check className="h-12 w-12 text-[#1E5FAD]" />
+          <div className="mx-auto w-24 h-24 bg-[#1e5fad]/10 rounded-full flex items-center justify-center mb-4">
+            <Check className="h-12 w-12 text-[#1e5fad]" />
           </div>
           <h3 className="text-xl font-semibold mb-2">Listo,</h3>
           <p className="text-gray-600 mb-6">
-            hemos agregado a tu carrito de compras un <span className="text-[#1E5FAD]">{testName}</span> para{" "}
+            hemos agregado a tu carrito de compras un <span className="text-[#1e5fad]">{testName}</span> para{" "}
             {patientName}
           </p>
           <div className="flex flex-col gap-3">
-            <Button onClick={onContinueShopping} className="w-full bg-[#1E5FAD] hover:bg-[#3DA64A]">
+            <Button onClick={onContinueShopping} className="w-full bg-[#1e5fad] hover:bg-[#3DA64A]">
               Seguir agregando para {patientName}
             </Button>
             <Button
               onClick={onNewPatient}
               variant="outline"
-              className="w-full border-[#1E5FAD] text-[#1E5FAD] hover:bg-[#1E5FAD]/10"
+              className="w-full border-[#1e5fad] text-[#1e5fad] hover:bg-[#1e5fad]/10"
             >
               Deseo comprar para otro paciente
             </Button>

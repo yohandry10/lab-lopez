@@ -12,26 +12,26 @@ const services = [
     id: 1,
     title: "Salud Sexual",
     description: "Confianza, libertad y seguridad para elegir",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "/diabetes.jpg",
     link: "/servicios/salud-sexual",
   },
   {
     id: 2,
     title: "Masculino Edad de Oro",
     description: "Experiencia, sabiduría y plenitud",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "/viejitos.jpg",
     link: "/servicios/masculino-edad-oro",
   },
   {
     id: 3,
     title: "Diabetes bajo control",
     description: "Estilo de vida, autocontrol, bienestar",
-    image: "/placeholder.svg?height=200&width=300",
+    image: "/perfil.jpg",
     link: "/servicios/diabetes-control",
   },
 ]
 
-export function MainServices() {
+export default function MainServices() {
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
@@ -111,9 +111,9 @@ export function MainServices() {
                 <CardContent>
                   <Button
                     asChild
-                    className="w-full bg-[#1E5FAD] hover:bg-[#3DA64A] transition-all duration-300 hover:shadow-lg"
+                    className="bg-[#1e5fad] hover:bg-[#1e5fad]/90 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg relative z-10"
                   >
-                    <Link href={service.link}>Ver detalles</Link>
+                    <Link href={service.link}>VER DETALLES</Link>
                   </Button>
                 </CardContent>
               </Card>

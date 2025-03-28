@@ -8,7 +8,8 @@ type User = {
   email: string
   first_name: string
   last_name: string
-  user_type: "patient" | "doctor" | "company"
+  /** Ajustamos a `userType` en CamelCase **/
+  userType: "patient" | "doctor" | "company"
   patient_code?: string
   company_name?: string
   company_ruc?: string
@@ -31,19 +32,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Verificar sesión al cargar
   useEffect(() => {
     async function loadSession() {
       setIsLoading(true)
       try {
         const userData = await getCurrentUser()
         if (userData) {
+          // Asignamos a "userType" en CamelCase
           setUser({
             id: userData.id,
             email: userData.email,
             first_name: userData.first_name,
             last_name: userData.last_name,
-            user_type: userData.user_type as "patient" | "doctor" | "company",
+            userType: userData.user_type as "patient" | "doctor" | "company",
             patient_code: userData.patient_code,
             company_name: userData.company_name,
             company_ruc: userData.company_ruc,
@@ -61,19 +62,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadSession()
   }, [])
 
-  // Función de inicio de sesión
+  // Función de login
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
       const result = await signIn(email, password)
-
       if (result.success && result.user) {
         setUser({
           id: result.user.id,
           email: result.user.email,
           first_name: result.user.first_name,
           last_name: result.user.last_name,
-          user_type: result.user.user_type as "patient" | "doctor" | "company",
+          // Reasignamos user_type => userType
+          userType: result.user.user_type as "patient" | "doctor" | "company",
           patient_code: result.user.patient_code,
           company_name: result.user.company_name,
           company_ruc: result.user.company_ruc,
@@ -82,7 +83,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
         return { success: true }
       }
-
       return { success: false, error: result.error }
     } catch (error) {
       console.error("Error al iniciar sesión:", error)
@@ -92,20 +92,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Modificar la función register para manejar mejor los errores
-
   // Función de registro
   const register = async (userData: any) => {
     setIsLoading(true)
     try {
-      console.log("Iniciando registro con datos:", {
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        userType: userData.userType,
-      })
-
-      // Generar código de paciente si es necesario
       let patientCode = undefined
       if (userData.userType === "patient") {
         patientCode = `P${Math.floor(100000 + Math.random() * 900000)}`
@@ -115,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         first_name: userData.firstName,
         last_name: userData.lastName,
         username: userData.username,
-        user_type: userData.userType,
+        user_type: userData.userType, // la DB espera "user_type", lo guardamos así
         patient_code: patientCode,
         company_name: userData.companyName,
         company_ruc: userData.companyRuc,
@@ -125,15 +115,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         accepted_marketing: userData.acceptedMarketing,
       })
 
-      console.log("Resultado del registro:", result)
-
       if (result.success && result.user) {
         setUser({
           id: result.user.id,
           email: result.user.email,
           first_name: result.user.first_name,
           last_name: result.user.last_name,
-          user_type: result.user.user_type as "patient" | "doctor" | "company",
+          userType: result.user.user_type as "patient" | "doctor" | "company",
           patient_code: result.user.patient_code,
           company_name: result.user.company_name,
           company_ruc: result.user.company_ruc,
@@ -147,9 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           patientCode: result.patientCode,
         }
       }
-
-      console.error("Error en el registro:", result.error)
-      return { success: false, error: result.error || "Error desconocido en el registro" }
+      return { success: false, error: result.error || "Error desconocido" }
     } catch (error: any) {
       console.error("Error inesperado al registrar usuario:", error)
       return {
@@ -161,12 +147,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Función de actualización de perfil
+  // Función para actualizar el perfil
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) {
       return { success: false, error: "No hay usuario autenticado" }
     }
-
     setIsLoading(true)
     try {
       const result = await updateUserProfile(user.id, {
@@ -176,7 +161,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         company_ruc: updates.company_ruc,
         company_position: updates.company_position,
       })
-
       if (result.success && result.user) {
         setUser({
           ...user,
@@ -188,7 +172,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
         return { success: true }
       }
-
       return { success: false, error: result.error }
     } catch (error) {
       console.error("Error al actualizar perfil:", error)
@@ -198,17 +181,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Función de cierre de sesión
+  // Función para cerrar sesión
   const logout = async () => {
     setIsLoading(true)
     try {
       const result = await signOut()
-
       if (result.success) {
         setUser(null)
         return { success: true }
       }
-
       return { success: false, error: result.error }
     } catch (error) {
       console.error("Error al cerrar sesión:", error)
@@ -232,4 +213,3 @@ export function useAuth() {
   }
   return context
 }
-

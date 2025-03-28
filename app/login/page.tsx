@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
@@ -37,17 +36,22 @@ export default function LoginPage() {
     companyEmail: "",
   })
 
-  // Redirigir si ya hay sesión iniciada
+  // Si ya hay sesión iniciada, redirige al dashboard según userType
   useEffect(() => {
     if (user) {
-      router.push("/")
+      if (user.userType === "doctor") {
+        router.push("/medicos/dashboard")
+      } else if (user.userType === "patient") {
+        router.push("/pacientes/dashboard")
+      } else if (user.userType === "company") {
+        router.push("/empresas/dashboard")
+      } else {
+        router.push("/")
+      }
     }
   }, [user, router])
 
-  // Agregar estado para recordar usuario
-  const [rememberUser, setRememberUser] = useState(false)
-
-  // Modificar el useEffect para cargar credenciales guardadas
+  // Cargar credenciales guardadas (si "Recordar usuario" está activo)
   useEffect(() => {
     const savedIdentifier = localStorage.getItem("roe_saved_identifier")
     if (savedIdentifier) {
@@ -56,15 +60,16 @@ export default function LoginPage() {
     }
   }, [])
 
+  // Manejar cambios en inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-    // Clear error when user types
     if (errors[name as keyof typeof errors]) {
       setErrors((prev) => ({ ...prev, [name]: "" }))
     }
   }
 
+  // Validaciones
   const validateIndividualForm = () => {
     let isValid = true
     const newErrors = { identifier: "", password: "", companyRuc: "", companyEmail: "" }
@@ -73,7 +78,6 @@ export default function LoginPage() {
       newErrors.identifier = "Por favor, ingresa tu usuario o correo electrónico"
       isValid = false
     }
-
     if (!formData.password) {
       newErrors.password = "La contraseña es requerida"
       isValid = false
@@ -112,58 +116,69 @@ export default function LoginPage() {
     return isValid
   }
 
-  // Modificar el handleSubmit para guardar credenciales
+  // Login de usuario individual (paciente / doctor)
   const handleIndividualSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
     if (!validateIndividualForm()) return
 
     setIsLoading(true)
-
     try {
-      // Guardar identificador si "recordar sesión" está activado
+      // Guardar "usuario" o "email" si 'recordarMe' está activo
       if (rememberMe) {
         localStorage.setItem("roe_saved_identifier", formData.identifier)
       } else {
         localStorage.removeItem("roe_saved_identifier")
       }
 
-      const success = await login(formData.identifier, formData.password)
-
-      if (success) {
-        // Redirect to home page after successful login
-        router.push("/")
+      // Login con email/usuario y contraseña
+      const result = await login(formData.identifier, formData.password)
+      if (result.success) {
+        // Redirigir según userType
+        if (user?.userType === "doctor") {
+          router.push("/medicos/dashboard")
+        } else if (user?.userType === "patient") {
+          router.push("/pacientes/dashboard")
+        } else if (user?.userType === "company") {
+          router.push("/empresas/dashboard")
+        } else {
+          router.push("/")
+        }
       }
     } finally {
       setIsLoading(false)
     }
   }
 
+  // Login de usuario tipo "empresa"
   const handleCompanySubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
     if (!validateCompanyForm()) return
 
     setIsLoading(true)
-
     try {
-      // Iniciar sesión con RUC y correo de empresa
-      const success = await login(formData.companyEmail, formData.password, formData.companyRuc)
-
-      if (success) {
-        // Redirect to home page after successful login
-        router.push("/")
+      const result = await login(formData.companyEmail, formData.password)
+      if (result.success) {
+        if (user?.userType === "doctor") {
+          router.push("/medicos/dashboard")
+        } else if (user?.userType === "patient") {
+          router.push("/pacientes/dashboard")
+        } else if (user?.userType === "company") {
+          router.push("/empresas/dashboard")
+        } else {
+          router.push("/")
+        }
       }
     } finally {
       setIsLoading(false)
     }
   }
 
+  // Mostrar/ocultar la contraseña
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword)
   }
 
-  // Si está cargando la autenticación, mostrar spinner
+  // Muestra spinner mientras se verifica la sesión
   if (authLoading) {
     return (
       <div className="container flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] py-12">
@@ -184,6 +199,7 @@ export default function LoginPage() {
         <ArrowLeft className="mr-2 h-4 w-4" />
         Volver al inicio
       </Link>
+
       <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
         <div className="flex flex-col space-y-2 text-center">
           <div className="flex justify-center mb-4">
@@ -205,6 +221,7 @@ export default function LoginPage() {
             <TabsTrigger value="company">Empresa</TabsTrigger>
           </TabsList>
 
+          {/* TAB: INDIVIDUAL */}
           <TabsContent value="individual">
             <div className="grid gap-6">
               <form onSubmit={handleIndividualSubmit}>
@@ -223,6 +240,7 @@ export default function LoginPage() {
                     />
                     {errors.identifier && <p className="text-sm text-red-500">{errors.identifier}</p>}
                   </div>
+
                   <div className="grid gap-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="password">Contraseña</Label>
@@ -250,7 +268,6 @@ export default function LoginPage() {
                     {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
                   </div>
 
-                  {/* Agregar checkbox para recordar usuario (después del campo de contraseña) */}
                   <div className="flex items-center space-x-2 my-1">
                     <Checkbox
                       id="remember"
@@ -280,6 +297,7 @@ export default function LoginPage() {
             </div>
           </TabsContent>
 
+          {/* TAB: EMPRESA */}
           <TabsContent value="company">
             <div className="grid gap-6">
               <form onSubmit={handleCompanySubmit}>
@@ -299,6 +317,7 @@ export default function LoginPage() {
                     />
                     {errors.companyRuc && <p className="text-sm text-red-500">{errors.companyRuc}</p>}
                   </div>
+
                   <div className="grid gap-2">
                     <Label htmlFor="companyEmail">Email corporativo</Label>
                     <Input
@@ -314,6 +333,7 @@ export default function LoginPage() {
                     />
                     {errors.companyEmail && <p className="text-sm text-red-500">{errors.companyEmail}</p>}
                   </div>
+
                   <div className="grid gap-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="password">Contraseña</Label>
@@ -365,6 +385,7 @@ export default function LoginPage() {
             <span className="bg-background px-2 text-muted-foreground">O continúa con</span>
           </div>
         </div>
+
         <div className="flex flex-col gap-2">
           <Button variant="outline">Continuar con Google</Button>
         </div>
@@ -385,4 +406,3 @@ export default function LoginPage() {
     </div>
   )
 }
-

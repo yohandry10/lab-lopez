@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { createContext, useContext, useState, useEffect, useCallback } from "react"
 import { useToast } from "@/components/ui/use-toast"
 
@@ -9,6 +7,7 @@ interface CartItem {
   id: number
   name: string
   price: number
+  patientInfo?: any
 }
 
 interface CartContextType {
@@ -20,7 +19,14 @@ interface CartContextType {
   total: number
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined)
+const CartContext = createContext<CartContextType>({
+  items: [],
+  addItem: () => {},
+  removeItem: () => {},
+  clearCart: () => {},
+  itemCount: 0,
+  total: 0,
+})
 
 // Función para cargar el carrito desde localStorage
 const loadCartFromStorage = (): CartItem[] => {
@@ -66,13 +72,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
 
         toast({
-          title: "Análisis agregado",
-          description: "Se agregó el análisis a tu carrito",
+          title: "Análisis agregado", 
+          description: "Se agregó el análisis a tu carrito"
         })
         return [...prev, item]
       })
     },
-    [toast],
+    [toast]
   )
 
   const removeItem = useCallback(
@@ -80,17 +86,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setItems((prev) => prev.filter((item) => item.id !== id))
       toast({
         title: "Análisis eliminado",
-        description: "Se eliminó el análisis de tu carrito",
+        description: "Se eliminó el análisis de tu carrito"
       })
     },
-    [toast],
+    [toast]
   )
 
   const clearCart = useCallback(() => {
     setItems([])
     toast({
       title: "Carrito vacío",
-      description: "Se han eliminado todos los análisis del carrito",
+      description: "Se han eliminado todos los análisis del carrito"
     })
   }, [toast])
 
@@ -113,9 +119,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function useCart() {
+export const useCart = () => {
   const context = useContext(CartContext)
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useCart must be used within a CartProvider")
   }
   return context

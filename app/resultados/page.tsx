@@ -712,7 +712,7 @@ export default function ResultadosPage() {
     return (
       <div className="container mx-auto px-4 py-12 max-w-6xl">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2">Panel de Empresa</h1>
+          <h1 className="text-3xl font-bold mt-8 mb-8">Panel de Empresa</h1>
           <p className="text-gray-600">Gestiona la información de tus empleados de forma segura</p>
         </div>
 
@@ -1098,7 +1098,7 @@ export default function ResultadosPage() {
                       <div className="flex flex-col items-center">
                         <button
                           onClick={() => handleUserTypeSelect("patient")}
-                          className="w-24 h-24 rounded-full bg-[#1E5FAD] flex items-center justify-center hover:bg-blue-800 transition-colors mb-4"
+                          className="w-24 h-24 rounded-full bg-[#0066ff] flex items-center justify-center hover:bg-[#0066ff]/90 transition-colors mb-4"
                         >
                           <User className="h-12 w-12 text-white" />
                         </button>
@@ -1109,7 +1109,7 @@ export default function ResultadosPage() {
                       <div className="flex flex-col items-center">
                         <button
                           onClick={() => handleUserTypeSelect("doctor")}
-                          className="w-24 h-24 rounded-full bg-[#1E5FAD] flex items-center justify-center hover:bg-blue-800 transition-colors mb-4"
+                          className="w-24 h-24 rounded-full bg-[#0066ff] flex items-center justify-center hover:bg-[#0066ff]/90 transition-colors mb-4"
                         >
                           <Stethoscope className="h-12 w-12 text-white" />
                         </button>
@@ -1120,7 +1120,7 @@ export default function ResultadosPage() {
                       <div className="flex flex-col items-center">
                         <button
                           onClick={() => handleUserTypeSelect("company")}
-                          className="w-24 h-24 rounded-full bg-[#1E5FAD] flex items-center justify-center hover:bg-blue-800 transition-colors mb-4"
+                          className="w-24 h-24 rounded-full bg-[#0066ff] flex items-center justify-center hover:bg-[#0066ff]/90 transition-colors mb-4"
                         >
                           <Building className="h-12 w-12 text-white" />
                         </button>
@@ -1187,7 +1187,7 @@ export default function ResultadosPage() {
                         </button>
                       </div>
                     </div>
-                    <Button type="submit" className="w-full bg-blue-700 hover:bg-blue-800" disabled={isLoading}>
+                    <Button type="submit" className="w-full bg-[#0066ff] hover:bg-[#0066ff]/90" disabled={isLoading}>
                       {isLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1200,17 +1200,17 @@ export default function ResultadosPage() {
                     <div className="mt-4 text-center">
                       <p className="text-sm text-gray-500">
                         ¿No tienes una cuenta?{" "}
-                        <Link href="/registro" className="text-blue-700 hover:text-blue-800">
+                        <Link href="/registro" className="text-[#0066ff] hover:text-[#0066ff]/90">
                           Regístrate
                         </Link>
                       </p>
                     </div>
 
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                      <p className="text-sm text-blue-800 font-medium">Credenciales de demostración:</p>
-                      <p className="text-xs text-blue-700 mt-1">Usuario: demo</p>
-                      <p className="text-xs text-blue-700">Email: demo@roe.com</p>
-                      <p className="text-xs text-blue-700">Contraseña: password123</p>
+                    <div className="mt-4 p-4 bg-[#0066ff]/10 rounded-lg border border-[#0066ff]/20">
+                      <p className="text-sm text-[#0066ff] font-medium">Credenciales de demostración:</p>
+                      <p className="text-xs text-[#0066ff]/90 mt-1">Usuario: demo</p>
+                      <p className="text-xs text-[#0066ff]/90">Email: demo@roe.com</p>
+                      <p className="text-xs text-[#0066ff]/90">Contraseña: password123</p>
                     </div>
                   </form>
                 </CardContent>
@@ -1270,13 +1270,6 @@ export default function ResultadosPage() {
                       <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-4">
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-blue-800 font-medium">Panel de médico</p>
-                          <Button
-                            size="sm"
-                            onClick={() => router.push("/medicos/dashboard")}
-                            className="bg-blue-700 hover:bg-blue-800"
-                          >
-                            Ir al panel completo
-                          </Button>
                         </div>
                       </div>
 

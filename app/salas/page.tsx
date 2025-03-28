@@ -23,10 +23,10 @@ export default function SalasPage() {
                 Nuestras salas de atención están equipadas con la mejor tecnología y diseñadas para brindarte la mayor comodidad durante tu visita.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button className="bg-blue-700 hover:bg-blue-800">
+                <Button className="bg-[#0066ff] hover:bg-[#0066ff]/90">
                   Agendar visita
                 </Button>
-                <Button variant="outline" className="border-blue-700 text-blue-700 hover:bg-blue-50">
+                <Button variant="outline" className="border-[#0066ff] text-[#0066ff] hover:bg-[#0066ff]/10">
                   Ver ubicaciones
                 </Button>
               </div>
@@ -229,7 +229,7 @@ export default function SalasPage() {
                   <div className="text-sm text-muted-foreground mb-4">
                     Servicio profesional con los más altos estándares de calidad y seguridad.
                   </div>
-                  <Button variant="outline" className="text-blue-700 border-blue-700 hover:bg-blue-50">
+                  <Button variant="outline" className="text-[#0066ff] border-[#0066ff] hover:bg-[#0066ff]/10">
                     Más información
                   </Button>
                 </CardContent>

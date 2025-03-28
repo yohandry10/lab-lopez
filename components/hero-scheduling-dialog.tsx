@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SchedulingFlow } from "./scheduling-flow"
 import { useCart } from "@/contexts/cart-context"
 import { SuccessDialog } from "./success-dialog"
+import { Home } from "lucide-react"
 
 interface HeroSchedulingDialogProps {
   isOpen: boolean
@@ -105,14 +106,18 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
 
             <div>
               <Label className="font-medium">Tipo de atención</Label>
-              <RadioGroup value={serviceType} onValueChange={setServiceType} className="mt-2 flex flex-wrap gap-4">
+              <RadioGroup value={serviceType} onValueChange={setServiceType} className="mt-2 flex flex-col space-y-2">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="sede" id="hero-sede" />
-                  <Label htmlFor="hero-sede">Atención en sede</Label>
+                  <Label htmlFor="hero-sede" className="flex items-center gap-2">
+                    Atención en sede
+                  </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="domicilio" id="hero-domicilio" />
-                  <Label htmlFor="hero-domicilio">Atención a domicilio</Label>
+                  <Label htmlFor="hero-domicilio" className="flex items-center gap-2">
+                    Atención a domicilio <Home className="h-4 w-4" />
+                  </Label>
                 </div>
               </RadioGroup>
             </div>

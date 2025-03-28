@@ -2,6 +2,8 @@
 import { useState } from "react"
 import Image from "next/image"
 import { Mail, Phone, MessageSquare, ChevronDown } from "lucide-react"
+import { Link } from "react-router-dom"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
 export default function DomicilioExacto() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
@@ -34,122 +36,66 @@ export default function DomicilioExacto() {
 
       {/* ======= SECCIÓN 2 COLUMNAS (Texto + Botones / Imagen) ======= */}
       <section className="w-full bg-white py-10 md:py-16">
-        {/* Se reduce el gap para acercar más la imagen al texto */}
-        <div
-          className="container mx-auto grid items-start gap-2 px-4 md:grid-cols-2"
-          style={{ transform: "translateX(165px)" }}
-        >
-          {/* Columna Izquierda: Texto + Botones */}
-          <div className="flex flex-col space-y-6 text-center md:text-left">
-            <p className="text-gray-800 leading-relaxed">
-              Pensando siempre en el bienestar de nuestros pacientes, somos los pioneros en incorporar el servicio de
-              toma de muestra a domicilio, manteniendo los altos estándares de seguridad, profesionalismo y servicio;
-              característicos de nuestra atención en sedes.
-            </p>
-            <p className="text-gray-800 leading-relaxed">
-              En la actualidad, este servicio se encuentra disponible los 365 días del año previa coordinación del día y
-              hora de atención a través de los siguientes canales de contacto:
-            </p>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 items-start lg:gap-2">
+            <div className="space-y-6">
+              <p className="text-gray-600 leading-relaxed">
+                Pensando siempre en el bienestar de nuestros pacientes, somos los pioneros en
+                incorporar el servicio de toma de muestra a domicilio, manteniendo los altos estándares
+                de seguridad, profesionalismo y servicio; característicos de nuestra atención en sedes.
+              </p>
 
-            {/* BOTONES GRANDES Y ANCHOS */}
-            <div className="flex flex-col space-y-4 items-center md:items-start">
-              {/* Botón 1 */}
-              <a
-                href="mailto:correo@labroe.com"
-                className="
-                  inline-flex 
-                  w-full 
-                  max-w-xl 
-                  items-center 
-                  justify-center 
-                  rounded-md 
-                  bg-blue-600 
-                  px-6 py-4 
-                  text-white 
-                  text-base 
-                  font-semibold 
-                  whitespace-nowrap
-                  shadow-md
-                  hover:bg-blue-700 
-                  transition-colors
-                "
-              >
-                <Mail className="mr-2 h-5 w-5" />
-                <span>Escríbenos a: correo@labroe.com</span>
-              </a>
+              <p className="text-gray-600">
+                En la actualidad, este servicio se encuentra disponible los 365 días del año previa
+                coordinación del día y hora de atención a través de los siguientes canales de contacto:
+              </p>
 
-              {/* Botón 2 */}
-              <a
-                href="tel:015025255"
-                className="
-                  inline-flex 
-                  w-full 
-                  max-w-xl 
-                  items-center 
-                  justify-center 
-                  rounded-md 
-                  bg-blue-600 
-                  px-6 py-4 
-                  text-white 
-                  text-base 
-                  font-semibold 
-                  whitespace-nowrap
-                  shadow-md
-                  hover:bg-blue-700 
-                  transition-colors
-                "
-              >
-                <Phone className="mr-2 h-5 w-5" />
-                <span>Infórmanos al: (01) 502 5255</span>
-              </a>
+              <div className="space-y-3">
+                <a
+                  href="mailto:correo@labroe.com"
+                  className="flex items-center justify-center gap-2 bg-[#1e5fad] text-white p-4 rounded-lg hover:bg-[#1e5fad]/90 transition-colors"
+                >
+                  <Mail className="h-5 w-5" />
+                  Escríbenos a: correo@labroe.com
+                </a>
 
-              {/* Botón 3 */}
-              <a
-                href="https://wa.me/51999999999"
-                className="
-                  inline-flex 
-                  w-full 
-                  max-w-xl 
-                  items-center 
-                  justify-center 
-                  rounded-md 
-                  bg-green-600 
-                  px-6 py-4 
-                  text-white 
-                  text-base 
-                  font-semibold 
-                  whitespace-nowrap
-                  shadow-md
-                  hover:bg-green-700 
-                  transition-colors
-                "
-              >
-                <MessageSquare className="mr-2 h-5 w-5" />
-                <span>Escríbenos por WhatsApp: +51 999 999 999</span>
-              </a>
+                <a
+                  href="tel:+51015025255"
+                  className="flex items-center justify-center gap-2 bg-[#1e5fad] text-white p-4 rounded-lg hover:bg-[#1e5fad]/90 transition-colors"
+                >
+                  <Phone className="h-5 w-5" />
+                  Infórmanos al: (01) 502 5255
+                </a>
+
+                <a
+                  href="https://wa.me/51999999999"
+                  className="flex items-center justify-center gap-2 bg-[#25D366] text-white p-4 rounded-lg hover:bg-[#25D366]/90 transition-colors"
+                >
+                  <MessageSquare className="h-5 w-5" />
+                  Escríbenos por WhatsApp: +51 999 999 999
+                </a>
+              </div>
             </div>
-          </div>
 
-          {/* Columna Derecha: Imagen (más cerca gracias al gap-2) */}
-          <div className="flex justify-center md:justify-end">
-            <Image
-              src="/domi.jpg"
-              alt="Servicio a domicilio"
-              width={400}
-              height={400}
-              className="object-cover"
-              priority
-            />
+            <div className="flex justify-center md:justify-start">
+              <Image
+                src="/domi.jpg"
+                alt="Servicio a domicilio"
+                width={400}
+                height={400}
+                className="object-cover rounded-2xl"
+                priority
+              />
+            </div>
           </div>
         </div>
       </section>
 
       {/* ============ ACORDEÓN CON 4 ÍTEMS ============ */}
       <section className="w-full bg-white pb-16">
-        {/* Se conserva el translateX(-190px) */}
-        <div className="container mx-auto px-4" style={{ transform: "translateX(159px)" }}>
-          {/* Se quita el max-w-2xl para que ocupe más ancho y llegue hasta la imagen */}
-          <div className="flex w-full flex-col gap-4 mx-auto">
+        <div className="container mx-auto px-4" style={{ transform: "translateX(-115px)" }}>
+          {/* Se aumenta el ancho del acordeón usando max-w-5xl para más anchura horizontal */}
+          <div className="flex w-full flex-col gap-4 mx-auto max-w-5xl">
             {/* Item 1 */}
             <div>
               <button

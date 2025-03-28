@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { articles } from "@/components/digital-library"
 import { motion } from "framer-motion"
+import { use } from "react"
 
 export default function ArticlePage() {
   const params = useParams()
@@ -16,7 +17,7 @@ export default function ArticlePage() {
   const [relatedArticles, setRelatedArticles] = useState([])
 
   useEffect(() => {
-    const slug = params.slug
+    const slug = use(params).slug
     const foundArticle = articles.find((a) => a.slug === slug)
 
     if (!foundArticle) {

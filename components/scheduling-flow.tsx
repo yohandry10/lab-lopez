@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { es } from "date-fns/locale"
 import { GoogleMapPicker } from "./google-map-picker"
+import { Home } from "lucide-react"
 
 interface SchedulingFlowProps {
   isOpen: boolean
@@ -235,7 +236,9 @@ export function SchedulingFlow({
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="domicilio" id="domicilio" />
-                    <Label htmlFor="domicilio">Atención a domicilio</Label>
+                    <Label htmlFor="domicilio" className="flex items-center gap-2">
+                      Atención a domicilio <Home className="h-4 w-4" />
+                    </Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -271,7 +274,7 @@ export function SchedulingFlow({
                         key={time}
                         type="button"
                         variant={formData.timeSlot === time ? "default" : "outline"}
-                        className={`text-sm ${formData.timeSlot === time ? "bg-blue-600" : ""}`}
+                        className={`text-sm ${formData.timeSlot === time ? "bg-[#1e5fad]" : ""}`}
                         onClick={() => setFormData({ ...formData, timeSlot: time })}
                       >
                         {time}
@@ -543,11 +546,11 @@ export function SchedulingFlow({
               <Button
                 variant="outline"
                 onClick={onClose}
-                className="border-[#1E5FAD] text-[#1E5FAD] hover:bg-[#1E5FAD]/10"
+                className="border-[#1e5fad] text-[#1e5fad] hover:bg-[#1e5fad]/10"
               >
-                Anterior
+                Cancelar
               </Button>
-              <Button onClick={handleNext} disabled={!isStep1Valid()} className="bg-[#1E5FAD] hover:bg-[#3DA64A]">
+              <Button onClick={handleNext} disabled={!isStep1Valid()} className="bg-[#1e5fad] hover:bg-[#3DA64A]">
                 Siguiente
               </Button>
             </div>
@@ -556,12 +559,12 @@ export function SchedulingFlow({
               <Button
                 variant="outline"
                 onClick={handleBack}
-                className="border-[#1E5FAD] text-[#1E5FAD] hover:bg-[#1E5FAD]/10"
+                className="border-[#1e5fad] text-[#1e5fad] hover:bg-[#1e5fad]/10"
               >
                 Anterior
               </Button>
-              <Button onClick={handleSubmit} disabled={!isStep2Valid()} className="bg-[#1E5FAD] hover:bg-[#3DA64A]">
-                Siguiente
+              <Button onClick={handleSubmit} disabled={!isStep2Valid()} className="bg-[#1e5fad] hover:bg-[#3DA64A]">
+                Finalizar
               </Button>
             </div>
           )}
