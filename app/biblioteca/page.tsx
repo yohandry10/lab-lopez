@@ -51,7 +51,7 @@ export default function BibliotecaPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-blue-900 mb-4">
+        <h1 className="text-4xl font-light tracking-tight sm:text-5xl md:text-6xl text-gray-900 mb-4">
           Biblioteca Digital
         </h1>
         <p className="text-xl text-gray-500">

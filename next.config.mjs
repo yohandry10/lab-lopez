@@ -7,20 +7,22 @@ try {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
+  reactStrictMode: true,
+  experimental: {
+    appDir: true,
+    optimizeCss: true,
+    optimizePackageImports: ['lucide-react'],
   },
   images: {
+    domains: ['v0.dev', 'localhost'],
     unoptimized: true,
+    formats: ['image/avif', 'image/webp'],
   },
-  experimental: {
-    webpackBuildWorker: true,
-    parallelServerBuildTraces: true,
-    parallelServerCompiles: true,
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
   },
+  poweredByHeader: false,
 }
 
 mergeConfig(nextConfig, userConfig)

@@ -36,7 +36,7 @@ const slides = [
   },
 ]
 
-export function HeroSlider() {
+export default function HeroSlider() {
   console.log("Renderizando HeroSlider")
 
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -102,7 +102,7 @@ export function HeroSlider() {
                     currentSlide === index ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
                   }`}
                 >
-                  <Button asChild className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6 h-auto">
+                  <Button asChild className="bg-[#1e5fad] hover:bg-[#1e5fad]/90 text-lg px-8 py-6 h-auto">
                     <Link href={slide.buttonLink}>{slide.buttonText}</Link>
                   </Button>
                 </div>
@@ -119,7 +119,7 @@ export function HeroSlider() {
             key={index}
             onClick={() => goToSlide(index)}
             className={`w-3 h-3 rounded-full transition-all ${
-              currentSlide === index ? "bg-blue-500 w-8" : "bg-white/50 hover:bg-white"
+              currentSlide === index ? "bg-[#1e5fad] w-8" : "bg-white/50 hover:bg-white"
             }`}
             aria-label={`Go to slide ${index + 1}`}
           />

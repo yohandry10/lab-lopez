@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide navbar and footer in analysis pages */
+[data-analysis-page] nav,
+[data-analysis-page] footer {
+  display: none !important;
+}
+
 :root {
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;

@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { es } from "date-fns/locale"
 import { GoogleMapPicker } from "./google-map-picker"
+import { Home, MapPin } from "lucide-react"
 
 interface SchedulingFlowProps {
   isOpen: boolean
@@ -24,6 +25,22 @@ interface SchedulingFlowProps {
   onComplete: (data: any) => void
   testName: string
   initialServiceType?: string
+}
+
+// Definir las coordenadas y detalles de las sedes
+const sedesInfo = {
+  "Sede San Juan de Miraflores": {
+    address: "Av. Miguel Iglesias 625, San Juan de Miraflores 15824",
+    lat: -12.159346,
+    lng: -76.972204,
+    name: "Sede San Juan de Miraflores",
+  },
+  "Sede Santa Anita": {
+    address: "María Parado de Bellido 110G, Santa Anita 15008",
+    lat: -12.043387,
+    lng: -76.975092,
+    name: "Sede Santa Anita",
+  },
 }
 
 export function SchedulingFlow({
@@ -34,33 +51,23 @@ export function SchedulingFlow({
   initialServiceType = "sede",
 }: SchedulingFlowProps) {
   const [step, setStep] = useState(1)
+  const [selectedSedeInfo, setSelectedSedeInfo] = useState<any>(null)
   const [formData, setFormData] = useState({
-    // Step 1: Appointment details
     serviceType: initialServiceType,
-    date: null,
-    location: "",
+    date: null as Date | null,
     timeSlot: "",
-
-    // Step 2: Patient details
-    documentType: "DNI",
-    documentNumber: "",
-    firstName: "",
-    lastName: "",
-    maternalLastName: "",
-    gender: "",
-    birthDate: "",
-    email: "",
-    mobile: "",
-    phone: "",
-    acceptTerms: false,
-
-    // Domicilio details
+    location: "",
+    district: "",
     address: "",
     addressDetails: "",
-    district: "",
     reference: "",
     latitude: 0,
     longitude: 0,
+    // Paso 2
+    patientName: "",
+    patientDNI: "",
+    patientPhone: "",
+    patientEmail: "",
   })
 
   // Actualizar el tipo de servicio cuando cambia initialServiceType
@@ -72,25 +79,20 @@ export function SchedulingFlow({
   }, [initialServiceType])
 
   const locations = [
-    "Sede Armendáriz (Av. Armendáriz 500, Miraflores)",
-    "Sede San Isidro",
-    "Sede Miraflores",
-    "Sede San Borja",
-    "Sede La Molina",
+    "Sede San Juan de Miraflores",
+    "Sede Santa Anita",
   ]
 
   const districts = [
-    "Miraflores",
-    "San Isidro",
-    "Barranco",
+    "San Juan de Miraflores",
+    "Villa María del Triunfo",
+    "Villa El Salvador",
+    "Chorrillos",
     "Surco",
     "San Borja",
+    "Santa Anita",
+    "Ate",
     "La Molina",
-    "Jesús María",
-    "Lince",
-    "Magdalena",
-    "Pueblo Libre",
-    "San Miguel",
   ]
 
   const timeSlots = [
@@ -129,82 +131,70 @@ export function SchedulingFlow({
     "17:15",
   ]
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target
+  // Manejar el cambio de sede seleccionada
+  const handleSedeChange = (value: string) => {
+    const sedeInfo = sedesInfo[value]
+    setSelectedSedeInfo(sedeInfo)
     setFormData({
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
+      location: value,
+      address: sedeInfo.address,
+      latitude: sedeInfo.lat,
+      longitude: sedeInfo.lng,
     })
   }
 
-  const handleDateChange = (date) => {
-    setFormData({
-      ...formData,
-      date,
-    })
+  const handleDateChange = (date: Date | null) => {
+    setFormData({ ...formData, date })
   }
 
-  const handleLocationSelect = (location) => {
+  const handleLocationSelect = (location: { lat: number; lng: number; address: string }) => {
     setFormData({
       ...formData,
-      address: location.address,
       latitude: location.lat,
       longitude: location.lng,
+      address: location.address,
     })
   }
 
-  const handleNext = () => {
-    setStep(step + 1)
-  }
-
-  const handleBack = () => {
-    setStep(step - 1)
-  }
-
-  const handleSubmit = () => {
-    onComplete(formData)
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData({ ...formData, [name]: value })
   }
 
   const isStep1Valid = () => {
     if (formData.serviceType === "sede") {
-      return formData.date && formData.location && formData.timeSlot
+      return (
+        formData.date &&
+        formData.timeSlot &&
+        formData.location
+      )
     } else {
-      return formData.date && formData.timeSlot && formData.address && formData.district
+      return (
+        formData.date &&
+        formData.timeSlot &&
+        formData.district &&
+        formData.address
+      )
     }
   }
 
   const isStep2Valid = () => {
     return (
-      formData.documentNumber &&
-      formData.firstName &&
-      formData.lastName &&
-      formData.maternalLastName &&
-      formData.gender &&
-      formData.email &&
-      formData.mobile &&
-      formData.acceptTerms
+      formData.patientName &&
+      formData.patientDNI &&
+      formData.patientPhone &&
+      formData.patientEmail
     )
   }
 
-  // Resetear la ubicación cuando cambia el tipo de servicio
-  useEffect(() => {
-    if (formData.serviceType === "sede") {
-      setFormData((prev) => ({
-        ...prev,
-        address: "",
-        addressDetails: "",
-        district: "",
-        reference: "",
-        latitude: 0,
-        longitude: 0,
-      }))
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        location: "",
-      }))
+  const handleNext = () => {
+    if (step === 1 && isStep1Valid()) {
+      setStep(2)
+    } else if (step === 2 && isStep2Valid()) {
+      onComplete(formData)
     }
-  }, [formData.serviceType])
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -235,7 +225,9 @@ export function SchedulingFlow({
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="domicilio" id="domicilio" />
-                    <Label htmlFor="domicilio">Atención a domicilio</Label>
+                    <Label htmlFor="domicilio" className="flex items-center gap-2">
+                      Atención a domicilio <Home className="h-4 w-4" />
+                    </Label>
                   </div>
                 </RadioGroup>
               </div>
@@ -265,13 +257,17 @@ export function SchedulingFlow({
                   <Label htmlFor="timeSlot" className="font-medium">
                     Elige un turno *
                   </Label>
-                  <div className="mt-2 grid grid-cols-4 sm:grid-cols-5 gap-2">
+                  <div className="mt-2 grid grid-cols-4 sm:grid-cols-6 gap-2">
                     {timeSlots.map((time) => (
                       <Button
                         key={time}
                         type="button"
                         variant={formData.timeSlot === time ? "default" : "outline"}
-                        className={`text-sm ${formData.timeSlot === time ? "bg-blue-600" : ""}`}
+                        className={`text-sm ${
+                          formData.timeSlot === time 
+                            ? "bg-[#1e5fad] text-white hover:bg-[#1e5fad]/90" 
+                            : "bg-[#EBF5FF] text-[#1e5fad] border-[#1e5fad] hover:bg-[#1e5fad]/10"
+                        }`}
                         onClick={() => setFormData({ ...formData, timeSlot: time })}
                       >
                         {time}
@@ -282,25 +278,49 @@ export function SchedulingFlow({
               </div>
 
               {formData.serviceType === "sede" ? (
-                <div>
-                  <Label htmlFor="location" className="font-medium">
-                    Escoge la sede para la cita *
-                  </Label>
-                  <Select
-                    value={formData.location}
-                    onValueChange={(value) => setFormData({ ...formData, location: value })}
-                  >
-                    <SelectTrigger id="location" className="mt-2">
-                      <SelectValue placeholder="Selecciona una sede" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations.map((location) => (
-                        <SelectItem key={location} value={location}>
-                          {location}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="location" className="font-medium">
+                      Escoge la sede para la cita *
+                    </Label>
+                    <Select
+                      value={formData.location}
+                      onValueChange={handleSedeChange}
+                    >
+                      <SelectTrigger id="location" className="mt-2">
+                        <SelectValue placeholder="Selecciona una sede" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.map((location) => (
+                          <SelectItem key={location} value={location}>
+                            {location}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {selectedSedeInfo && (
+                    <div className="space-y-4">
+                      <div className="bg-gray-50 p-4 rounded-lg flex items-start gap-3">
+                        <MapPin className="h-5 w-5 text-[#1e5fad] mt-1" />
+                        <div>
+                          <h4 className="font-medium text-gray-900">{selectedSedeInfo.name}</h4>
+                          <p className="text-sm text-gray-600">{selectedSedeInfo.address}</p>
+                        </div>
+                      </div>
+                      <div className="h-[300px] rounded-lg overflow-hidden border">
+                        <GoogleMapPicker
+                          readOnly={true}
+                          initialLocation={{
+                            lat: selectedSedeInfo.lat,
+                            lng: selectedSedeInfo.lng,
+                            address: selectedSedeInfo.address
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -363,208 +383,74 @@ export function SchedulingFlow({
 
         {step === 2 && (
           <div className="py-4">
-            <div className="space-y-6">
-              <div className="bg-blue-50 p-4 rounded-md">
-                <h3 className="font-medium text-blue-900 mb-2">Datos del paciente</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="documentType" className="text-sm">
-                      Tipo *
-                    </Label>
-                    <Select
-                      value={formData.documentType}
-                      onValueChange={(value) => setFormData({ ...formData, documentType: value })}
-                    >
-                      <SelectTrigger id="documentType" className="mt-1">
-                        <SelectValue placeholder="Tipo de documento" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DNI">DNI</SelectItem>
-                        <SelectItem value="CE">Carné de Extranjería</SelectItem>
-                        <SelectItem value="Pasaporte">Pasaporte</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="documentNumber" className="text-sm">
-                      N° Documento *
-                    </Label>
-                    <Input
-                      id="documentNumber"
-                      name="documentNumber"
-                      value={formData.documentNumber}
-                      onChange={handleInputChange}
-                      placeholder="Su documento"
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="firstName" className="text-sm">
-                    Nombres *
-                  </Label>
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    placeholder="Sus nombres"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lastName" className="text-sm">
-                    Apellido paterno *
-                  </Label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    placeholder="Su primer apellido"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="maternalLastName" className="text-sm">
-                    Apellido materno *
-                  </Label>
-                  <Input
-                    id="maternalLastName"
-                    name="maternalLastName"
-                    value={formData.maternalLastName}
-                    onChange={handleInputChange}
-                    placeholder="Su segundo apellido"
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="gender" className="text-sm">
-                    Género *
-                  </Label>
-                  <Select
-                    value={formData.gender}
-                    onValueChange={(value) => setFormData({ ...formData, gender: value })}
-                  >
-                    <SelectTrigger id="gender" className="mt-1">
-                      <SelectValue placeholder="Elija el género" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="M">Masculino</SelectItem>
-                      <SelectItem value="F">Femenino</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="birthDate" className="text-sm">
-                    Fecha de nacimiento *
-                  </Label>
-                  <Input
-                    id="birthDate"
-                    name="birthDate"
-                    type="date"
-                    value={formData.birthDate}
-                    onChange={handleInputChange}
-                    className="mt-1"
-                  />
-                </div>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="patientName">Nombre completo *</Label>
+                <Input
+                  id="patientName"
+                  name="patientName"
+                  value={formData.patientName}
+                  onChange={handleInputChange}
+                  className="mt-1"
+                />
               </div>
 
               <div>
-                <Label htmlFor="email" className="text-sm">
-                  Email *
-                </Label>
+                <Label htmlFor="patientDNI">DNI *</Label>
                 <Input
-                  id="email"
-                  name="email"
+                  id="patientDNI"
+                  name="patientDNI"
+                  value={formData.patientDNI}
+                  onChange={handleInputChange}
+                  maxLength={8}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="patientPhone">Teléfono *</Label>
+                <Input
+                  id="patientPhone"
+                  name="patientPhone"
+                  value={formData.patientPhone}
+                  onChange={handleInputChange}
+                  type="tel"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="patientEmail">Correo electrónico *</Label>
+                <Input
+                  id="patientEmail"
+                  name="patientEmail"
+                  value={formData.patientEmail}
+                  onChange={handleInputChange}
                   type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="Su correo electrónico"
                   className="mt-1"
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="mobile" className="text-sm">
-                    Móvil *
-                  </Label>
-                  <Input
-                    id="mobile"
-                    name="mobile"
-                    value={formData.mobile}
-                    onChange={handleInputChange}
-                    placeholder="Su móvil"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone" className="text-sm">
-                    Teléfono
-                  </Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    placeholder="Su fijo"
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-2">
-                <input
-                  type="checkbox"
-                  id="acceptTerms"
-                  name="acceptTerms"
-                  checked={formData.acceptTerms}
-                  onChange={handleInputChange}
-                  className="mt-1"
-                />
-                <Label htmlFor="acceptTerms" className="text-sm">
-                  He leído y acepto el tratamiento de mis datos personales para finalidades adicionales
-                </Label>
               </div>
             </div>
           </div>
         )}
 
         <DialogFooter>
-          {step === 1 ? (
-            <div className="flex justify-between w-full">
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="border-[#1E5FAD] text-[#1E5FAD] hover:bg-[#1E5FAD]/10"
-              >
-                Anterior
-              </Button>
-              <Button onClick={handleNext} disabled={!isStep1Valid()} className="bg-[#1E5FAD] hover:bg-[#3DA64A]">
-                Siguiente
-              </Button>
-            </div>
-          ) : (
-            <div className="flex justify-between w-full">
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                className="border-[#1E5FAD] text-[#1E5FAD] hover:bg-[#1E5FAD]/10"
-              >
-                Anterior
-              </Button>
-              <Button onClick={handleSubmit} disabled={!isStep2Valid()} className="bg-[#1E5FAD] hover:bg-[#3DA64A]">
-                Siguiente
-              </Button>
-            </div>
+          {step === 2 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep(1)}
+            >
+              Atrás
+            </Button>
           )}
+          <Button
+            type="button"
+            onClick={handleNext}
+            disabled={step === 1 ? !isStep1Valid() : !isStep2Valid()}
+          >
+            {step === 1 ? "Siguiente" : "Completar"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

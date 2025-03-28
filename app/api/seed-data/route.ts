@@ -8,7 +8,7 @@ export async function GET() {
       .from("users")
       .insert([
         {
-          email: "paciente@roe.com",
+          email: "paciente@lopez.com",
           first_name: "Juan",
           last_name: "Pérez",
           username: "juanperez",
@@ -16,7 +16,7 @@ export async function GET() {
           patient_code: "ROE-12345-6789",
         },
         {
-          email: "doctor@roe.com",
+          email: "doctor@lopez.com",
           first_name: "Carlos",
           last_name: "Rodríguez",
           username: "carlosrodriguez",
@@ -24,7 +24,7 @@ export async function GET() {
           specialty: "Medicina General",
         },
         {
-          email: "empresa@roe.com",
+          email: "empresa@lopez.com",
           first_name: "María",
           last_name: "García",
           username: "mariagarcia",

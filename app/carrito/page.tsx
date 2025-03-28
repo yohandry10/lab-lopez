@@ -32,8 +32,8 @@ export default function CarritoPage() {
   // Manejar el checkout
   const handleCheckout = () => {
     toast({
-      title: "Análisis agendados",
-      description: "Tus análisis han sido agendados correctamente. Recibirás un correo con los detalles.",
+      title: "Pago exitoso",
+      description: "Tu pago ha sido procesado correctamente. Recibirás un correo con los detalles de tu compra.",
     })
     clearCart()
     setIsCheckoutOpen(false)
@@ -134,46 +134,59 @@ export default function CarritoPage() {
               <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
                 <DialogTrigger asChild>
                   <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Agendar análisis
+                    Proceder al pago
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
                   <DialogHeader>
-                    <DialogTitle>Agendar análisis</DialogTitle>
-                    <DialogDescription>Completa la información para agendar tus análisis</DialogDescription>
+                    <DialogTitle>Checkout</DialogTitle>
+                    <DialogDescription>Selecciona tu método de pago preferido</DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="nombre">Nombres</Label>
-                        <Input id="nombre" placeholder="Ingresa tus nombres" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="apellido">Apellidos</Label>
-                        <Input id="apellido" placeholder="Ingresa tus apellidos" />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Correo electrónico</Label>
-                      <Input id="email" type="email" placeholder="correo@ejemplo.com" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="telefono">Teléfono</Label>
-                      <Input id="telefono" placeholder="999 999 999" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Modalidad</Label>
-                      <RadioGroup defaultValue="sede">
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="sede" id="sede" />
-                          <Label htmlFor="sede">En sede</Label>
+                    <div className="space-y-4">
+                      <Label>Método de pago</Label>
+                      <RadioGroup defaultValue="tarjeta">
+                        <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                          <RadioGroupItem value="tarjeta" id="tarjeta" />
+                          <Label htmlFor="tarjeta" className="flex-1 cursor-pointer">
+                            <div className="font-medium">Tarjeta de crédito/débito</div>
+                            <div className="text-sm text-gray-500">Visa, Mastercard, American Express</div>
+                          </Label>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="domicilio" id="domicilio" />
-                          <Label htmlFor="domicilio">A domicilio</Label>
+                        <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                          <RadioGroupItem value="yape" id="yape" />
+                          <Label htmlFor="yape" className="flex-1 cursor-pointer">
+                            <div className="font-medium">Yape</div>
+                            <div className="text-sm text-gray-500">Paga directamente desde tu app Yape</div>
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                          <RadioGroupItem value="plin" id="plin" />
+                          <Label htmlFor="plin" className="flex-1 cursor-pointer">
+                            <div className="font-medium">Plin</div>
+                            <div className="text-sm text-gray-500">Paga directamente desde tu app Plin</div>
+                          </Label>
                         </div>
                       </RadioGroup>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Detalles del pago</Label>
+                      <div className="p-4 bg-gray-50 rounded-lg space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Subtotal</span>
+                          <span>S/. {total.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">IGV (18%)</span>
+                          <span>Incluido</span>
+                        </div>
+                        <Separator className="my-2" />
+                        <div className="flex justify-between font-bold">
+                          <span>Total a pagar</span>
+                          <span>S/. {total.toFixed(2)}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <DialogFooter>
@@ -181,7 +194,7 @@ export default function CarritoPage() {
                       Cancelar
                     </Button>
                     <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleCheckout}>
-                      Confirmar
+                      Pagar ahora
                     </Button>
                   </DialogFooter>
                 </DialogContent>
