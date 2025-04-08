@@ -266,13 +266,14 @@ export async function GET() {
     })
   } catch (error) {
     console.error("Error al insertar datos de ejemplo:", error)
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
     return NextResponse.json(
       {
         message: "Error al insertar datos de ejemplo",
-        error: error.message,
+        error: errorMessage,
         success: false,
       },
-      { status: 500 },
+      { status: 500 }
     )
   }
 }

@@ -85,7 +85,7 @@ export function AnalysisDialog({ isOpen, onClose, analysis }: AnalysisDialogProp
 
   if (!mounted || !analysis) return null
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
@@ -93,12 +93,18 @@ export function AnalysisDialog({ isOpen, onClose, analysis }: AnalysisDialogProp
     }))
   }
 
-  const handleLocationSelect = (location) => {
+  interface Location {
+    address: string
+    lat: number
+    lng: number
+  }
+
+  const handleLocationSelect = (location: Location) => {
     setFormData(prev => ({
       ...prev,
       address: location.address,
-      latitude: location.lat,
-      longitude: location.lng
+      lat: location.lat,
+      lng: location.lng
     }))
   }
 

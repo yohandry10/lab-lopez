@@ -2,7 +2,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import { Mail, Phone, MessageSquare, ChevronDown } from "lucide-react"
-import { Link } from "react-router-dom"
+import Link from "next/link"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
 export default function DomicilioExacto() {

@@ -48,16 +48,11 @@ export function Cart() {
                       <div className="text-sm text-muted-foreground">
                         {formatPrice(item.price)}
                       </div>
-                      {item.patientInfo && (
+                      {item.patientDetails && (
                         <div className="mt-2 text-sm text-muted-foreground">
-                          <div>Paciente: {item.patientInfo.patientName}</div>
-                          <div>Edad: {item.patientInfo.patientAge}</div>
-                          <div>Género: {item.patientInfo.patientGender}</div>
-                          {item.patientInfo.observations && (
-                            <div>
-                              Observaciones: {item.patientInfo.observations}
-                            </div>
-                          )}
+                          <div>Paciente: {item.patientDetails.firstName} {item.patientDetails.lastName}</div>
+                          {item.patientDetails.email && <div>Email: {item.patientDetails.email}</div>}
+                          {item.patientDetails.phone && <div>Teléfono: {item.patientDetails.phone}</div>}
                         </div>
                       )}
                     </div>

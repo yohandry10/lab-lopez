@@ -13,50 +13,35 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/contexts/auth-context"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AuthHeroSection } from "@/components/auth-hero-section"
 
 export default function LoginPage() {
   const router = useRouter()
   const { login, user, isLoading: authLoading } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
   const [activeTab, setActiveTab] = useState("individual")
 
   const [formData, setFormData] = useState({
     identifier: "",
     password: "",
-    companyRuc: "",
-    companyEmail: "",
+    remember: false
   })
 
   const [errors, setErrors] = useState({
     identifier: "",
     password: "",
-    companyRuc: "",
-    companyEmail: "",
   })
 
-  // Si ya hay sesión iniciada, redirige al dashboard según userType
-  useEffect(() => {
-    if (user) {
-      if (user.userType === "doctor") {
-        router.push("/medicos/dashboard")
-      } else if (user.userType === "patient") {
-        router.push("/pacientes/dashboard")
-      } else if (user.userType === "company") {
-        router.push("/empresas/dashboard")
-      } else {
-        router.push("/")
-      }
-    }
-  }, [user, router])
-
-  // Cargar credenciales guardadas (si "Recordar usuario" está activo)
+  // Cargar credenciales guardadas
   useEffect(() => {
     const savedIdentifier = localStorage.getItem("roe_saved_identifier")
     if (savedIdentifier) {
-      setFormData((prev) => ({ ...prev, identifier: savedIdentifier }))
-      setRememberMe(true)
+      setFormData(prev => ({ 
+        ...prev, 
+        identifier: savedIdentifier,
+        remember: true 
+      }))
     }
   }, [])
 
@@ -70,9 +55,9 @@ export default function LoginPage() {
   }
 
   // Validaciones
-  const validateIndividualForm = () => {
+  const validateForm = () => {
     let isValid = true
-    const newErrors = { identifier: "", password: "", companyRuc: "", companyEmail: "" }
+    const newErrors = { identifier: "", password: "" }
 
     if (!formData.identifier) {
       newErrors.identifier = "Por favor, ingresa tu usuario o correo electrónico"
@@ -87,86 +72,24 @@ export default function LoginPage() {
     return isValid
   }
 
-  const validateCompanyForm = () => {
-    let isValid = true
-    const newErrors = { identifier: "", password: "", companyRuc: "", companyEmail: "" }
-
-    if (!formData.companyRuc) {
-      newErrors.companyRuc = "Por favor, ingresa el RUC de la empresa"
-      isValid = false
-    } else if (formData.companyRuc.length !== 11 || !/^\d+$/.test(formData.companyRuc)) {
-      newErrors.companyRuc = "El RUC debe tener 11 dígitos numéricos"
-      isValid = false
-    }
-
-    if (!formData.companyEmail) {
-      newErrors.companyEmail = "Por favor, ingresa el correo electrónico"
-      isValid = false
-    } else if (!/\S+@\S+\.\S+/.test(formData.companyEmail)) {
-      newErrors.companyEmail = "Ingresa un correo electrónico válido"
-      isValid = false
-    }
-
-    if (!formData.password) {
-      newErrors.password = "La contraseña es requerida"
-      isValid = false
-    }
-
-    setErrors(newErrors)
-    return isValid
-  }
-
-  // Login de usuario individual (paciente / doctor)
-  const handleIndividualSubmit = async (e: React.FormEvent) => {
+  // Login de usuario
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validateIndividualForm()) return
+    if (!validateForm()) return
 
     setIsLoading(true)
     try {
-      // Guardar "usuario" o "email" si 'recordarMe' está activo
-      if (rememberMe) {
+      // Guardar identificador si "recordar" está activo
+      if (formData.remember) {
         localStorage.setItem("roe_saved_identifier", formData.identifier)
       } else {
         localStorage.removeItem("roe_saved_identifier")
       }
 
-      // Login con email/usuario y contraseña
+      // Login con identificador y contraseña
       const result = await login(formData.identifier, formData.password)
       if (result.success) {
-        // Redirigir según userType
-        if (user?.userType === "doctor") {
-          router.push("/medicos/dashboard")
-        } else if (user?.userType === "patient") {
-          router.push("/pacientes/dashboard")
-        } else if (user?.userType === "company") {
-          router.push("/empresas/dashboard")
-        } else {
-          router.push("/")
-        }
-      }
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Login de usuario tipo "empresa"
-  const handleCompanySubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validateCompanyForm()) return
-
-    setIsLoading(true)
-    try {
-      const result = await login(formData.companyEmail, formData.password)
-      if (result.success) {
-        if (user?.userType === "doctor") {
-          router.push("/medicos/dashboard")
-        } else if (user?.userType === "patient") {
-          router.push("/pacientes/dashboard")
-        } else if (user?.userType === "company") {
-          router.push("/empresas/dashboard")
-        } else {
-          router.push("/")
-        }
+        router.push("/")
       }
     } finally {
       setIsLoading(false)
@@ -191,216 +114,112 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="container flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] py-12">
+    <div className="min-h-screen bg-white">
       <Link
         href="/"
-        className="absolute top-4 left-4 inline-flex items-center justify-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3"
+        className="absolute top-4 left-4 z-50 inline-flex items-center justify-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3 text-white"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Volver al inicio
       </Link>
 
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-        <div className="flex flex-col space-y-2 text-center">
-          <div className="flex justify-center mb-4">
-            <Image
-              src="/placeholder.svg?height=60&width=60"
-              alt="ROE Logo"
-              width={60}
-              height={60}
-              className="h-12 w-12"
-            />
+      {/* Hero Section */}
+      <AuthHeroSection
+        title="Bienvenido de nuevo"
+        subtitle="Inicia sesión para acceder a tu cuenta y gestionar tus análisis clínicos"
+      />
+
+      {/* Formulario de login */}
+      <div className="container mx-auto px-4 py-16">
+        <div className="mx-auto max-w-md">
+          <div className="flex flex-col space-y-2 text-center mb-8">
+            <h2 className="text-2xl font-semibold tracking-tight">Iniciar sesión</h2>
+            <p className="text-sm text-muted-foreground">Ingresa tus credenciales para continuar</p>
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">Iniciar sesión</h1>
-          <p className="text-sm text-muted-foreground">Ingresa tus credenciales para acceder a tu cuenta</p>
-        </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="individual">Individual</TabsTrigger>
-            <TabsTrigger value="company">Empresa</TabsTrigger>
-          </TabsList>
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <form onSubmit={handleSubmit}>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="identifier">Usuario o correo electrónico</Label>
+                  <Input
+                    id="identifier"
+                    name="identifier"
+                    type="text"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    autoCorrect="off"
+                    value={formData.identifier}
+                    onChange={handleChange}
+                    className={errors.identifier ? "border-red-500" : ""}
+                  />
+                  {errors.identifier && <p className="text-sm text-red-500">{errors.identifier}</p>}
+                </div>
 
-          {/* TAB: INDIVIDUAL */}
-          <TabsContent value="individual">
-            <div className="grid gap-6">
-              <form onSubmit={handleIndividualSubmit}>
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="identifier">Usuario o Email</Label>
+                <div className="grid gap-2">
+                  <Label htmlFor="password">Contraseña</Label>
+                  <div className="relative">
                     <Input
-                      id="identifier"
-                      name="identifier"
-                      placeholder="Ingresa tu usuario o email"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      value={formData.identifier}
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
                       onChange={handleChange}
-                      className={errors.identifier ? "border-red-500" : ""}
+                      className={errors.password ? "border-red-500 pr-10" : "pr-10"}
                     />
-                    {errors.identifier && <p className="text-sm text-red-500">{errors.identifier}</p>}
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                      onClick={togglePasswordVisibility}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
+                  {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
+                </div>
 
-                  <div className="grid gap-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password">Contraseña</Label>
-                      <Link href="/recuperar-contrasena" className="text-sm text-blue-700 hover:text-blue-800">
-                        ¿Olvidaste tu contraseña?
-                      </Link>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        value={formData.password}
-                        onChange={handleChange}
-                        className={errors.password ? "border-red-500 pr-10" : "pr-10"}
-                      />
-                      <button
-                        type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                        onClick={togglePasswordVisibility}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                    {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
-                  </div>
-
-                  <div className="flex items-center space-x-2 my-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
                     <Checkbox
                       id="remember"
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(checked === true)}
+                      checked={formData.remember}
+                      onCheckedChange={() => setFormData(prev => ({ ...prev, remember: !prev.remember }))}
                     />
                     <label
                       htmlFor="remember"
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                      Recordar mi usuario
+                      Recordarme
                     </label>
                   </div>
-
-                  <Button type="submit" className="bg-blue-700 hover:bg-blue-800 mt-2" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Iniciando sesión...
-                      </>
-                    ) : (
-                      "Iniciar sesión"
-                    )}
-                  </Button>
+                  <Link
+                    href="/recuperar-password"
+                    className="text-sm text-blue-700 hover:text-blue-800 font-medium"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
                 </div>
-              </form>
-            </div>
-          </TabsContent>
 
-          {/* TAB: EMPRESA */}
-          <TabsContent value="company">
-            <div className="grid gap-6">
-              <form onSubmit={handleCompanySubmit}>
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="companyRuc">RUC de la empresa</Label>
-                    <Input
-                      id="companyRuc"
-                      name="companyRuc"
-                      placeholder="Ingresa el RUC de la empresa"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      value={formData.companyRuc}
-                      onChange={handleChange}
-                      className={errors.companyRuc ? "border-red-500" : ""}
-                      maxLength={11}
-                    />
-                    {errors.companyRuc && <p className="text-sm text-red-500">{errors.companyRuc}</p>}
-                  </div>
+                <Button type="submit" className="bg-blue-700 hover:bg-blue-800" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Iniciando sesión...
+                    </>
+                  ) : (
+                    "Iniciar sesión"
+                  )}
+                </Button>
+              </div>
+            </form>
 
-                  <div className="grid gap-2">
-                    <Label htmlFor="companyEmail">Email corporativo</Label>
-                    <Input
-                      id="companyEmail"
-                      name="companyEmail"
-                      type="email"
-                      placeholder="Ingresa tu email corporativo"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      value={formData.companyEmail}
-                      onChange={handleChange}
-                      className={errors.companyEmail ? "border-red-500" : ""}
-                    />
-                    {errors.companyEmail && <p className="text-sm text-red-500">{errors.companyEmail}</p>}
-                  </div>
-
-                  <div className="grid gap-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password">Contraseña</Label>
-                      <Link href="/recuperar-contrasena" className="text-sm text-blue-700 hover:text-blue-800">
-                        ¿Olvidaste tu contraseña?
-                      </Link>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        value={formData.password}
-                        onChange={handleChange}
-                        className={errors.password ? "border-red-500 pr-10" : "pr-10"}
-                      />
-                      <button
-                        type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                        onClick={togglePasswordVisibility}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                    {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
-                  </div>
-
-                  <Button type="submit" className="bg-blue-700 hover:bg-blue-800 mt-2" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Iniciando sesión...
-                      </>
-                    ) : (
-                      "Iniciar sesión"
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              ¿No tienes una cuenta?{" "}
+              <Link href="/registro" className="text-blue-700 hover:text-blue-800 font-medium">
+                Regístrate
+              </Link>
+            </p>
           </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">O continúa con</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Button variant="outline">Continuar con Google</Button>
-        </div>
-        <p className="px-8 text-center text-sm text-muted-foreground">
-          ¿No tienes una cuenta?{" "}
-          <Link href="/registro" className="underline underline-offset-4 hover:text-primary">
-            Regístrate
-          </Link>
-        </p>
-
-        <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
-          <p className="text-sm text-blue-800 font-medium">Credenciales de demostración:</p>
-          <p className="text-xs text-blue-700 mt-1">Usuario: demo</p>
-          <p className="text-xs text-blue-700">Email: demo@roe.com</p>
-          <p className="text-xs text-blue-700">Contraseña: password123</p>
         </div>
       </div>
     </div>

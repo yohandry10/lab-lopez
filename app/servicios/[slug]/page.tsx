@@ -159,10 +159,12 @@ const profiles = {
   },
 }
 
+type ProfileType = typeof profiles[keyof typeof profiles]
+
 export default function ServicePage() {
   const params = useParams()
   const { addItem } = useCart()
-  const [profile, setProfile] = useState(null)
+  const [profile, setProfile] = useState<ProfileType | null>(null)
 
   useEffect(() => {
     const slug = params.slug
@@ -171,7 +173,7 @@ export default function ServicePage() {
       return
     }
 
-    const foundProfile = profiles[slug]
+    const foundProfile = profiles[slug as keyof typeof profiles]
     if (!foundProfile) {
       notFound()
       return
@@ -278,10 +280,10 @@ export default function ServicePage() {
                 <div className="flex gap-4">
                   <div className="text-green-600 font-medium">Disponible</div>
                   <Button
-                    className="bg-green-600 hover:bg-green-700"
+                    className="w-full bg-[#0066ff] hover:bg-[#0066ff]/90"
                     onClick={() =>
                       addItem({
-                        id: params.slug,
+                        id: typeof params.slug === "string" ? parseInt(params.slug.replace(/\D/g, "")) || Date.now() : Date.now(),
                         name: profile.title,
                         price: profile.price,
                       })

@@ -27,8 +27,19 @@ interface SchedulingFlowProps {
   initialServiceType?: string
 }
 
+interface SedeInfo {
+  address: string
+  lat: number
+  lng: number
+  name: string
+}
+
+type SedesInfoType = {
+  [key: string]: SedeInfo
+}
+
 // Definir las coordenadas y detalles de las sedes
-const sedesInfo = {
+const sedesInfo: SedesInfoType = {
   "Sede San Juan de Miraflores": {
     address: "Av. Miguel Iglesias 625, San Juan de Miraflores 15824",
     lat: -12.159346,
@@ -51,10 +62,10 @@ export function SchedulingFlow({
   initialServiceType = "sede",
 }: SchedulingFlowProps) {
   const [step, setStep] = useState(1)
-  const [selectedSedeInfo, setSelectedSedeInfo] = useState<any>(null)
+  const [selectedSedeInfo, setSelectedSedeInfo] = useState<SedeInfo | null>(null)
   const [formData, setFormData] = useState({
     serviceType: initialServiceType,
-    date: null as Date | null,
+    date: undefined as Date | undefined,
     timeSlot: "",
     location: "",
     district: "",
@@ -64,10 +75,14 @@ export function SchedulingFlow({
     latitude: 0,
     longitude: 0,
     // Paso 2
-    patientName: "",
-    patientDNI: "",
-    patientPhone: "",
-    patientEmail: "",
+    firstName: "",
+    lastName: "",
+    documentType: "dni",
+    documentNumber: "",
+    phone: "",
+    email: "",
+    birthDate: "",
+    gender: "",
   })
 
   // Actualizar el tipo de servicio cuando cambia initialServiceType
@@ -134,17 +149,19 @@ export function SchedulingFlow({
   // Manejar el cambio de sede seleccionada
   const handleSedeChange = (value: string) => {
     const sedeInfo = sedesInfo[value]
-    setSelectedSedeInfo(sedeInfo)
-    setFormData({
-      ...formData,
-      location: value,
-      address: sedeInfo.address,
-      latitude: sedeInfo.lat,
-      longitude: sedeInfo.lng,
-    })
+    if (sedeInfo) {
+      setSelectedSedeInfo(sedeInfo)
+      setFormData({
+        ...formData,
+        location: value,
+        address: sedeInfo.address,
+        latitude: sedeInfo.lat,
+        longitude: sedeInfo.lng,
+      })
+    }
   }
 
-  const handleDateChange = (date: Date | null) => {
+  const handleDateChange = (date: Date | undefined) => {
     setFormData({ ...formData, date })
   }
 
@@ -181,10 +198,11 @@ export function SchedulingFlow({
 
   const isStep2Valid = () => {
     return (
-      formData.patientName &&
-      formData.patientDNI &&
-      formData.patientPhone &&
-      formData.patientEmail
+      formData.firstName &&
+      formData.lastName &&
+      formData.documentNumber &&
+      formData.phone &&
+      formData.email
     )
   }
 
@@ -192,7 +210,25 @@ export function SchedulingFlow({
     if (step === 1 && isStep1Valid()) {
       setStep(2)
     } else if (step === 2 && isStep2Valid()) {
-      onComplete(formData)
+      const patientData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        documentType: formData.documentType,
+        documentNumber: formData.documentNumber,
+        phone: formData.phone,
+        email: formData.email,
+        birthDate: formData.birthDate,
+        gender: formData.gender,
+        address: formData.address,
+        district: formData.district,
+        reference: formData.reference,
+        coordinates: formData.serviceType === "domicilio" ? {
+          lat: formData.latitude,
+          lng: formData.longitude,
+          address: formData.address,
+        } : undefined
+      }
+      onComplete(patientData)
     }
   }
 
@@ -248,7 +284,6 @@ export function SchedulingFlow({
                       weekStartsOn={1}
                       showOutsideDays={false}
                       fixedWeeks
-                      ISOWeek
                     />
                   </div>
                 </div>
@@ -385,34 +420,62 @@ export function SchedulingFlow({
           <div className="py-4">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="patientName">Nombre completo *</Label>
+                <Label htmlFor="firstName">Nombre *</Label>
                 <Input
-                  id="patientName"
-                  name="patientName"
-                  value={formData.patientName}
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
                   onChange={handleInputChange}
                   className="mt-1"
                 />
               </div>
 
               <div>
-                <Label htmlFor="patientDNI">DNI *</Label>
+                <Label htmlFor="lastName">Apellido *</Label>
                 <Input
-                  id="patientDNI"
-                  name="patientDNI"
-                  value={formData.patientDNI}
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
                   onChange={handleInputChange}
-                  maxLength={8}
                   className="mt-1"
                 />
               </div>
 
               <div>
-                <Label htmlFor="patientPhone">Teléfono *</Label>
+                <Label htmlFor="documentType">Tipo de documento *</Label>
+                <Select
+                  value={formData.documentType}
+                  onValueChange={(value) => setFormData({ ...formData, documentType: value })}
+                >
+                  <SelectTrigger id="documentType" className="mt-1">
+                    <SelectValue placeholder="Selecciona el tipo de documento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dni">DNI</SelectItem>
+                    <SelectItem value="passport">Pasaporte</SelectItem>
+                    <SelectItem value="other">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="documentNumber">Número de documento *</Label>
                 <Input
-                  id="patientPhone"
-                  name="patientPhone"
-                  value={formData.patientPhone}
+                  id="documentNumber"
+                  name="documentNumber"
+                  value={formData.documentNumber}
+                  onChange={handleInputChange}
+                  maxLength={10}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="phone">Teléfono *</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
                   onChange={handleInputChange}
                   type="tel"
                   className="mt-1"
@@ -420,15 +483,44 @@ export function SchedulingFlow({
               </div>
 
               <div>
-                <Label htmlFor="patientEmail">Correo electrónico *</Label>
+                <Label htmlFor="email">Correo electrónico *</Label>
                 <Input
-                  id="patientEmail"
-                  name="patientEmail"
-                  value={formData.patientEmail}
+                  id="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleInputChange}
                   type="email"
                   className="mt-1"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="birthDate">Fecha de nacimiento</Label>
+                <Input
+                  id="birthDate"
+                  name="birthDate"
+                  value={formData.birthDate}
+                  onChange={handleInputChange}
+                  type="date"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="gender">Género</Label>
+                <Select
+                  value={formData.gender}
+                  onValueChange={(value) => setFormData({ ...formData, gender: value })}
+                >
+                  <SelectTrigger id="gender" className="mt-1">
+                    <SelectValue placeholder="Selecciona el género" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Masculino</SelectItem>
+                    <SelectItem value="female">Femenino</SelectItem>
+                    <SelectItem value="other">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>

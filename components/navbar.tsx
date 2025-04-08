@@ -74,6 +74,7 @@ const NavLink = memo(({
   const router = useRouter()
   const { isScrolled } = useNavbarContext()
   const isHomePage = pathname === "/"
+  const isAuthPage = pathname === "/login" || pathname === "/registro"
   const isActive = pathname === href
 
   useEffect(() => {
@@ -89,11 +90,13 @@ const NavLink = memo(({
         ref={buttonRef}
         onClick={onClick}
         className={`text-lg font-medium transition-all duration-200 ease-in-out rounded-lg px-4 py-2 relative ${
-          isScrolled
-            ? "text-[#356fb8] hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
-            : isHomePage
-              ? "text-white hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
-              : "text-[#356fb8] hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
+          isAuthPage
+            ? "text-white hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
+            : isScrolled
+              ? "text-[#356fb8] hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
+              : isHomePage
+                ? "text-white hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
+                : "text-[#356fb8] hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
         }`}
       >
         {etiqueta}
@@ -107,11 +110,13 @@ const NavLink = memo(({
       href={href}
       prefetch={true}
       className={`text-lg font-medium transition-all duration-200 ease-in-out rounded-lg px-4 py-2 relative ${
-        isScrolled
-          ? "text-[#356fb8] hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
-          : isHomePage
-            ? "text-white hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
-            : "text-[#356fb8] hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
+        isAuthPage
+          ? "text-white hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
+          : isScrolled
+            ? "text-[#356fb8] hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
+            : isHomePage
+              ? "text-white hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
+              : "text-[#356fb8] hover:text-white hover:bg-[#3da64a] hover:shadow-lg"
       }`}
     >
       {etiqueta}
@@ -124,7 +129,7 @@ NavLink.displayName = 'NavLink'
 // Memoizar el logo para evitar re-renders innecesarios
 const Logo = memo(() => (
   <Link href="/" prefetch={true} className="flex items-center gap-2">
-    <Image src="/lopez.png" alt="ROE Logo" width={160} height={160} className="object-contain" priority />
+    <Image src="/lopez.png" alt="Lopez Lab Logo" width={160} height={60} className="object-contain" priority />
   </Link>
 ))
 
@@ -132,7 +137,6 @@ Logo.displayName = 'Logo'
 
 export function Navbar() {
   const { itemCount } = useCart()
-  const { user, logout } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [showResultadosDropdown, setShowResultadosDropdown] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
@@ -141,6 +145,8 @@ export function Navbar() {
   const isHomePage = pathname === "/"
   const dropdownRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null) as React.RefObject<HTMLButtonElement>
+  const { user, logout } = useAuth()
+  const router = useRouter()
 
   // Optimizar el manejo del scroll con throttling
   useEffect(() => {
@@ -160,9 +166,9 @@ export function Navbar() {
   }, [])
 
   const handleLogout = useCallback(() => {
-    logout()
+    // Implementar logout aquí si es necesario
     setIsOpen(false)
-  }, [logout])
+  }, [])
 
   const toggleResultadosDropdown = useCallback((e?: React.MouseEvent) => {
     if (e) {
@@ -268,12 +274,12 @@ export function Navbar() {
                 ))}
               </nav>
 
-              {/* Derecha: Iconos de Login, Carrito y Menú móvil */}
+              {/* Derecha: Iconos de Login y Carrito */}
               <div className="flex items-center gap-4">
                 <div className="hidden lg:flex items-center gap-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      {user ? (
+                  {user ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -281,41 +287,45 @@ export function Navbar() {
                         >
                           <User className="h-6 w-6 text-white" />
                         </Button>
-                      ) : (
-                        <Link href="/login">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="relative h-12 w-12 rounded-full bg-[#1e5fad] hover:bg-[#2EB9A5] transition-colors"
-                          >
-                            <User className="h-6 w-6 text-white" />
-                          </Button>
-                        </Link>
-                      )}
-                    </DropdownMenuTrigger>
-                    {user && (
+                      </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
+                        <DropdownMenuLabel className="font-normal">
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-medium leading-none">{user.first_name} {user.last_name}</p>
+                            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                          </div>
+                        </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                          <User className="mr-2 h-4 w-4" />
-                          <span>Perfil</span>
+                        <DropdownMenuItem asChild>
+                          <Link href="/perfil">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>Mi Perfil</span>
+                          </Link>
                         </DropdownMenuItem>
-                        {user.userType === "patient" && (
-                          <DropdownMenuItem asChild>
-                            <Link href="/resultados">
-                              <span className="mr-2">🔍</span>
-                              <span>Mis resultados</span>
-                            </Link>
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={handleLogout}>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600"
+                          onClick={async () => {
+                            await logout();
+                            router.push("/");
+                          }}
+                        >
                           <LogOut className="mr-2 h-4 w-4" />
-                          <span>Cerrar sesión</span>
+                          <span>Cerrar Sesión</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
-                    )}
-                  </DropdownMenu>
+                    </DropdownMenu>
+                  ) : (
+                    <Link href="/login">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="relative h-12 w-12 rounded-full bg-[#1e5fad] hover:bg-[#2EB9A5] transition-colors"
+                      >
+                        <User className="h-6 w-6 text-white" />
+                      </Button>
+                    </Link>
+                  )}
                   <Link href="/carrito">
                     <Button
                       variant="ghost"

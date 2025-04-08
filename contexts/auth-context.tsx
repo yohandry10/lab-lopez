@@ -1,16 +1,20 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { getCurrentUser, signIn, signOut, signUp, updateUserProfile } from "@/lib/auth-service"
+import { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { signIn, signOut, signUp, getCurrentUser, updateUser } from "@/lib/auth-service"
+import type { User } from "@/lib/supabase-client"
 
-type User = {
-  id: string
+type RegisterData = {
   email: string
+  password: string
+  username: string
   first_name: string
   last_name: string
-  /** Ajustamos a `userType` en CamelCase **/
-  userType: "patient" | "doctor" | "company"
+  user_type: "patient" | "doctor" | "company"
+  accepted_terms: boolean
+  accepted_marketing: boolean
   patient_code?: string
+  specialty?: string
   company_name?: string
   company_ruc?: string
   company_position?: string
@@ -22,7 +26,7 @@ type AuthContextType = {
   isLoading: boolean
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<{ success: boolean; error?: string }>
-  register: (userData: any) => Promise<any>
+  register: (userData: RegisterData) => Promise<{ success: boolean; error?: string }>
   updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>
 }
 
@@ -38,19 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const userData = await getCurrentUser()
         if (userData) {
-          // Asignamos a "userType" en CamelCase
-          setUser({
-            id: userData.id,
-            email: userData.email,
-            first_name: userData.first_name,
-            last_name: userData.last_name,
-            userType: userData.user_type as "patient" | "doctor" | "company",
-            patient_code: userData.patient_code,
-            company_name: userData.company_name,
-            company_ruc: userData.company_ruc,
-            company_position: userData.company_position,
-            is_company_admin: userData.is_company_admin,
-          })
+          setUser(userData as User)
         }
       } catch (error) {
         console.error("Error al cargar la sesión:", error)
@@ -62,128 +54,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadSession()
   }, [])
 
-  // Función de login
   const login = async (email: string, password: string) => {
-    setIsLoading(true)
     try {
       const result = await signIn(email, password)
       if (result.success && result.user) {
-        setUser({
-          id: result.user.id,
-          email: result.user.email,
-          first_name: result.user.first_name,
-          last_name: result.user.last_name,
-          // Reasignamos user_type => userType
-          userType: result.user.user_type as "patient" | "doctor" | "company",
-          patient_code: result.user.patient_code,
-          company_name: result.user.company_name,
-          company_ruc: result.user.company_ruc,
-          company_position: result.user.company_position,
-          is_company_admin: result.user.is_company_admin,
-        })
+        setUser(result.user as User)
         return { success: true }
       }
       return { success: false, error: result.error }
     } catch (error) {
-      console.error("Error al iniciar sesión:", error)
+      console.error("Error en login:", error)
       return { success: false, error: "Error al iniciar sesión" }
-    } finally {
-      setIsLoading(false)
     }
   }
 
-  // Función de registro
-  const register = async (userData: any) => {
-    setIsLoading(true)
-    try {
-      let patientCode = undefined
-      if (userData.userType === "patient") {
-        patientCode = `P${Math.floor(100000 + Math.random() * 900000)}`
-      }
-
-      const result = await signUp(userData.email, userData.password, {
-        first_name: userData.firstName,
-        last_name: userData.lastName,
-        username: userData.username,
-        user_type: userData.userType, // la DB espera "user_type", lo guardamos así
-        patient_code: patientCode,
-        company_name: userData.companyName,
-        company_ruc: userData.companyRuc,
-        company_position: userData.companyPosition,
-        is_company_admin: userData.userType === "company",
-        accepted_terms: userData.acceptedTerms,
-        accepted_marketing: userData.acceptedMarketing,
-      })
-
-      if (result.success && result.user) {
-        setUser({
-          id: result.user.id,
-          email: result.user.email,
-          first_name: result.user.first_name,
-          last_name: result.user.last_name,
-          userType: result.user.user_type as "patient" | "doctor" | "company",
-          patient_code: result.user.patient_code,
-          company_name: result.user.company_name,
-          company_ruc: result.user.company_ruc,
-          company_position: result.user.company_position,
-          is_company_admin: result.user.is_company_admin,
-        })
-
-        return {
-          success: true,
-          user: result.user,
-          patientCode: result.patientCode,
-        }
-      }
-      return { success: false, error: result.error || "Error desconocido" }
-    } catch (error: any) {
-      console.error("Error inesperado al registrar usuario:", error)
-      return {
-        success: false,
-        error: error?.message || "Error inesperado al registrar usuario",
-      }
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Función para actualizar el perfil
-  const updateProfile = async (updates: Partial<User>) => {
-    if (!user) {
-      return { success: false, error: "No hay usuario autenticado" }
-    }
-    setIsLoading(true)
-    try {
-      const result = await updateUserProfile(user.id, {
-        first_name: updates.first_name,
-        last_name: updates.last_name,
-        company_name: updates.company_name,
-        company_ruc: updates.company_ruc,
-        company_position: updates.company_position,
-      })
-      if (result.success && result.user) {
-        setUser({
-          ...user,
-          first_name: result.user.first_name,
-          last_name: result.user.last_name,
-          company_name: result.user.company_name,
-          company_ruc: result.user.company_ruc,
-          company_position: result.user.company_position,
-        })
-        return { success: true }
-      }
-      return { success: false, error: result.error }
-    } catch (error) {
-      console.error("Error al actualizar perfil:", error)
-      return { success: false, error: "Error al actualizar perfil" }
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Función para cerrar sesión
   const logout = async () => {
-    setIsLoading(true)
     try {
       const result = await signOut()
       if (result.success) {
@@ -192,10 +77,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return { success: false, error: result.error }
     } catch (error) {
-      console.error("Error al cerrar sesión:", error)
+      console.error("Error en logout:", error)
       return { success: false, error: "Error al cerrar sesión" }
-    } finally {
-      setIsLoading(false)
+    }
+  }
+
+  const register = async (userData: RegisterData) => {
+    try {
+      const result = await signUp(userData)
+      if (result.success && result.user) {
+        setUser(result.user as User)
+        return { success: true }
+      }
+      return { success: false, error: result.error }
+    } catch (error) {
+      console.error("Error en registro:", error)
+      return { success: false, error: "Error al registrar usuario" }
+    }
+  }
+
+  const updateProfile = async (updates: Partial<User>) => {
+    try {
+      const result = await updateUser(user?.id || "", updates)
+      if (result.success && result.user) {
+        setUser(result.user as User)
+        return { success: true }
+      }
+      return { success: false, error: result.error }
+    } catch (error) {
+      console.error("Error al actualizar perfil:", error)
+      return { success: false, error: "Error al actualizar perfil" }
     }
   }
 

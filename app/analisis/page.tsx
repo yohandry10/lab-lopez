@@ -902,12 +902,12 @@ export default function AnalisisPage() {
     return pages
   }
 
-  const handleAddToCart = (analysis) => {
+  const handleAddToCart = (analysis: typeof analysisData[0]) => {
     setSelectedTest(analysis)
     setIsSchedulingOpen(true)
   }
 
-  const handleScheduleComplete = (data) => {
+  const handleScheduleComplete = (data: { firstName: string; lastName: string }) => {
     setIsSchedulingOpen(false)
 
     // Extract patient name from form data
@@ -915,12 +915,14 @@ export default function AnalisisPage() {
     setPatientName(fullName)
 
     // Add item to cart
-    addItem({
-      id: selectedTest.id,
-      name: selectedTest.name,
-      price: selectedTest.price,
-      patientInfo: data,
-    })
+    if (selectedTest) {
+      addItem({
+        id: selectedTest.id,
+        name: selectedTest.name,
+        price: selectedTest.price,
+        patientDetails: data,
+      })
+    }
 
     // Show success dialog
     setIsSuccessOpen(true)
@@ -1317,6 +1319,11 @@ export default function AnalisisPage() {
                             name: profile.title,
                             price: profile.price,
                             category: "Perfil",
+                            conditions: "No especificado",
+                            sample: "No especificado",
+                            protocol: "No especificado",
+                            suggestions: "",
+                            comments: ""
                           })
                         }
                       >
@@ -1393,7 +1400,12 @@ export default function AnalisisPage() {
                           id: 2000 + i,
                           name: test.title,
                           price: test.price,
-                          category: "COVID-19",
+                          category: "Test",
+                          conditions: "No especificado",
+                          sample: "No especificado",
+                          protocol: "No especificado",
+                          suggestions: "",
+                          comments: ""
                         })
                       }
                     >

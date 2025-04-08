@@ -23,6 +23,27 @@ interface HeroSchedulingDialogProps {
   onClose: () => void
 }
 
+interface PatientFormData {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  documentType: string
+  documentNumber: string
+  birthDate: string
+  gender: string
+  address?: string
+  district?: string
+  province?: string
+  department?: string
+  reference?: string
+  coordinates?: {
+    lat: number
+    lng: number
+    address: string
+  }
+}
+
 export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogProps) {
   const [step, setStep] = useState(1)
   const [serviceType, setServiceType] = useState("sede")
@@ -34,12 +55,12 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
 
   // Lista de análisis populares
   const popularTests = [
-    { id: "hemograma", name: "Hemograma completo", price: 80 },
-    { id: "glucosa", name: "Glucosa", price: 50 },
-    { id: "perfil-lipidico", name: "Perfil lipídico", price: 120 },
-    { id: "perfil-tiroideo", name: "Perfil tiroideo", price: 180 },
-    { id: "covid-antigeno", name: "Prueba COVID-19 Antígeno", price: 100 },
-    { id: "covid-pcr", name: "Prueba COVID-19 PCR", price: 250 },
+    { id: 1, name: "Hemograma completo", price: 80 },
+    { id: 2, name: "Glucosa", price: 50 },
+    { id: 3, name: "Perfil lipídico", price: 120 },
+    { id: 4, name: "Perfil tiroideo", price: 180 },
+    { id: 5, name: "Prueba COVID-19 Antígeno", price: 100 },
+    { id: 6, name: "Prueba COVID-19 PCR", price: 250 },
   ]
 
   const handleNext = () => {
@@ -49,7 +70,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
     }
   }
 
-  const handleScheduleComplete = (data) => {
+  const handleScheduleComplete = (data: PatientFormData) => {
     setIsSchedulingOpen(false)
 
     // Extract patient name from form data
@@ -57,13 +78,13 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
     setPatientName(fullName)
 
     // Add item to cart
-    const test = popularTests.find((test) => test.id === selectedTest)
+    const test = popularTests.find((test) => test.id === parseInt(selectedTest))
     if (test) {
       addItem({
         id: test.id,
         name: test.name,
         price: test.price,
-        patientInfo: data,
+        patientDetails: data,
       })
     }
 
@@ -96,7 +117,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
                 </SelectTrigger>
                 <SelectContent>
                   {popularTests.map((test) => (
-                    <SelectItem key={test.id} value={test.id}>
+                    <SelectItem key={test.id} value={test.id.toString()}>
                       {test.name} - S/. {test.price.toFixed(2)}
                     </SelectItem>
                   ))}
@@ -139,7 +160,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
           isOpen={isSchedulingOpen}
           onClose={() => setIsSchedulingOpen(false)}
           onComplete={handleScheduleComplete}
-          testName={popularTests.find((test) => test.id === selectedTest)?.name || ""}
+          testName={popularTests.find((test) => test.id.toString() === selectedTest)?.name || ""}
           initialServiceType={serviceType}
         />
       )}
@@ -147,7 +168,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
       <SuccessDialog
         isOpen={isSuccessOpen}
         onClose={handleSuccessClose}
-        testName={popularTests.find((test) => test.id === selectedTest)?.name || ""}
+        testName={popularTests.find((test) => test.id.toString() === selectedTest)?.name || ""}
         patientName={patientName}
         onContinueShopping={handleSuccessClose}
         onNewPatient={handleSuccessClose}

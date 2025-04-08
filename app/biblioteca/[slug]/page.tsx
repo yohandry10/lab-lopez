@@ -1,37 +1,53 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams, notFound } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { ChevronLeft, Calendar, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { articles } from "@/components/digital-library"
+import { analysisData } from "@/components/digital-library"
 import { motion } from "framer-motion"
-import { use } from "react"
+import { useCart } from "@/contexts/cart-context"
+import type { Analysis } from "@/components/digital-library"
+
+interface CartItem {
+  id: number
+  name: string
+  price: number
+  category: string
+}
 
 export default function ArticlePage() {
+  const router = useRouter()
   const params = useParams()
-  const [article, setArticle] = useState(null)
-  const [relatedArticles, setRelatedArticles] = useState([])
+  const { addItem } = useCart()
+  const [isLoading, setIsLoading] = useState(true)
+  const [article, setArticle] = useState<Analysis | null>(null)
+  const [relatedArticles, setRelatedArticles] = useState<Analysis[]>([])
 
   useEffect(() => {
-    const slug = use(params).slug
-    const foundArticle = articles.find((a) => a.slug === slug)
+    const slug = params?.slug as string
+    const foundArticle = analysisData.find((a) => a.slug === slug)
 
     if (!foundArticle) {
-      notFound()
+      router.push('/biblioteca')
+      return
     }
 
     setArticle(foundArticle)
 
     // Find related articles (same category, excluding current)
-    const related = articles.filter((a) => a.category === foundArticle.category && a.id !== foundArticle.id).slice(0, 2)
+    const related = analysisData
+      .filter((a) => a.category === foundArticle.category && a.id !== foundArticle.id)
+      .slice(0, 2)
     setRelatedArticles(related)
-  }, [params])
 
-  if (!article) {
+    setIsLoading(false)
+  }, [params, router])
+
+  if (isLoading) {
     return (
       <div className="container px-4 py-12 flex justify-center">
         <div className="animate-pulse w-full max-w-4xl">
@@ -47,6 +63,20 @@ export default function ArticlePage() {
       </div>
     )
   }
+
+  const handleAddToCart = () => {
+    if (!article) return
+
+    const item: CartItem = {
+      id: article.id,
+      name: article.title,
+      price: 0, // Asumiendo que el precio es 0 o ajustando según necesites
+      category: article.category
+    }
+    addItem(item)
+  }
+
+  if (!article) return null
 
   return (
     <div className="container px-4 py-12">
@@ -70,22 +100,6 @@ export default function ArticlePage() {
               {article.category}
             </span>
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-blue-900 mb-4">{article.title}</h1>
-            <div className="flex flex-wrap items-center gap-4 text-gray-500">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <time>
-                  {new Date(article.date).toLocaleDateString("es-ES", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </time>
-              </div>
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span>{article.author}</span>
-              </div>
-            </div>
           </div>
         </motion.div>
 
@@ -114,27 +128,13 @@ export default function ArticlePage() {
                 {paragraph}
               </p>
             ))}
-          </div>
-        </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <div className="flex items-center gap-4 border-t border-gray-200 pt-8 mb-12">
-            <div className="relative w-16 h-16 rounded-full overflow-hidden">
-              <Image
-                src={article.authorImage || "/placeholder.svg"}
-                alt={article.author}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div>
-              <h3 className="font-bold text-lg">{article.author}</h3>
-              <p className="text-gray-500">{article.authorRole}</p>
-            </div>
+            {article.sections?.map((section, idx) => (
+              <div key={idx} className="mb-8">
+                <h2 className="text-2xl font-bold mb-4">{section.title}</h2>
+                <div className="prose prose-lg">{section.content}</div>
+              </div>
+            ))}
           </div>
         </motion.div>
 
@@ -142,7 +142,7 @@ export default function ArticlePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
           >
             <div>
               <h2 className="text-2xl font-bold mb-6">Artículos relacionados</h2>
@@ -167,12 +167,7 @@ export default function ArticlePage() {
                         </div>
                         <h3 className="text-lg font-bold mb-2">{relatedArticle.title}</h3>
                         <p className="text-gray-500 text-sm mb-4 line-clamp-2">{relatedArticle.description}</p>
-                        <Button
-                          asChild
-                          variant="outline"
-                          size="sm"
-                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                        >
+                        <Button asChild variant="outline" size="sm">
                           <Link href={`/biblioteca/${relatedArticle.slug}`}>Leer más</Link>
                         </Button>
                       </CardContent>
@@ -183,6 +178,12 @@ export default function ArticlePage() {
             </div>
           </motion.div>
         )}
+
+        <div className="flex justify-center">
+          <Button onClick={handleAddToCart} className="bg-[#1E5FAD] hover:bg-[#3DA64A] text-white">
+            Agregar al carrito
+          </Button>
+        </div>
       </div>
     </div>
   )

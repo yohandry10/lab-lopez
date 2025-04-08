@@ -73,11 +73,11 @@ export function Footer() {
           {/* Branding: Logo grande sin forma ovalada */}
           <div className="flex flex-col items-center gap-4">
             <Image
-              src="/lopez.PNG"
-              alt="Logo"
+              src="/lopez.png"
+              alt="Lopez Lab Logo"
               width={200}
-              height={200}
-              className="w-[200px] h-[200px] object-contain"
+              height={75}
+              className="w-[200px] h-auto object-contain"
             />
             <p className="text-gray-500 text-xl font-semibold text-center">Desde 1953 cuidando de ti y tu familia</p>
           </div>

@@ -11,15 +11,22 @@ import { Label } from "@/components/ui/label"
 interface SchedulingDialogProps {
   isOpen: boolean
   onClose: () => void
-  onSchedule: (data: any) => void
+  onSchedule: (data: SchedulingFormData) => void
   testName: string
+}
+
+interface SchedulingFormData {
+  serviceType: string
+  date: Date | undefined
+  location: string
+  timeSlot: string
 }
 
 export function SchedulingDialog({ isOpen, onClose, onSchedule, testName }: SchedulingDialogProps) {
   const [step, setStep] = useState(1)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SchedulingFormData>({
     serviceType: "",
-    date: null,
+    date: undefined,
     location: "",
     timeSlot: "",
   })
@@ -62,6 +69,13 @@ export function SchedulingDialog({ isOpen, onClose, onSchedule, testName }: Sche
     "17:15",
   ]
 
+  const handleSchedule = () => {
+    if (!formData.date || !formData.location || !formData.serviceType || !formData.timeSlot) {
+      return
+    }
+    onSchedule(formData)
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
@@ -95,7 +109,7 @@ export function SchedulingDialog({ isOpen, onClose, onSchedule, testName }: Sche
               <Calendar
                 mode="single"
                 selected={formData.date}
-                onSelect={(date) => setFormData({ ...formData, date })}
+                onSelect={(date) => setFormData({ ...formData, date: date || undefined })}
                 className="mt-2"
                 disabled={(date) => date < new Date()}
               />
@@ -145,7 +159,12 @@ export function SchedulingDialog({ isOpen, onClose, onSchedule, testName }: Sche
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={() => onSchedule(formData)}>Continuar</Button>
+          <Button 
+            onClick={handleSchedule}
+            disabled={!formData.date || !formData.location || !formData.serviceType || !formData.timeSlot}
+          >
+            Continuar
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

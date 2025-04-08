@@ -117,9 +117,9 @@ export default function Home() {
                   </div>
 
                   <div className="md:col-span-3 flex justify-between px-8 gap-8">
-                    <UserTypeLink href="/pacientes" icon={User} label="Pacientes" />
-                    <UserTypeLink href="/medicos" icon={Stethoscope} label="Médicos" />
-                    <UserTypeLink href="/empresas" icon={Building2} label="Empresas" />
+                    <UserTypeLink href="/login" icon={User} label="Pacientes" />
+                    <UserTypeLink href="/login" icon={Stethoscope} label="Médicos" />
+                    <UserTypeLink href="/login" icon={Building2} label="Empresas" />
                   </div>
                 </div>
               </div>

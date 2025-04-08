@@ -1,4 +1,4 @@
-import { IconType } from 'lucide-react'
+import React from 'react'
 
 export type Analysis = {
   id: number
@@ -8,11 +8,17 @@ export type Analysis = {
   category: string
   slug: string
   content: string
-  heroIcons: string[]
-  sections: {
+  heroIcons?: string[]
+  sections?: {
     title: string
     content: React.ReactNode
   }[]
+  details?: {
+    overview: string
+    procedure: string
+    indications: string[]
+    interpretation: string
+  }
 }
 
 export const analysisData: Analysis[] = [

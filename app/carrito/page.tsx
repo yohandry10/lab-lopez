@@ -58,7 +58,7 @@ export default function CarritoPage() {
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-12">
-      <div className="mb-8">
+      <div className="mb-8 text-center mt-8">
         <h1 className="text-2xl font-bold mb-2">Tu carrito</h1>
         <p className="text-gray-500">
           {itemCount} {itemCount === 1 ? "análisis" : "análisis"} en tu carrito

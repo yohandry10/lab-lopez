@@ -353,7 +353,7 @@ export default function DigitalLibrary() {
                     <div className="p-6">
                       <h3 className="text-xl font-semibold mb-2">{analysis.title}</h3>
                       <p className="text-gray-600 mb-4 line-clamp-2">{analysis.description}</p>
-                      <div className="flex justify-end">
+                      <div className="flex justify-center">
                         <Link 
                           href={`/analisis/${analysis.slug}`}
                           className="text-[#1E5FAD] hover:text-[#1E5FAD]/90 font-medium"

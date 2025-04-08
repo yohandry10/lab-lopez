@@ -9,21 +9,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { analysisData } from "@/components/digital-library"
 import { useCart } from "@/contexts/cart-context"
 import dynamic from 'next/dynamic'
-import * as Icons from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Baby, Dna, Search, TestTube, Microscope, Beaker } from "lucide-react"
+import { useRouter, useParams, useSearchParams } from "next/navigation"
+import type { Analysis } from "@/components/digital-library"
 
 // Cargar el formulario de manera dinámica
 const AnalysisForm = dynamic(() => import("@/components/analysis-form"), {
   loading: () => <p>Cargando formulario...</p>,
   ssr: false
 })
-
-type Props = {
-  params: {
-    slug: string
-  }
-  searchParams?: { [key: string]: string | string[] | undefined }
-}
 
 interface CartItem {
   id: number
@@ -32,8 +26,17 @@ interface CartItem {
   patientInfo?: any
 }
 
+const iconMap = {
+  Baby,
+  Dna,
+  Search,
+  TestTube,
+  Microscope,
+  Beaker
+}
+
 // Componente para la sección de artículos relacionados
-const RelatedArticles = ({ articles, category }: { articles: typeof analysisData, category: string }) => {
+const RelatedArticles = ({ articles, category }: { articles: Analysis[], category: string }) => {
   const relatedArticles = useMemo(() => {
     return articles
       .filter((a) => a.category === category)
@@ -70,7 +73,12 @@ const RelatedArticles = ({ articles, category }: { articles: typeof analysisData
 }
 
 // Componente para las secciones expandibles
-const ExpandableSection = ({ section, index, expandedSection, setExpandedSection }: any) => (
+const ExpandableSection = ({ section, index, expandedSection, setExpandedSection }: {
+  section: { title: string; content: React.ReactNode }
+  index: number
+  expandedSection: number | null
+  setExpandedSection: (index: number | null) => void
+}) => (
   <div key={index} className="border rounded-lg overflow-hidden">
     <button
       className="w-full px-6 py-4 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -99,13 +107,15 @@ const ExpandableSection = ({ section, index, expandedSection, setExpandedSection
   </div>
 )
 
-export default function AnalysisPage({ params, searchParams }: Props) {
+export default function AnalysisPage() {
   const router = useRouter()
+  const params = useParams()
+  const searchParams = useSearchParams()
   const [expandedSection, setExpandedSection] = useState<number | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const { addItem } = useCart()
   
-  const { slug } = params
+  const slug = params?.slug as string
   if (!slug) {
     router.push('/analisis')
     return null
@@ -122,7 +132,7 @@ export default function AnalysisPage({ params, searchParams }: Props) {
     // Memoize los iconos para evitar recreaciones innecesarias
     const heroIcons = useMemo(() => {
       return foundArticle.heroIcons?.map((iconName) => {
-        const Icon = Icons[iconName as keyof typeof Icons]
+        const Icon = iconMap[iconName as keyof typeof iconMap]
         return Icon ? <Icon key={iconName} className="w-6 h-6" /> : null
       }) || []
     }, [foundArticle.heroIcons])

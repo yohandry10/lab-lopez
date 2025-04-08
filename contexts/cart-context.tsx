@@ -7,7 +7,15 @@ interface CartItem {
   id: number
   name: string
   price: number
-  patientInfo?: any
+  patientDetails?: {
+    firstName?: string
+    lastName?: string
+    email?: string
+    phone?: string
+    address?: string
+    lat?: number
+    lng?: number
+  }
 }
 
 interface CartContextType {

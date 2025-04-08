@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Search } from "lucide-react"
 
+/// <reference types="@types/google.maps" />
+
 interface GoogleMapPickerProps {
   onLocationSelect?: (location: { lat: number; lng: number; address: string }) => void
   initialAddress?: string
@@ -78,13 +80,19 @@ export function GoogleMapPicker({
 
             // Obtener la dirección a partir de las coordenadas (geocodificación inversa)
             const geocoder = new window.google.maps.Geocoder()
-            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-              if (status === "OK" && results && results[0]) {
-                const address = results[0].formatted_address
-                setSelectedAddress(address)
-                onLocationSelect?.({ lat, lng, address })
+            geocoder.geocode(
+              { location: { lat, lng } },
+              (
+                results: google.maps.GeocoderResult[],
+                status: google.maps.GeocoderStatus
+              ) => {
+                if (status === "OK" && results && results[0]) {
+                  const address = results[0].formatted_address
+                  setSelectedAddress(address)
+                  onLocationSelect?.({ lat, lng, address })
+                }
               }
-            })
+            )
           }
         })
 
@@ -122,23 +130,30 @@ export function GoogleMapPicker({
 
         // Evento para añadir marcador al hacer clic en el mapa
         mapInstance.addListener("click", (event: google.maps.MapMouseEvent) => {
-          if (event.latLng && markerInstance) {
-            markerInstance.setPosition(event.latLng)
+          const latLng = event.latLng
+          if (latLng && markerInstance) {
+            markerInstance.setPosition(latLng)
 
             // Obtener la dirección a partir de las coordenadas
             const geocoder = new window.google.maps.Geocoder()
-            geocoder.geocode({ location: event.latLng.toJSON() }, (results, status) => {
-              if (status === "OK" && results && results[0]) {
-                const address = results[0].formatted_address
-                setSelectedAddress(address)
-                setSearchValue(address)
-                onLocationSelect?.({
-                  lat: event.latLng.lat(),
-                  lng: event.latLng.lng(),
-                  address,
-                })
+            geocoder.geocode(
+              { location: latLng.toJSON() },
+              (
+                results: google.maps.GeocoderResult[],
+                status: google.maps.GeocoderStatus
+              ) => {
+                if (status === "OK" && results && results[0]) {
+                  const address = results[0].formatted_address
+                  setSelectedAddress(address)
+                  setSearchValue(address)
+                  onLocationSelect?.({
+                    lat: latLng.lat(),
+                    lng: latLng.lng(),
+                    address,
+                  })
+                }
               }
-            })
+            )
           }
         })
       }
@@ -169,7 +184,9 @@ export function GoogleMapPicker({
 
     return () => {
       // Limpiar la función de inicialización al desmontar
-      delete window.initMap
+      if ('initMap' in window) {
+        delete (window as any).initMap
+      }
     }
   }, [initMap])
 
