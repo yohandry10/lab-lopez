@@ -1,25 +1,34 @@
-import type React from "react"
-import "./globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import { LayoutClient } from "@/components/layout-client"
+import "./globals.css"
+import { Navbar } from "@/components/navbar"
+import { Footer } from "@/components/footer"
+import { ClientProvider } from "@/components/client-provider"
+import { Preloader } from "@/components/preloader"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Lopez Lab",
-  description: "Laboratorio clínico de alta calidad",
+  title: "Laboratorio lOPEZ",
+  description: "Laboratorio LOPEZ - Servicios de análisis clínicos",
 }
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang="es">
       <body className={inter.className}>
-        <LayoutClient>{children}</LayoutClient>
+        <Preloader />
+        <ClientProvider>
+          <div className="flex min-h-screen flex-col">
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+        </ClientProvider>
       </body>
     </html>
   )

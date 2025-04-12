@@ -5,6 +5,13 @@ import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { useAuth } from "@/contexts/auth-context"
+import { Pencil, Trash2 } from "lucide-react"
 
 // Datos de los perfiles
 const profiles = {
@@ -14,13 +21,28 @@ const profiles = {
       "Una visión clara de lo que importa para poner tu salud en perspectiva. Este perfil te permitirá conocer de manera general cómo está tu organismo, para prevenir y/o tratar alguna enfermedad de forma oportuna. La salud es una relación entre tú y tu cuerpo, cuidarla depende de ti; pero permítenos acompañarte.",
     content:
       "Este perfil está diseñado para brindarte un panorama general de tu salud. Con exámenes clave, podrás identificar áreas de riesgo y tomar medidas preventivas a tiempo.",
-    price: 0,
+    price: 690.0,
     image: "/placeholder.svg?height=600&width=1200&text=Prevenci%C3%B3n+total",
     locations: ["Sede", "Domicilio"],
     sampleType: "General",
     ageRequirement: "Cualquier edad",
-    tests: [],
-    conditions: [],
+    tests: [
+      "HEMOGRAMA",
+      "GLUCOSA",
+      "UREA",
+      "CREATININA",
+      "COLESTEROL TOTAL",
+      "TRIGLICÉRIDOS",
+      "HDL",
+      "LDL",
+      "ÁCIDO ÚRICO",
+      "PROTEÍNAS TOTALES"
+    ],
+    conditions: [
+      "Ayuno de 8 horas",
+      "No realizar ejercicio intenso 24 horas antes",
+      "Informar sobre medicamentos en uso"
+    ],
   },
   "hombre-saludable": {
     title: "Perfil Hombre saludable",
@@ -28,13 +50,35 @@ const profiles = {
       "Este perfil proporciona una mirada a tu salud en general, abordando las dudas más comunes que pueden surgir en los hombres entre 18 y 45 años. Compuesto por 16 pruebas, te ayudará a cuidar tu bienestar.",
     content:
       "Pensado para hombres que desean un chequeo integral, este perfil evalúa indicadores clave para que tomes decisiones informadas sobre tu salud.",
-    price: 0,
+    price: 450.0,
     image: "/placeholder.svg?height=600&width=1200&text=Hombre+saludable",
     locations: ["Sede", "Domicilio"],
     sampleType: "General",
     ageRequirement: "18-45 años",
-    tests: [],
-    conditions: [],
+    tests: [
+      "HEMOGRAMA",
+      "GLUCOSA",
+      "UREA",
+      "CREATININA",
+      "COLESTEROL TOTAL",
+      "TRIGLICÉRIDOS",
+      "HDL",
+      "LDL",
+      "PSA TOTAL",
+      "PSA LIBRE",
+      "TESTOSTERONA TOTAL",
+      "TESTOSTERONA LIBRE",
+      "CORTISOL",
+      "TSH",
+      "T4 LIBRE",
+      "T3"
+    ],
+    conditions: [
+      "Ayuno de 8 horas",
+      "No realizar ejercicio intenso 24 horas antes",
+      "Informar sobre medicamentos en uso",
+      "Para PSA: No tener relaciones sexuales 48 horas antes"
+    ],
   },
   "mujer-saludable": {
     title: "Perfil Mujer saludable",
@@ -42,13 +86,35 @@ const profiles = {
       "Este perfil es esencial para examinar tu salud, controlar tus niveles hormonales y conocer tu riesgo a desarrollar enfermedades crónicas antes de los 45 años.",
     content:
       "Diseñado especialmente para mujeres, este perfil te ayudará a mantener un control integral de tu salud, anticipando posibles complicaciones.",
-    price: 0,
+    price: 550.0,
     image: "/placeholder.svg?height=600&width=1200&text=Mujer+saludable",
     locations: ["Sede", "Domicilio"],
     sampleType: "General",
     ageRequirement: "Hasta 45 años",
-    tests: [],
-    conditions: [],
+    tests: [
+      "HEMOGRAMA",
+      "GLUCOSA",
+      "UREA",
+      "CREATININA",
+      "COLESTEROL TOTAL",
+      "TRIGLICÉRIDOS",
+      "HDL",
+      "LDL",
+      "TSH",
+      "T4 LIBRE",
+      "T3",
+      "FSH",
+      "LH",
+      "ESTRADIOL",
+      "PROGESTERONA",
+      "PROLACTINA"
+    ],
+    conditions: [
+      "Ayuno de 8 horas",
+      "No realizar ejercicio intenso 24 horas antes",
+      "Informar sobre medicamentos en uso",
+      "Para hormonas: Tomar la muestra en los primeros días del ciclo menstrual"
+    ],
   },
   preoperatorio: {
     title: "Perfil Preoperatorio",
@@ -131,99 +197,284 @@ const profiles = {
 }
 
 export default function ServiciosPage() {
-  const [searchTerm, setSearchTerm] = useState("")
+  const [profilesData, setProfilesData] = useState(profiles)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingProfile, setEditingProfile] = useState<any>(null)
+  const { user } = useAuth()
 
-  const filteredProfiles = useMemo(() => {
-    return Object.entries(profiles).filter(([slug, profile]) =>
-      profile.title.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
-  }, [searchTerm])
+  const handleEditProfile = (profile: any) => {
+    setEditingProfile(profile)
+    setIsEditModalOpen(true)
+  }
+
+  const handleDeleteProfile = (slug: string) => {
+    if (confirm('¿Estás seguro de que deseas eliminar este perfil?')) {
+      setProfilesData(prevProfiles => {
+        const newProfiles = { ...prevProfiles }
+        delete newProfiles[slug]
+        return newProfiles
+      })
+    }
+  }
+
+  const handleAddProfile = () => {
+    setEditingProfile({
+      title: '',
+      description: '',
+      content: '',
+      price: 0,
+      image: '/placeholder.svg',
+      locations: [],
+      sampleType: '',
+      ageRequirement: '',
+      tests: [],
+      conditions: []
+    })
+    setIsEditModalOpen(true)
+  }
+
+  const handleSaveProfile = (updatedProfile: any) => {
+    setProfilesData(prevProfiles => ({
+      ...prevProfiles,
+      [updatedProfile.slug]: updatedProfile
+    }))
+    setIsEditModalOpen(false)
+    setEditingProfile(null)
+  }
 
   return (
-    <div className="min-h-screen bg-[#f3f9fe]">
-      {/* Hero con Imagen de Fondo */}
-      <section className="relative h-[500px] overflow-hidden">
-        <Image
-          src="/placeholder.svg?height=600&width=1200&text=Servicios"
-          alt="Hero de servicios"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent" />
-        <div className="container mx-auto px-4 relative h-full flex flex-col justify-center">
+    <div className="container mx-auto px-4 py-12">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-light tracking-tight sm:text-5xl text-gray-900 mb-4">
+          Perfiles de bienestar
+        </h1>
+        <p className="text-xl text-gray-500">
+          Servicios diseñados para mejorar tu calidad de vida
+        </p>
+        
+        {user?.user_type === "admin" && (
+          <Button 
+            onClick={handleAddProfile}
+            className="mt-4 bg-[#3DA64A] hover:bg-[#3DA64A]/90 text-white"
+          >
+            Agregar nuevo perfil
+          </Button>
+        )}
+      </div>
+
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {Object.entries(profilesData).map(([slug, profile]) => (
           <motion.div
+            key={slug}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
+            transition={{ duration: 0.5 }}
           >
-            <h1 className="text-4xl md:text-5xl font-light text-white mb-4">Todos Nuestros Servicios</h1>
-            <p className="text-lg text-gray-100">Selecciona tu perfil. Escribe tu búsqueda aquí</p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Sección de Buscador */}
-      <section className="py-8">
-        <div className="container mx-auto px-4 text-center">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar perfil..."
-            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-600"
-          />
-        </div>
-      </section>
-
-      {/* Listado de Perfiles */}
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          {filteredProfiles.length === 0 ? (
-            <p className="text-center text-gray-600">No se encontraron perfiles.</p>
-          ) : (
-            <div className="space-y-16">
-              {filteredProfiles.map(([slug, profile]) => (
-                <motion.div
-                  key={slug}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
-                  viewport={{ once: true }}
-                  className="border-b pb-8 mb-8"
-                >
-                  <div className="grid md:grid-cols-2 gap-6 items-center">
-                    {/* Imagen del servicio */}
-                    <div className="relative h-[300px]">
-                      <Image
-                        src={profile.image || "/placeholder.svg"}
-                        alt={profile.title}
-                        fill
-                        className="object-cover rounded-md"
-                      />
-                    </div>
-                    {/* Contenido del servicio */}
-                    <div className="text-left">
-                      <h2 className="text-2xl font-light text-black mb-4">{profile.title}</h2>
-                      <p className="text-gray-600 mb-4">{profile.description}</p>
-                      <p className="text-gray-600 mb-4">{profile.content}</p>
-                      <div className="flex gap-4 mb-4">
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white" asChild>
-                          <Link href={`/servicios/${slug}`}>Ver detalles</Link>
-                        </Button>
-                      </div>
-                      {profile.price > 0 && (
-                        <div className="text-xl font-bold text-black">S/ {profile.price.toFixed(2)}</div>
-                      )}
-                    </div>
+            <Card className="h-full flex flex-col overflow-hidden">
+              <div className="relative aspect-video">
+                <Image
+                  src={profile.image}
+                  alt={profile.title}
+                  fill
+                  className="object-cover"
+                />
+                {user?.user_type === "admin" && (
+                  <div className="absolute top-4 right-4 flex gap-2">
+                    <Button
+                      onClick={() => handleEditProfile({ ...profile, slug })}
+                      className="bg-[#1E5FAD] hover:bg-[#1E5FAD]/90 text-white p-2 rounded-full"
+                      size="icon"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      onClick={() => handleDeleteProfile(slug)}
+                      className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full"
+                      size="icon"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                </motion.div>
-              ))}
+                )}
+              </div>
+              <CardContent className="flex-1 p-6">
+                <h2 className="text-2xl font-semibold mb-2">{profile.title}</h2>
+                <p className="text-gray-600 mb-4">{profile.description}</p>
+                <div className="mt-auto">
+                  <Link href={`/servicios/${slug}`}>
+                    <Button className="w-full bg-[#1E5FAD] hover:bg-[#1E5FAD]/90 text-white">
+                      Ver detalles
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Modal de edición */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{editingProfile?.slug ? 'Editar perfil' : 'Nuevo perfil'}</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={(e) => {
+            e.preventDefault()
+            const formData = new FormData(e.currentTarget)
+            const updatedProfile = {
+              title: formData.get('title') as string,
+              description: formData.get('description') as string,
+              content: formData.get('content') as string,
+              price: parseFloat(formData.get('price') as string) || 0,
+              image: formData.get('image') as string,
+              locations: formData.get('locations')?.toString().split(',').map(loc => loc.trim()) || [],
+              sampleType: formData.get('sampleType') as string,
+              ageRequirement: formData.get('ageRequirement') as string,
+              tests: formData.get('tests')?.toString().split('\n').filter(test => test.trim()) || [],
+              conditions: formData.get('conditions')?.toString().split('\n').filter(condition => condition.trim()) || [],
+              slug: formData.get('slug') as string
+            }
+            handleSaveProfile(updatedProfile)
+          }}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="title" className="text-right">Título</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  defaultValue={editingProfile?.title}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="slug" className="text-right">Slug</Label>
+                <Input
+                  id="slug"
+                  name="slug"
+                  defaultValue={editingProfile?.slug}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="description" className="text-right">Descripción</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  defaultValue={editingProfile?.description}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="content" className="text-right">Contenido</Label>
+                <Textarea
+                  id="content"
+                  name="content"
+                  defaultValue={editingProfile?.content}
+                  className="col-span-3"
+                  rows={5}
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="price" className="text-right">Precio</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  defaultValue={editingProfile?.price}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="image" className="text-right">URL de imagen</Label>
+                <Input
+                  id="image"
+                  name="image"
+                  defaultValue={editingProfile?.image}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="locations" className="text-right">Ubicaciones (separadas por coma)</Label>
+                <Input
+                  id="locations"
+                  name="locations"
+                  defaultValue={editingProfile?.locations?.join(', ')}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="sampleType" className="text-right">Tipo de muestra</Label>
+                <Input
+                  id="sampleType"
+                  name="sampleType"
+                  defaultValue={editingProfile?.sampleType}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="ageRequirement" className="text-right">Requisito de edad</Label>
+                <Input
+                  id="ageRequirement"
+                  name="ageRequirement"
+                  defaultValue={editingProfile?.ageRequirement}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="tests" className="text-right">Tests (uno por línea)</Label>
+                <Textarea
+                  id="tests"
+                  name="tests"
+                  defaultValue={editingProfile?.tests?.join('\n')}
+                  className="col-span-3"
+                  rows={4}
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="conditions" className="text-right">Condiciones (una por línea)</Label>
+                <Textarea
+                  id="conditions"
+                  name="conditions"
+                  defaultValue={editingProfile?.conditions?.join('\n')}
+                  className="col-span-3"
+                  rows={4}
+                />
+              </div>
             </div>
-          )}
-        </div>
-      </section>
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" className="bg-[#3DA64A] hover:bg-[#3DA64A]/90 text-white">
+                Guardar
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

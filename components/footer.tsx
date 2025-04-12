@@ -67,118 +67,54 @@ export function Footer() {
   }, [])
 
   return (
-    <footer className="bg-gray-100">
-      <div className="container px-4 py-12 md:py-16">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {/* Branding: Logo grande sin forma ovalada */}
-          <div className="flex flex-col items-center gap-4">
-            <Image
-              src="/lopez.png"
-              alt="Lopez Lab Logo"
-              width={200}
-              height={75}
-              className="w-[200px] h-auto object-contain"
-            />
-            <p className="text-gray-500 text-xl font-semibold text-center">Desde 1953 cuidando de ti y tu familia</p>
-          </div>
-          {/* Enlaces útiles */}
+    <footer className="w-full border-t bg-white">
+      <div className="container py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="font-bold text-lg mb-4">Enlaces útiles</h3>
+            <h3 className="font-semibold mb-4">Sobre nosotros</h3>
+            <p className="text-sm text-gray-600">
+              Laboratorio ROE, brindando servicios de calidad y confianza desde 1990.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-4">Enlaces rápidos</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/resultados">
-                  <span className="text-gray-500 hover:text-blue-700">Resultados</span>
+                <Link href="/analisis" className="text-sm text-gray-600 hover:text-gray-900">
+                  Análisis
                 </Link>
               </li>
               <li>
-                <Link href="/pacientes">
-                  <span className="text-gray-500 hover:text-blue-700">Pacientes</span>
+                <Link href="/servicios" className="text-sm text-gray-600 hover:text-gray-900">
+                  Servicios
                 </Link>
               </li>
               <li>
-                <Link href="/medicos">
-                  <span className="text-gray-500 hover:text-blue-700">Médicos</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/empresas">
-                  <span className="text-gray-500 hover:text-blue-700">Empresas</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/analisis">
-                  <span className="text-gray-500 hover:text-blue-700">Consulta de análisis</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/covid">
-                  <span className="text-gray-500 hover:text-blue-700">Agenda una prueba Covid-19</span>
+                <Link href="/biblioteca" className="text-sm text-gray-600 hover:text-gray-900">
+                  Biblioteca
                 </Link>
               </li>
             </ul>
           </div>
-          {/* Más sobre nosotros */}
           <div>
-            <h3 className="font-bold text-lg mb-4">Más sobre nosotros</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/nosotros">
-                  <span className="text-gray-500 hover:text-blue-700">Nosotros</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/sedes">
-                  <span className="text-gray-500 hover:text-blue-700">Sedes</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/comprobantes">
-                  <span className="text-gray-500 hover:text-blue-700">Comprobantes electrónicos</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/trabaja">
-                  <span className="text-gray-500 hover:text-blue-700">Trabaja con nosotros</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/contacto">
-                  <span className="text-gray-500 hover:text-blue-700">Contacto</span>
-                </Link>
-              </li>
+            <h3 className="font-semibold mb-4">Contacto</h3>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>Teléfono: (01) 123-4567</li>
+              <li>Email: contacto@roe.com</li>
+              <li>Dirección: Av. Principal 123</li>
             </ul>
           </div>
-          {/* Contacto */}
           <div>
-            <h3 className="font-bold text-lg mb-4">Contacto</h3>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-2">
-                <Phone className="h-5 w-5 text-blue-700" />
-                <span className="text-gray-500">(01) 513 6666</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="h-5 w-5 text-blue-700" />
-                <span className="text-gray-500">(054) 272 273</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="h-5 w-5 text-blue-700" />
-                <span className="text-gray-500">933 829 995</span>
-              </li>
-              <li>
-                <Link href="/contacto">
-                  <span className="flex items-center gap-2 text-blue-700 hover:text-blue-800">
-                    <Mail className="h-5 w-5" />
-                    <span>Escríbenos</span>
-                  </span>
-                </Link>
-              </li>
+            <h3 className="font-semibold mb-4">Horario</h3>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>Lunes a Viernes: 7:00 - 20:00</li>
+              <li>Sábados: 7:00 - 14:00</li>
+              <li>Domingos: 7:00 - 12:00</li>
             </ul>
           </div>
         </div>
-        {/* Íconos de redes sociales */}
-        <FooterSocialIcons />
-        <div className="text-center text-gray-500 text-sm">
-          <p>© {year || "..."}. Todos los derechos reservados.</p>
+        <div className="mt-8 pt-8 border-t text-center text-sm text-gray-600">
+          © {new Date().getFullYear()} Laboratorio ROE. Todos los derechos reservados.
         </div>
       </div>
     </footer>

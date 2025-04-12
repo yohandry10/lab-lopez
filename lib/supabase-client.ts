@@ -7,7 +7,7 @@ export type User = {
   username: string
   first_name: string
   last_name: string
-  user_type: "patient"
+  user_type: "patient" | "doctor" | "admin"
   created_at?: string
   updated_at?: string
   patient_code?: string

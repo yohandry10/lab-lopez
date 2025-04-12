@@ -5,9 +5,14 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ChevronRight, Microscope, TestTube, Beaker, Baby, Dna, Search } from "lucide-react"
+import { ChevronLeft, ChevronRight, Microscope, TestTube, Beaker, Baby, Dna, Search, Pencil, Trash2 } from "lucide-react"
 import { useState, useCallback, useEffect, useMemo } from "react"
 import { useInView } from "react-intersection-observer"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { useAuth } from "@/contexts/auth-context"
 
 export type Analysis = {
   id: number
@@ -286,32 +291,167 @@ export const analysisData: Analysis[] = [
   }
 ]
 
-export const articles = analysisData.map(analysis => ({
-  ...analysis,
-  date: new Date().toISOString()
-}))
+// Definir el tipo para los artículos
+type Article = {
+  id: number
+  title: string
+  description: string
+  content: string
+  image: string
+  category: string
+  date: string
+  slug: string
+  author?: string
+  readTime?: string
+}
+
+// Datos de los artículos
+export const articles: Article[] = [
+  {
+    id: 1,
+    title: "La importancia del diagnóstico temprano",
+    description: "Descubre por qué la detección temprana es clave para tu salud y cómo los análisis preventivos pueden salvar vidas.",
+    content: `El diagnóstico temprano es fundamental para prevenir y tratar enfermedades de manera efectiva. Los análisis preventivos nos permiten:
+
+1. Detectar enfermedades en etapas iniciales
+2. Prevenir complicaciones futuras
+3. Mejorar las probabilidades de éxito en el tratamiento
+4. Reducir costos a largo plazo
+5. Mantener una mejor calidad de vida
+
+En ROE, contamos con una amplia gama de perfiles y análisis diseñados específicamente para la detección temprana de diversas condiciones de salud.`,
+    image: "/articles/diagnostico-temprano.jpg",
+    category: "Salud Preventiva",
+    date: "2024-03-15",
+    slug: "importancia-diagnostico-temprano",
+    author: "Dr. Juan Pérez",
+    readTime: "5 min"
+  },
+  {
+    id: 2,
+    title: "Nutrición y análisis clínicos",
+    description: "Cómo los análisis pueden mejorar tu plan nutricional y optimizar tu salud a través de una alimentación personalizada.",
+    content: `Los análisis clínicos son una herramienta valiosa para optimizar tu nutrición. Al conocer tus niveles de vitaminas, minerales y otros nutrientes, podemos:
+
+1. Identificar deficiencias nutricionales
+2. Personalizar tu plan alimenticio
+3. Prevenir enfermedades relacionadas con la nutrición
+4. Mejorar tu rendimiento físico y mental
+5. Optimizar tu metabolismo
+
+Nuestros perfiles nutricionales te ayudarán a entender mejor tus necesidades específicas y a tomar decisiones informadas sobre tu alimentación.`,
+    image: "/articles/nutricion-analisis.jpg",
+    category: "Nutrición",
+    date: "2024-03-14",
+    slug: "nutricion-analisis-clinicos",
+    author: "Dra. María García",
+    readTime: "7 min"
+  },
+  {
+    id: 3,
+    title: "Avances en pruebas genéticas",
+    description: "Las últimas innovaciones en diagnóstico genético y cómo están revolucionando la medicina preventiva.",
+    content: `El campo de las pruebas genéticas está evolucionando rápidamente, ofreciendo nuevas posibilidades para la medicina preventiva:
+
+1. Detección temprana de predisposiciones genéticas
+2. Personalización de tratamientos
+3. Evaluación de riesgos familiares
+4. Planificación familiar informada
+5. Desarrollo de terapias específicas
+
+En ROE, nos mantenemos a la vanguardia de estas innovaciones, ofreciendo las pruebas genéticas más avanzadas y precisas del mercado.`,
+    image: "/articles/pruebas-geneticas.jpg",
+    category: "Genética",
+    date: "2024-03-13",
+    slug: "avances-pruebas-geneticas",
+    author: "Dr. Carlos Rodríguez",
+    readTime: "10 min"
+  },
+  {
+    id: 4,
+    title: "Salud hormonal y bienestar",
+    description: "Entiende la importancia del equilibrio hormonal y cómo los análisis pueden ayudarte a mantenerlo.",
+    content: `El equilibrio hormonal es crucial para tu salud y bienestar general. Los análisis hormonales nos permiten:
+
+1. Evaluar la función tiroidea
+2. Monitorear niveles de hormonas sexuales
+3. Detectar desbalances hormonales
+4. Optimizar tratamientos hormonales
+5. Prevenir complicaciones relacionadas
+
+Nuestros perfiles hormonales están diseñados para proporcionar una evaluación completa de tu salud endocrina.`,
+    image: "/articles/salud-hormonal.jpg",
+    category: "Endocrinología",
+    date: "2024-03-12",
+    slug: "salud-hormonal-bienestar",
+    author: "Dra. Ana Martínez",
+    readTime: "8 min"
+  }
+]
 
 export default function DigitalLibrary() {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const { user } = useAuth()
+  const [articles, setArticles] = useState(analysisData)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingArticle, setEditingArticle] = useState<Analysis | null>(null)
 
-  // Calcular los artículos visibles (siempre 3)
-  const visibleArticles = useMemo(() => {
-    const endIndex = currentIndex + 3
-    return analysisData.slice(currentIndex, endIndex)
-  }, [currentIndex])
-
-  const nextSlide = () => {
-    setCurrentIndex((prevIndex) => {
-      const nextIndex = prevIndex + 1
-      return nextIndex >= analysisData.length - 2 ? 0 : nextIndex
-    })
+  const handleEditArticle = (article: Analysis) => {
+    setEditingArticle(article)
+    setIsEditModalOpen(true)
   }
 
-  const prevSlide = () => {
-    setCurrentIndex((prevIndex) => {
-      const nextIndex = prevIndex - 1
-      return nextIndex < 0 ? analysisData.length - 3 : nextIndex
+  const handleDeleteArticle = (articleId: number) => {
+    if (confirm('¿Estás seguro de que deseas eliminar este artículo?')) {
+      setArticles(prevArticles => prevArticles.filter(article => article.id !== articleId))
+    }
+  }
+
+  const handleAddArticle = () => {
+    const newArticle: Analysis = {
+      id: articles.length + 1,
+      title: '',
+      description: '',
+      content: '',
+      image: '/placeholder.svg',
+      category: '',
+      slug: '',
+      heroIcons: [],
+      sections: []
+    }
+    setEditingArticle(newArticle)
+    setIsEditModalOpen(true)
+  }
+
+  const handleSaveArticle = (e: React.FormEvent) => {
+    e.preventDefault()
+    const form = e.target as HTMLFormElement
+    const formData = new FormData(form)
+
+    const updatedArticle: Analysis = {
+      id: editingArticle?.id || articles.length + 1,
+      title: formData.get('title') as string,
+      description: formData.get('description') as string,
+      content: formData.get('content') as string,
+      image: formData.get('image') as string || editingArticle?.image || '/placeholder.svg',
+      category: formData.get('category') as string,
+      slug: formData.get('slug') as string,
+      heroIcons: editingArticle?.heroIcons || [],
+      sections: editingArticle?.sections || []
+    }
+
+    setArticles(prevArticles => {
+      if (editingArticle?.id) {
+        return prevArticles.map(article => 
+          article.id === editingArticle.id ? updatedArticle : article
+        )
+      } else {
+        return [...prevArticles, updatedArticle]
+      }
     })
+
+    setIsEditModalOpen(false)
+    setEditingArticle(null)
   }
 
   return (
@@ -320,69 +460,154 @@ export default function DigitalLibrary() {
         <div className="flex flex-col items-center mb-8">
           <h2 className="text-4xl font-light text-gray-900 mb-2">Biblioteca Digital</h2>
           <p className="text-gray-500 text-lg">Servicios diseñados para mejorar tu calidad de vida</p>
+          
+          {user?.user_type === "admin" && (
+            <Button 
+              onClick={handleAddArticle}
+              className="mt-4 bg-[#3DA64A] hover:bg-[#3DA64A]/90 text-white"
+            >
+              Agregar nuevo artículo
+            </Button>
+          )}
         </div>
 
-        <div className="relative mx-16">
-          <div className="flex gap-6 overflow-hidden">
+        <div className="relative">
+          <div className="overflow-hidden">
             <AnimatePresence mode="wait">
-              {visibleArticles.map((analysis) => (
-                <motion.div
-                  key={analysis.id}
-                  className="w-1/3 flex-shrink-0"
-                  initial={{ opacity: 0, x: 100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full">
-                    <div className="relative aspect-[16/9] overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {articles.slice(currentIndex, currentIndex + 3).map((article) => (
+                  <motion.div
+                    key={article.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="relative"
+                  >
+                    <div className="relative h-48 mb-4 rounded-lg overflow-hidden">
                       <Image
-                        src={analysis.image}
-                        alt={analysis.title}
+                        src={article.image}
+                        alt={article.title}
                         fill
                         className="object-cover"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        priority={true}
                       />
-                      <div className="absolute top-4 left-4">
-                        <span className="bg-[#1E5FAD] text-white px-4 py-1 rounded-full text-sm">
-                          {analysis.category}
-                        </span>
-                      </div>
+                      
+                      {user?.user_type === "admin" && (
+                        <div className="absolute top-4 right-4 flex gap-2">
+                          <Button
+                            onClick={() => handleEditArticle(article)}
+                            className="bg-[#1E5FAD] hover:bg-[#1E5FAD]/90 text-white p-2 rounded-full"
+                            size="icon"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteArticle(article.id)}
+                            className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full"
+                            size="icon"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     <div className="p-6">
-                      <h3 className="text-xl font-semibold mb-2">{analysis.title}</h3>
-                      <p className="text-gray-600 mb-4 line-clamp-2">{analysis.description}</p>
+                      <h3 className="text-xl font-semibold mb-2">{article.title}</h3>
+                      <p className="text-gray-600 mb-4 line-clamp-2">{article.description}</p>
                       <div className="flex justify-center">
                         <Link 
-                          href={`/analisis/${analysis.slug}`}
+                          href={`/analisis/${article.slug}`}
                           className="text-[#1E5FAD] hover:text-[#1E5FAD]/90 font-medium"
                         >
                           Leer más
                         </Link>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))}
+              </div>
             </AnimatePresence>
           </div>
-
-          <button
-            onClick={prevSlide}
-            className="absolute -left-16 top-1/2 -translate-y-1/2 bg-[#1E5FAD] hover:bg-[#1E5FAD]/90 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg z-10"
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </button>
-
-          <button
-            onClick={nextSlide}
-            className="absolute -right-16 top-1/2 -translate-y-1/2 bg-[#1E5FAD] hover:bg-[#1E5FAD]/90 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg z-10"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </button>
         </div>
       </div>
+
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{editingArticle ? 'Editar artículo' : 'Nuevo artículo'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveArticle}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="title" className="text-right">Título</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  defaultValue={editingArticle?.title}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="description" className="text-right">Descripción</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  defaultValue={editingArticle?.description}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="content" className="text-right">Contenido</Label>
+                <Textarea
+                  id="content"
+                  name="content"
+                  defaultValue={editingArticle?.content}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="image" className="text-right">URL Imagen</Label>
+                <Input
+                  id="image"
+                  name="image"
+                  defaultValue={editingArticle?.image}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="category" className="text-right">Categoría</Label>
+                <Input
+                  id="category"
+                  name="category"
+                  defaultValue={editingArticle?.category}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="slug" className="text-right">Slug</Label>
+                <Input
+                  id="slug"
+                  name="slug"
+                  defaultValue={editingArticle?.slug}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" className="bg-[#3DA64A] hover:bg-[#3DA64A]/90 text-white">
+                Guardar
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }

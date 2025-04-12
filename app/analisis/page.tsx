@@ -1,23 +1,27 @@
 "use client"
 
-import { CardFooter } from "@/components/ui/card"
-import { CardDescription } from "@/components/ui/card"
-import { CardTitle } from "@/components/ui/card"
-import { CardHeader } from "@/components/ui/card"
+import { CardFooter } from "../../components/ui/card"
+import { CardDescription } from "../../components/ui/card"
+import { CardTitle } from "../../components/ui/card"
+import { CardHeader } from "../../components/ui/card"
 import { useState, useEffect } from "react"
-import { Search, ChevronLeft, ChevronRight, Calendar, Check, Syringe } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight, Calendar, Check, Syringe, Edit, Trash } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { AnalysisDialog } from "@/components/analysis-dialog"
-import { SchedulingFlow } from "@/components/scheduling-flow"
-import { SuccessDialog } from "@/components/success-dialog"
-import { HeroSchedulingDialog } from "@/components/hero-scheduling-dialog"
-import { useCart } from "@/contexts/cart-context"
-import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { AnalysisDialog } from "../../components/analysis-dialog"
+import { SchedulingFlow } from "../../components/scheduling-flow"
+import { SuccessDialog } from "../../components/success-dialog"
+import { HeroSchedulingDialog } from "../../components/hero-scheduling-dialog"
+import { useCart } from "../../contexts/cart-context"
+import { Card, CardContent } from "../../components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs"
+import { useAuth } from "../../contexts/auth-context"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog"
+import { Label } from "../../components/ui/label"
+import { Textarea } from "../../components/ui/textarea"
 
 // Lista extendida de análisis
 const analysisData = [
@@ -805,6 +809,15 @@ const analysisData = [
 // Obtener categorías únicas para el filtro
 const categories = [...new Set(analysisData.map((item) => item.category))].sort()
 
+// Definir el tipo para los perfiles
+type Profile = {
+  title: string
+  description: string
+  price: number
+  image: string
+  tests: string[]
+}
+
 export default function AnalisisPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedLetter, setSelectedLetter] = useState<string | null>(null)
@@ -812,8 +825,54 @@ export default function AnalisisPage() {
   const [selectedAnalysis, setSelectedAnalysis] = useState<(typeof analysisData)[0] | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [viewMode, setViewMode] = useState<"list" | "grid">("list")
+  const [localAnalysisData, setLocalAnalysisData] = useState(analysisData)
   const { addItem } = useCart()
   const router = useRouter()
+  const { user } = useAuth()
+  const [popularProfiles, setPopularProfiles] = useState([
+    {
+      title: "Perfil Básico",
+      description: "Evaluación general de tu salud",
+      price: 180.00,
+      image: "/placeholder.svg",
+      tests: [
+        "Hemograma completo",
+        "Glucosa",
+        "Colesterol total",
+        "Triglicéridos",
+        "Creatinina",
+        "Urea"
+      ]
+    },
+    {
+      title: "Perfil Lipídico",
+      description: "Evaluación completa de grasas en sangre",
+      price: 220.00,
+      image: "/placeholder.svg",
+      tests: [
+        "Colesterol total",
+        "Colesterol HDL",
+        "Colesterol LDL",
+        "Triglicéridos",
+        "Índice aterogénico"
+      ]
+    },
+    {
+      title: "Perfil Hepático",
+      description: "Evaluación de la función del hígado",
+      price: 250.00,
+      image: "/placeholder.svg",
+      tests: [
+        "TGO",
+        "TGP",
+        "GGT",
+        "Fosfatasa alcalina",
+        "Bilirrubina total",
+        "Bilirrubina directa",
+        "Proteínas totales"
+      ]
+    }
+  ])
 
   // States for scheduling flow
   const [isSchedulingOpen, setIsSchedulingOpen] = useState(false)
@@ -827,7 +886,7 @@ export default function AnalisisPage() {
   const ITEMS_PER_PAGE = 10
 
   // Filtrar análisis por letra, término de búsqueda y categoría
-  const filteredAnalysis = analysisData.filter((analysis) => {
+  const filteredAnalysis = localAnalysisData.filter((analysis) => {
     const matchesSearch = searchTerm ? analysis.name.toLowerCase().includes(searchTerm.toLowerCase()) : true
     const matchesLetter = selectedLetter ? analysis.name.charAt(0).toUpperCase() === selectedLetter : true
     const matchesCategory = selectedCategory ? analysis.category === selectedCategory : true
@@ -943,6 +1002,47 @@ export default function AnalisisPage() {
     setIsSuccessOpen(false)
     setSelectedTest(null)
     router.push("/carrito")
+  }
+
+  const [editingAnalysis, setEditingAnalysis] = useState<typeof analysisData[0] | null>(null)
+
+  const handleUpdateAnalysis = (updatedAnalysis: typeof analysisData[0]) => {
+    setLocalAnalysisData(prevData =>
+      prevData.map(item =>
+        item.id === updatedAnalysis.id ? updatedAnalysis : item
+      )
+    )
+    setEditingAnalysis(null)
+  }
+
+  const handleDeleteAnalysis = (analysis: typeof analysisData[0]) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este análisis?')) {
+      setLocalAnalysisData(prevData => prevData.filter(item => item.id !== analysis.id))
+    }
+  }
+
+  const [editingProfile, setEditingProfile] = useState<Profile | null>(null)
+
+  const handleDeleteProfile = (index: number) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este perfil?')) {
+      setPopularProfiles(prevProfiles => prevProfiles.filter((_, i) => i !== index))
+    }
+  }
+
+  const handleUpdateProfile = (updatedProfile: Profile) => {
+    console.log('Perfil antes de actualizar:', updatedProfile)
+    setPopularProfiles(prevProfiles => {
+      const newProfiles = prevProfiles.map(profile => {
+        if (profile.title === editingProfile?.title) {
+          console.log('Actualizando perfil:', updatedProfile)
+          return updatedProfile
+        }
+        return profile
+      })
+      console.log('Nuevos perfiles:', newProfiles)
+      return newProfiles
+    })
+    setEditingProfile(null)
   }
 
   return (
@@ -1096,7 +1196,22 @@ export default function AnalisisPage() {
                   <tbody className="divide-y divide-gray-200">
                     {currentAnalyses.map((analysis) => (
                       <tr key={analysis.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-6 text-sm text-gray-900">{analysis.name}</td>
+                        <td className="py-4 px-6 text-sm text-gray-900">
+                          <div className="flex items-center justify-between">
+                            <span>{analysis.name}</span>
+                            {user?.user_type === "admin" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setEditingAnalysis(analysis)}
+                                className="ml-2 border-blue-200 hover:bg-blue-50"
+                              >
+                                <Edit className="h-4 w-4 mr-1" />
+                                Editar
+                              </Button>
+                            )}
+                          </div>
+                        </td>
                         <td className="py-4 px-4 text-sm text-gray-500 text-center hidden md:table-cell">
                           {analysis.category}
                         </td>
@@ -1130,34 +1245,51 @@ export default function AnalisisPage() {
             ) : (
               <div id="analysis-table" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {currentAnalyses.map((analysis) => (
-                  <Card key={analysis.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg">{analysis.name}</CardTitle>
-                        <div className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">{analysis.category}</div>
+                  <Card key={analysis.id} className="w-full">
+                    <CardHeader>
+                      <div className="flex justify-between items-center">
+                        <CardTitle>{analysis.name}</CardTitle>
+                        <div className="flex gap-2">
+                          {user?.user_type === "admin" && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setEditingAnalysis(analysis)}
+                                className="border-blue-200 hover:bg-blue-50"
+                              >
+                                <Edit className="h-4 w-4 mr-1" />
+                                Editar
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteAnalysis(analysis)}
+                                className="hover:bg-red-600"
+                              >
+                                <Trash className="h-4 w-4 mr-1" />
+                                Eliminar
+                              </Button>
+                            </>
+                          )}
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleAddToCart(analysis)}
+                            className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
+                          >
+                            Agregar
+                          </Button>
+                        </div>
                       </div>
+                      <CardDescription>Categoría: {analysis.category}</CardDescription>
                     </CardHeader>
-                    <CardContent className="pb-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <CardDescription>Muestra: {analysis.sample}</CardDescription>
-                        <p className="font-medium text-lg">S/. {analysis.price.toFixed(2)}</p>
-                      </div>
-                      <div className="flex justify-between mt-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                          onClick={() => setSelectedAnalysis(analysis)}
-                        >
-                          Ver detalles
-                        </Button>
-                        <Button
-                          size="sm"
-                          className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
-                          onClick={() => handleAddToCart(analysis)}
-                        >
-                          Agregar
-                        </Button>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <p><strong>Precio:</strong> S/. {analysis.price.toFixed(2)}</p>
+                        <p><strong>Condiciones:</strong> {analysis.conditions}</p>
+                        <p><strong>Muestra:</strong> {analysis.sample}</p>
+                        <p><strong>Protocolo:</strong> {analysis.protocol}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -1221,83 +1353,47 @@ export default function AnalisisPage() {
 
           <TabsContent value="popular" className="mt-6">
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {[
-                {
-                  title: "Perfil Básico",
-                  description: "Evaluación general de tu salud",
-                  price: 180.0,
-                  tests: ["Hemograma completo", "Glucosa", "Colesterol total", "Triglicéridos", "Creatinina", "Urea"],
-                  image: "/placeholder.svg?height=200&width=300&text=Perfil%20Básico",
-                },
-                {
-                  title: "Perfil Lipídico",
-                  description: "Evaluación completa de grasas en sangre",
-                  price: 220.0,
-                  tests: [
-                    "Colesterol total",
-                    "Colesterol HDL",
-                    "Colesterol LDL",
-                    "Triglicéridos",
-                    "Índice aterogénico",
-                  ],
-                  image: "/placeholder.svg?height=200&width=300&text=Perfil%20Lipídico",
-                },
-                {
-                  title: "Perfil Hepático",
-                  description: "Evaluación de la función del hígado",
-                  price: 250.0,
-                  tests: [
-                    "TGO",
-                    "TGP",
-                    "GGT",
-                    "Fosfatasa alcalina",
-                    "Bilirrubina total",
-                    "Bilirrubina directa",
-                    "Proteínas totales",
-                  ],
-                  image: "/placeholder.svg?height=200&width=300&text=Perfil%20Hepático",
-                },
-                {
-                  title: "Perfil Tiroideo",
-                  description: "Evaluación de la función de la tiroides",
-                  price: 280.0,
-                  tests: ["TSH", "T4 libre", "T3 total", "Anticuerpos anti-TPO"],
-                  image: "/placeholder.svg?height=200&width=300&text=Perfil%20Tiroideo",
-                },
-                {
-                  title: "Perfil Renal",
-                  description: "Evaluación de la función de los riñones",
-                  price: 200.0,
-                  tests: ["Creatinina", "Urea", "Ácido úrico", "Electrolitos (Na, K, Cl)"],
-                  image: "/placeholder.svg?height=200&width=300&text=Perfil%20Renal",
-                },
-                {
-                  title: "Perfil Diabético",
-                  description: "Control y diagnóstico de diabetes",
-                  price: 300.0,
-                  tests: ["Glucosa", "Hemoglobina glicosilada", "Insulina", "Péptido C", "Microalbuminuria"],
-                  image: "/placeholder.svg?height=200&width=300&text=Perfil%20Diabético",
-                },
-              ].map((profile, i) => (
-                <Card
-                  key={i}
-                  className="overflow-hidden border-none shadow-lg hover:shadow-xl transition-shadow card-hover"
-                >
-                  <div className="relative h-40">
-                    <Image
-                      src={profile.image || "/placeholder.svg"}
-                      alt={profile.title}
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-                      <div className="p-4 text-white">
-                        <h3 className="text-lg font-bold">{profile.title}</h3>
-                        <p className="text-sm text-white/80">{profile.description}</p>
-                      </div>
+              {popularProfiles.map((profile, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <CardHeader className="p-0">
+                    <div className="relative h-48">
+                      <Image
+                        src={profile.image}
+                        alt={profile.title}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
-                  </div>
-                  <CardContent className="pt-4">
+                  </CardHeader>
+                  <CardContent>
+                    <div className="pt-4">
+                      <div className="flex justify-between items-center">
+                        <CardTitle>{profile.title}</CardTitle>
+                        {user?.user_type === "admin" && (
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingProfile(profile)}
+                              className="border-blue-200 hover:bg-blue-50"
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Editar
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteProfile(i)}
+                              className="hover:bg-red-600"
+                            >
+                              <Trash className="h-4 w-4 mr-1" />
+                              Eliminar
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                      <CardDescription className="mt-2">{profile.description}</CardDescription>
+                    </div>
                     <div className="mb-4">
                       <div className="font-medium mb-2">Incluye:</div>
                       <ul className="text-sm space-y-1">
@@ -1311,24 +1407,26 @@ export default function AnalisisPage() {
                     </div>
                     <div className="flex justify-between items-center mt-4">
                       <div className="font-bold text-lg">S/. {profile.price.toFixed(2)}</div>
-                      <Button
-                        className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
-                        onClick={() =>
-                          handleAddToCart({
-                            id: 1000 + i,
-                            name: profile.title,
-                            price: profile.price,
-                            category: "Perfil",
-                            conditions: "No especificado",
-                            sample: "No especificado",
-                            protocol: "No especificado",
-                            suggestions: "",
-                            comments: ""
-                          })
-                        }
-                      >
-                        Agregar
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
+                          onClick={() =>
+                            handleAddToCart({
+                              id: 1000 + i,
+                              name: profile.title,
+                              price: profile.price,
+                              category: "Perfil",
+                              conditions: "No especificado",
+                              sample: "No especificado",
+                              protocol: "No especificado",
+                              suggestions: "",
+                              comments: ""
+                            })
+                          }
+                        >
+                          Agregar
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -1446,6 +1544,204 @@ export default function AnalisisPage() {
       />
 
       <HeroSchedulingDialog isOpen={isHeroSchedulingOpen} onClose={() => setIsHeroSchedulingOpen(false)} />
+
+      {editingAnalysis && (
+        <Dialog open={!!editingAnalysis} onOpenChange={() => setEditingAnalysis(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Editar Análisis</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              const formData = new FormData(e.currentTarget)
+              const updatedAnalysis = {
+                ...editingAnalysis,
+                name: formData.get('name') as string,
+                price: parseFloat(formData.get('price') as string),
+                category: formData.get('category') as string,
+                conditions: formData.get('conditions') as string,
+                sample: formData.get('sample') as string,
+                protocol: formData.get('protocol') as string,
+                suggestions: formData.get('suggestions') as string,
+                comments: formData.get('comments') as string,
+              }
+              handleUpdateAnalysis(updatedAnalysis)
+            }}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">Nombre</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    defaultValue={editingAnalysis.name}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="price" className="text-right">Precio</Label>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    defaultValue={editingAnalysis.price}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="category" className="text-right">Categoría</Label>
+                  <Input
+                    id="category"
+                    name="category"
+                    defaultValue={editingAnalysis.category}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="conditions" className="text-right">Condiciones</Label>
+                  <Input
+                    id="conditions"
+                    name="conditions"
+                    defaultValue={editingAnalysis.conditions}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="sample" className="text-right">Muestra</Label>
+                  <Input
+                    id="sample"
+                    name="sample"
+                    defaultValue={editingAnalysis.sample}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="protocol" className="text-right">Protocolo</Label>
+                  <Textarea
+                    id="protocol"
+                    name="protocol"
+                    defaultValue={editingAnalysis.protocol}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="suggestions" className="text-right">Sugerencias</Label>
+                  <Textarea
+                    id="suggestions"
+                    name="suggestions"
+                    defaultValue={editingAnalysis.suggestions}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="comments" className="text-right">Comentarios</Label>
+                  <Textarea
+                    id="comments"
+                    name="comments"
+                    defaultValue={editingAnalysis.comments}
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-4">
+                <Button type="button" variant="outline" onClick={() => setEditingAnalysis(null)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" className="bg-[#3DA64A] hover:bg-[#1E5FAD]">
+                  Guardar cambios
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Diálogo de edición de perfiles */}
+      <Dialog open={!!editingProfile} onOpenChange={() => setEditingProfile(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Perfil</DialogTitle>
+          </DialogHeader>
+          {editingProfile && (
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              const formData = new FormData(e.currentTarget)
+              const title = formData.get('title') as string
+              const description = formData.get('description') as string
+              const price = parseFloat(formData.get('price') as string)
+              const tests = (formData.get('tests') as string)
+                .split('\n')
+                .filter(test => test.trim() !== '')
+
+              const updatedProfile: Profile = {
+                title,
+                description,
+                price,
+                tests,
+                image: editingProfile.image
+              }
+
+              console.log('Enviando actualización:', updatedProfile)
+              handleUpdateProfile(updatedProfile)
+            }}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">Título</Label>
+                  <Input
+                    id="title"
+                    name="title"
+                    defaultValue={editingProfile.title}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="description" className="text-right">Descripción</Label>
+                  <Input
+                    id="description"
+                    name="description"
+                    defaultValue={editingProfile.description}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="price" className="text-right">Precio</Label>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    defaultValue={editingProfile.price}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="tests" className="text-right">Análisis incluidos</Label>
+                  <Textarea
+                    id="tests"
+                    name="tests"
+                    defaultValue={editingProfile.tests.join('\n')}
+                    className="col-span-3"
+                    placeholder="Un análisis por línea"
+                    rows={5}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-4">
+                <Button type="button" variant="outline" onClick={() => setEditingProfile(null)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" className="bg-[#3DA64A] hover:bg-[#1E5FAD]">
+                  Guardar cambios
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -6,12 +6,11 @@ import { Button } from "@/components/ui/button"
 import { useSearchParams } from "next/navigation"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
+import { TestResultsModal } from "@/components/test-results-modal"
 
 interface Examen {
   codigo: string // El código corto del examen (ej: BH)
   nombre: string // El nombre completo del examen
-  // Ya no necesitamos url_descarga aquí
-  // Podrían existir otros campos como 'resultado', 'estado', etc.
 }
 
 // Ajusta según lo que devuelva la API real
@@ -24,6 +23,12 @@ interface OrdenResponse {
     id?: number
     tipo_identificacion?: string
     numero_identificacion?: string
+    nombres?: string
+    apellidos?: string
+    nombre_completo?: string
+  }
+  medico?: {
+    id?: number
     nombres?: string
     apellidos?: string
     nombre_completo?: string
@@ -41,14 +46,17 @@ export default function ResultadosPage() {
   const [results, setResults] = useState<OrdenResponse[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
+  const [isResultsModalOpen, setIsResultsModalOpen] = useState(false)
 
   const handleSearch = async () => {
-    const searchValue = activeTab === "orden" ? numeroOrden : numeroIdentificacion
+    const searchValue =
+      activeTab === "orden" ? numeroOrden.trim() : numeroIdentificacion.trim()
 
-    if (!searchValue.trim()) {
+    if (!searchValue) {
       setError(
-        `Por favor ingrese el número de ${
-          activeTab === "orden" ? "orden" : "identificación"
+        `Por favor ingrese un ${
+          activeTab === "orden" ? "número de orden" : "número de identificación"
         }`
       )
       return
@@ -75,16 +83,14 @@ export default function ResultadosPage() {
       console.log("\n=== RESPUESTA RECIBIDA ===")
       console.log(JSON.stringify(data, null, 2))
 
-      if (!response.ok) {
-        throw new Error(data.message || "Error al buscar resultados")
-      }
-
       if (data.success === false) {
+        // Si la API devuelve éxito falso pero tiene un mensaje informativo
         setError(data.message || "No se encontraron resultados")
         setResults([])
         return
       }
 
+      // Si tenemos datos, los procesamos aunque haya un mensaje de advertencia
       if (data.data && Array.isArray(data.data)) {
         if (data.data.length === 0) {
           setError(
@@ -93,6 +99,14 @@ export default function ResultadosPage() {
             } ${searchValue.trim()}`
           )
         } else {
+          // Mostrar mensaje informativo si existe
+          if (data.message && !data.message.includes("Se encontraron")) {
+            setError(data.message)
+          } else {
+            setError("")
+          }
+          
+          // Siempre mostrar los resultados si los hay, incluso si son alternativos
           setResults(data.data)
         }
       } else {
@@ -105,6 +119,11 @@ export default function ResultadosPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleViewResults = (orderId: number) => {
+    setSelectedOrderId(orderId)
+    setIsResultsModalOpen(true)
   }
 
   return (
@@ -192,6 +211,12 @@ export default function ResultadosPage() {
                       EXÁMENES
                     </th>
                     <th className="px-4 py-2 text-left text-sm font-medium text-gray-900">
+                      MÉDICO
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-900">
+                      ESTADO
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-900">
                       ACCIONES
                     </th>
                   </tr>
@@ -246,12 +271,34 @@ export default function ResultadosPage() {
                         if (tipo_identificacion) {
                           idTemp += ` (${tipo_identificacion})`
                         }
+                      } else if (tipo_identificacion === "SIN_IDENTIFICACION") {
+                        idTemp = "No proporcionado"
                       }
                       // Si se construyó una ID válida, usarla
                       if (idTemp) {
                         identificacion = idTemp;
                       }
                     }
+
+                    // Obtener información del médico
+                    const medico = orden.medico ? 
+                      `${orden.medico.apellidos || ''} ${orden.medico.nombres || ''}`.trim() || 
+                      (orden.medico.nombre_completo || "EXTERNO\nPARTICULAR") : 
+                      "EXTERNO\nPARTICULAR";
+
+                    // Obtener estado del examen
+                    const estado = orden.estado || "VALIDADO";
+
+                    // Agrupar los exámenes para mostrarlos en una sola lista
+                    const examenesList = (orden.examenes && orden.examenes.length > 0) ? (
+                      <ul className="space-y-1 list-disc pl-5">
+                        {orden.examenes.map((examen, idx) => (
+                          <li key={idx}>{examen.nombre || "Sin descripción"} {examen.codigo && <span className="text-xs font-mono">({examen.codigo})</span>}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className="italic">No hay exámenes asociados</span>
+                    );
 
                     return (
                       <tr
@@ -271,38 +318,40 @@ export default function ResultadosPage() {
                           {identificacion}
                         </td>
                         <td className="px-4 py-2 text-sm text-gray-500 align-top">
-                          {orden.examenes && orden.examenes.length > 0 ? (
-                            <ul className="space-y-1">
-                              {orden.examenes.map((examen, index) => (
-                                <li
-                                  key={`${orden.id}-examen-${index}-${examen.codigo || index}`}
-                                  className="flex items-center justify-between"
-                                >
-                                  <span>
-                                    {examen.nombre || "Sin descripción"}
-                                    {examen.codigo && (
-                                      <span className="text-xs font-mono ml-1">({examen.codigo})</span>
-                                    )}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <span className="italic">No hay exámenes asociados</span>
-                          )}
+                          {examenesList}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-900">
+                          <span className="whitespace-pre-line">{medico}</span>
+                        </td>
+                        <td className="px-4 py-2 text-sm">
+                          <span className="inline-block px-2 py-1 text-xs rounded-full font-medium bg-green-100 text-green-800">
+                            {estado}
+                          </span>
                         </td>
                         <td className="px-4 py-2 text-sm text-gray-500 align-top">
-                          <a 
-                            href={`/api/download-pdf?orderId=${orden.id}`} 
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors font-medium"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-1">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm-.75-11.25a.75.75 0 0 0-1.5 0v4.59L6.3 9.8a.75.75 0 0 0-1.06 1.06l3.5 3.5a.75.75 0 0 0 1.06 0l3.5-3.5a.75.75 0 1 0-1.06-1.06l-1.94 1.94V6.75Z" clipRule="evenodd" />
-                            </svg>
-                            Descargar PDF
-                          </a>
+                          <div className="flex flex-col space-y-2">
+                            <button
+                              onClick={() => handleViewResults(orden.id)}
+                              className="inline-flex items-center px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors font-medium"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-1">
+                                <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
+                                <path fillRule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                              </svg>
+                              Ver resultado
+                            </button>
+                            <a 
+                              href={`/api/download-pdf?orderId=${orden.id}`} 
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors font-medium"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 mr-1">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm-.75-11.25a.75.75 0 0 0-1.5 0v4.59L6.3 9.8a.75.75 0 0 0-1.06 1.06l3.5 3.5a.75.75 0 0 0 1.06 0l3.5-3.5a.75.75 0 1 0-1.06-1.06l-1.94 1.94V6.75Z" clipRule="evenodd" />
+                              </svg>
+                              Descargar PDF
+                            </a>
+                          </div>
                         </td>
                       </tr>
                     )
@@ -319,6 +368,48 @@ export default function ResultadosPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de resultados */}
+      {selectedOrderId !== null && (
+        <TestResultsModal
+          open={isResultsModalOpen}
+          onOpenChange={setIsResultsModalOpen}
+          orderId={selectedOrderId}
+          orderNumber={results.find(r => r.id === selectedOrderId)?.numero_orden || ""}
+          patientName={
+            (() => {
+              const orden = results.find(r => r.id === selectedOrderId);
+              if (!orden || !orden.paciente) return "Paciente";
+              
+              const { apellidos, nombres, nombre_completo } = orden.paciente;
+              
+              if (apellidos && nombres) {
+                return `${apellidos} ${nombres}`;
+              } else if (nombre_completo) {
+                return nombre_completo;
+              } else {
+                return "Paciente";
+              }
+            })()
+          }
+          patientId={results.find(r => r.id === selectedOrderId)?.paciente?.numero_identificacion}
+          testDate={
+            (() => {
+              const orden = results.find(r => r.id === selectedOrderId);
+              if (!orden) return "";
+              
+              const fecha = new Date(orden.fecha_orden);
+              return fecha.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+            })()
+          }
+        />
+      )}
     </div>
   )
 }

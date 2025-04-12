@@ -88,129 +88,166 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Valor de búsqueda requerido." })
     }
 
-    // 1. Construir endpoint para la búsqueda inicial en Orion
-    let initialEndpoint = "";
+    // ESTRATEGIA 1: Buscar según el tipo
+    let data: OrdenData[] | null = null;
+    let endpoint = "";
     const relacionesAIncluir = "paciente,categoria,medico,examenes"; // Definir relaciones una vez
 
-    if (searchType === "identificacion") {
-      initialEndpoint = `/ordenes?paciente.numero_identificacion=${encodeURIComponent(searchValue)}&incluir=${relacionesAIncluir}`;
-    } else if (searchType === "orden") { 
-      initialEndpoint = `/ordenes?numero_orden=${encodeURIComponent(searchValue)}&incluir=${relacionesAIncluir}`;
+    if (searchType === "orden") {
+      // Usar el formato correcto según la documentación de la API con paginación
+      endpoint = `/ordenes?filtrar[numero_orden]=${encodeURIComponent(searchValue)}&incluir=${relacionesAIncluir}&pagina=1`
+      
+      try {
+        console.log(`Buscando con endpoint: ${endpoint}`)
+        const result = await fetchFromOrion(endpoint)
+        
+        // La API devuelve datos en la propiedad data
+        if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
+          data = result.data
+          console.log(`Encontradas ${data.length} órdenes con número exacto`)
+        } else {
+          console.log(`No se encontraron resultados en búsqueda exacta, probando alternativas...`)
+        }
+      } catch (error) {
+        console.error("Error en búsqueda exacta:", error)
+      }
+      
+      // Probar con número de orden externa
+      if (!data) {
+        try {
+          endpoint = `/ordenes?filtrar[numero_orden_externa]=${encodeURIComponent(searchValue)}&incluir=${relacionesAIncluir}&pagina=1`
+          console.log(`Buscando por número de orden externa: ${endpoint}`)
+          const result = await fetchFromOrion(endpoint)
+          
+          if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
+            data = result.data
+            console.log(`Encontradas ${data.length} órdenes con número externo`)
+          }
+        } catch (error) {
+          console.error("Error en búsqueda por número externo:", error)
+        }
+      }
+      
+      // Si no encontramos nada, probar búsqueda directa por ID
+      if (!data && /^\d+$/.test(searchValue)) {
+        try {
+          endpoint = `/ordenes/${encodeURIComponent(searchValue)}?incluir=${relacionesAIncluir}`
+          console.log(`Buscando por ID directo: ${endpoint}`)
+          const resultById = await fetchFromOrion(endpoint)
+          
+          if (resultById && resultById.data) {
+            // La API devuelve un objeto simple para búsquedas por ID
+            data = [resultById.data]
+            console.log(`Orden encontrada por ID directo`)
+          }
+        } catch (idError) {
+          console.log(`Búsqueda por ID falló, intentando con otros métodos...`)
+        }
+      }
+
+      // Probar con búsqueda por código de barras si está disponible en la API
+      if (!data) {
+        try {
+          endpoint = `/ordenes?filtrar[codigo_barras]=${encodeURIComponent(searchValue)}&incluir=${relacionesAIncluir}&pagina=1`
+          console.log(`Buscando por código de barras: ${endpoint}`)
+          const result = await fetchFromOrion(endpoint)
+          
+          if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
+            data = result.data
+            console.log(`Encontradas ${data.length} órdenes por código de barras`)
+          }
+        } catch (error) {
+          console.error("Error en búsqueda por código de barras:", error)
+        }
+      }
+
+      // Si aún no hay resultados, intentar con órdenes recientes
+      if (!data) {
+        try {
+          endpoint = `/ordenes?incluir=${relacionesAIncluir}&pagina=1`
+          console.log(`Buscando órdenes recientes: ${endpoint}`)
+          const result = await fetchFromOrion(endpoint)
+          
+          if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
+            // Filtrar localmente por coincidencia parcial
+            const filteredOrders = result.data.filter((orden: any) => {
+              if (!orden.numero_orden) return false
+              // Intentar coincidencia parcial o exacta
+              return orden.numero_orden.includes(searchValue) || 
+                     orden.numero_orden === searchValue || 
+                     String(orden.id) === searchValue
+            })
+            
+            if (filteredOrders.length > 0) {
+              data = filteredOrders
+              console.log(`Encontradas ${data.length} órdenes por filtrado local`)
+            } else {
+              // Mostrar órdenes recientes como alternativa
+              data = result.data.slice(0, 10)
+              console.log(`Mostrando ${data.length} órdenes recientes como alternativa`)
+              return NextResponse.json({
+                success: true,
+                data: data,
+                message: `No se encontró la orden ${searchValue}. Mostrando órdenes recientes.`
+              })
+            }
+          }
+        } catch (error) {
+          console.error("Error en búsqueda alternativa:", error)
+        }
+      }
+    } else if (searchType === "identificacion") {
+      try {
+        // Usar el formato correcto para filtrar por identificación del paciente
+        endpoint = `/ordenes?filtrar[paciente.numero_identificacion]=${encodeURIComponent(searchValue)}&incluir=${relacionesAIncluir}&pagina=1`
+        console.log(`Buscando por identificación: ${endpoint}`)
+        const result = await fetchFromOrion(endpoint)
+        if (result && result.data && Array.isArray(result.data)) {
+          data = result.data
+          console.log(`Encontradas ${data.length} órdenes por identificación`)
+        }
+      } catch (error) {
+        console.error("Error en búsqueda por identificación:", error)
+      }
+    } else if (searchType === "medico") {
+      try {
+        // Para filtrar por médico, probar con diferentes campos según la API
+        endpoint = `/ordenes?filtrar[medico.numero_identificacion]=${encodeURIComponent(searchValue)}&incluir=${relacionesAIncluir}&pagina=1`
+        console.log(`Buscando por médico (identificación): ${endpoint}`)
+        const result = await fetchFromOrion(endpoint)
+        if (result && result.data && Array.isArray(result.data) && result.data.length > 0) {
+          data = result.data
+          console.log(`Encontradas ${data.length} órdenes por identificación de médico`)
+        } else {
+          // Intentar por ID del médico
+          endpoint = `/ordenes?filtrar[medico.id_externo]=${encodeURIComponent(searchValue)}&incluir=${relacionesAIncluir}&pagina=1`
+          console.log(`Buscando por médico (ID externo): ${endpoint}`)
+          const resultById = await fetchFromOrion(endpoint)
+          if (resultById && resultById.data && Array.isArray(resultById.data)) {
+            data = resultById.data
+            console.log(`Encontradas ${data.length} órdenes por ID externo de médico`)
+          }
+        }
+      } catch (error) {
+        console.error("Error en búsqueda por médico:", error)
+      }
     } else {
       console.error(`Tipo de búsqueda no soportado: ${searchType}`);
       return NextResponse.json({ success: false, message: "Tipo de búsqueda no válido." }, { status: 400 });
     }
-    console.log(`Endpoint inicial (con incluir): ${initialEndpoint}`);
-
-    // 2. Realizar la búsqueda inicial en Orion
-    const initialResponse = await fetchFromOrion(initialEndpoint);
-
-    // Verificar si Orion devolvió un error explícito
-    if (initialResponse && initialResponse.success === false) {
-        console.log("Orion devolvió success: false", initialResponse.message);
-        return NextResponse.json({ success: false, message: initialResponse.message || "Error reportado por Orion." });
-    }
-
-    // Verificar si hay datos válidos en la respuesta
-    if (!initialResponse || !initialResponse.data || !Array.isArray(initialResponse.data)) {
-      console.log("Respuesta inicial de Orion no contiene 'data' como array válido.")
-      // Intentar devolver el mensaje de error de Orion si existe
-      const errorMessage = initialResponse?.message || "No se encontraron resultados o la respuesta de Orion no es válida.";
-      return NextResponse.json({ success: false, message: errorMessage });
-    }
-
-    // Si la respuesta inicial está vacía
-    if (initialResponse.data.length === 0) {
-      console.log("La búsqueda inicial en Orion no devolvió resultados.")
-      return NextResponse.json({ success: false, message: "No se encontraron resultados." });
-    }
-    
-    console.log(`Búsqueda inicial devolvió ${initialResponse.data.length} resultado(s) de Orion.`);
-
-    let finalResults: OrdenData[] = [];
-
-    // 3. Filtrado estricto y obtención de detalles (si aplica)
-    if (searchType === "orden") {
-      console.log(`Filtrando resultados para número de orden EXACTO: ${searchValue}`);
-      const exactMatches = initialResponse.data.filter((orden: OrdenData) => 
-        orden.numero_orden === searchValue
-      );
-
-      if (exactMatches.length === 0) {
-        console.log(`¡NINGUNA coincidencia EXACTA encontrada para ${searchValue} en la respuesta de Orion!`);
-        return NextResponse.json({ success: false, message: `No se encontró la orden exacta ${searchValue}.` });
-      }
-
-      console.log(`Se encontró ${exactMatches.length} coincidencia(s) EXACTA(s). Usando la primera (ID: ${exactMatches[0].id}).`);
-      const ordenExacta = exactMatches[0];
-
-      // Intentar obtener detalles completos para la orden exacta
-      try {
-        const detailsEndpoint = `/ordenes/${ordenExacta.id}?incluir=${relacionesAIncluir}`;
-        console.log(`Intentando obtener detalles (con incluir) para ID: ${ordenExacta.id}, Endpoint: ${detailsEndpoint}`);
-        const detailsResponse = await fetchFromOrion(detailsEndpoint);
-
-        if (detailsResponse && detailsResponse.data && typeof detailsResponse.data === 'object') {
-          console.log(`Detalles completos obtenidos para ID: ${ordenExacta.id}`);
-          finalResults = [detailsResponse.data as OrdenData]; // Usar los datos detallados
-        } else {
-          console.warn(`No se pudieron obtener detalles completos válidos para ID: ${ordenExacta.id}. Usando datos de la búsqueda inicial.`);
-          finalResults = [ordenExacta]; // Usar datos de la búsqueda inicial como fallback
-        }
-      } catch (detailsError) {
-        console.error(`Error al obtener detalles para ID: ${ordenExacta.id}. Usando datos de la búsqueda inicial.`, detailsError);
-        finalResults = [ordenExacta]; // Usar datos de la búsqueda inicial como fallback
-      }
-
-    } else { // Búsqueda por identificación (u otro tipo futuro)
-      console.log("Procesando resultados de búsqueda por identificación.");
-      // FILTRADO ESTRICTO para identificación:
-      console.log(`Filtrando resultados por identificación EXACTA: ${searchValue}`);
-      if (initialResponse.data && Array.isArray(initialResponse.data)) {
-          finalResults = initialResponse.data.filter((orden: OrdenData) => {
-              // Verificar si el paciente existe y tiene numero_identificacion
-              const pacienteIdentificacion = orden.paciente?.numero_identificacion;
-              // Comparar la identificación del paciente de la orden con la buscada
-              const match = pacienteIdentificacion === searchValue;
-              if (!match) {
-                  console.log(` - Descartando orden ID ${orden.id}: Paciente ID ${pacienteIdentificacion} !== ${searchValue}`);
-              }
-              return match;
-          });
-
-          if (finalResults.length === 0 && initialResponse.data.length > 0) {
-              console.log(`¡NINGUNA coincidencia EXACTA encontrada para ID ${searchValue} después del filtro! La API devolvió ${initialResponse.data.length} resultados iniciales.`);
-          } else {
-              console.log(`Se encontraron ${finalResults.length} coincidencia(s) EXACTA(s) para la identificación ${searchValue} después del filtro.`);
-          }
-      } else {
-          // Si initialResponse.data no es un array, finalResults ya está inicializado como []
-          console.log("La respuesta inicial de Orion no contenía un array 'data' para filtrar por identificación.");
-          finalResults = [];
-      }
-
-      // Opcional: Si quisiéramos forzar detalles para el primero (ya no es necesario si 'incluir' funciona bien):
-      // if (finalResults.length > 0) {
-      //   try {
-      //      const detailsEndpoint = `/ordenes/${finalResults[0].id}?incluir=${relacionesAIncluir}`;
-      //      const detailsResponse = await fetchFromOrion(detailsEndpoint);
-      //      if(detailsResponse.data) { finalResults = [detailsResponse.data as OrdenData] }
-      //   } catch {}
-      // }
-    }
 
     // 4. Devolver la respuesta final
-    if (finalResults.length === 0) {
-        // Esto no debería pasar si llegamos aquí después del filtro de orden, pero por seguridad.
-        console.log("Después de procesar, no hay resultados finales.");
-        return NextResponse.json({ success: false, message: "No se encontraron resultados procesables." });
+    if (!data || data.length === 0) {
+      // Esto no debería pasar si llegamos aquí después del filtro de orden, pero por seguridad.
+      console.log("Después de procesar, no hay resultados finales.");
+      return NextResponse.json({ success: false, message: "No se encontraron resultados procesables." });
     }
 
-    console.log(`\n=== FIN PROCESO GET - Devolviendo ${finalResults.length} resultado(s) ===`);
+    console.log(`\n=== FIN PROCESO GET - Devolviendo ${data.length} resultado(s) ===`);
     return NextResponse.json({
       success: true,
-      data: finalResults, // Siempre será un array
-      message: `Se encontraron ${finalResults.length} resultado(s).`,
+      data: data,
+      message: `Se encontraron ${data.length} resultado(s).`,
     });
     
   } catch (error) {
