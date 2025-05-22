@@ -73,7 +73,7 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Sobre nosotros</h3>
             <p className="text-sm text-gray-600">
-              Laboratorio ROE, brindando servicios de calidad y confianza desde 1990.
+              Laboratorio LOPEZ, brindando servicios de calidad y confianza desde 1990.
             </p>
           </div>
           <div>
@@ -100,7 +100,7 @@ export function Footer() {
             <h3 className="font-semibold mb-4">Contacto</h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li>Teléfono: (01) 123-4567</li>
-              <li>Email: contacto@roe.com</li>
+              <li>Email: contacto@lopez.com</li>
               <li>Dirección: Av. Principal 123</li>
             </ul>
           </div>
@@ -113,8 +113,19 @@ export function Footer() {
             </ul>
           </div>
         </div>
+        <div className="mt-6 flex justify-center">
+          <Link href="/libro-reclamaciones">
+            <Image
+              src="/lib.webp"
+              alt="Libro de Reclamaciones"
+              width={80}
+              height={80}
+              className="object-contain cursor-pointer"
+            />
+          </Link>
+        </div>
         <div className="mt-8 pt-8 border-t text-center text-sm text-gray-600">
-          © {new Date().getFullYear()} Laboratorio ROE. Todos los derechos reservados.
+          © {new Date().getFullYear()} Laboratorio Lopez. Todos los derechos reservados.
         </div>
       </div>
     </footer>

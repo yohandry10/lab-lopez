@@ -1216,7 +1216,7 @@ export default function AnalisisPage() {
                           {analysis.category}
                         </td>
                         <td className="py-4 px-4 text-sm font-medium text-gray-900 text-center hidden md:table-cell">
-                          S/. {analysis.price.toFixed(2)}
+                          {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") ? `S/. ${analysis.price.toFixed(2)}` : ''}
                         </td>
                         <td className="py-4 px-4 text-center">
                           <Button
@@ -1229,13 +1229,15 @@ export default function AnalisisPage() {
                           </Button>
                         </td>
                         <td className="py-4 px-4 text-center">
-                          <Button
-                            size="sm"
-                            className="bg-[#3DA64A] hover:bg-[#1E5FAD] min-w-[80px]"
-                            onClick={() => handleAddToCart(analysis)}
-                          >
-                            AGREGAR
-                          </Button>
+                          {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                            <Button
+                              size="sm"
+                              className="bg-[#3DA64A] hover:bg-[#1E5FAD] min-w-[80px]"
+                              onClick={() => handleAddToCart(analysis)}
+                            >
+                              AGREGAR
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -1272,21 +1274,23 @@ export default function AnalisisPage() {
                               </Button>
                             </>
                           )}
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => handleAddToCart(analysis)}
-                            className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
-                          >
-                            Agregar
-                          </Button>
+                          {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => handleAddToCart(analysis)}
+                              className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
+                            >
+                              Agregar
+                            </Button>
+                          )}
                         </div>
                       </div>
                       <CardDescription>Categoría: {analysis.category}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        <p><strong>Precio:</strong> S/. {analysis.price.toFixed(2)}</p>
+                        <p><strong>Precio:</strong> {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") ? `S/. ${analysis.price.toFixed(2)}` : ''}</p>
                         <p><strong>Condiciones:</strong> {analysis.conditions}</p>
                         <p><strong>Muestra:</strong> {analysis.sample}</p>
                         <p><strong>Protocolo:</strong> {analysis.protocol}</p>
@@ -1406,26 +1410,28 @@ export default function AnalisisPage() {
                       </ul>
                     </div>
                     <div className="flex justify-between items-center mt-4">
-                      <div className="font-bold text-lg">S/. {profile.price.toFixed(2)}</div>
+                      <div className="font-bold text-lg">{user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") ? `S/. ${profile.price.toFixed(2)}` : ''}</div>
                       <div className="flex gap-2">
-                        <Button
-                          className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
-                          onClick={() =>
-                            handleAddToCart({
-                              id: 1000 + i,
-                              name: profile.title,
-                              price: profile.price,
-                              category: "Perfil",
-                              conditions: "No especificado",
-                              sample: "No especificado",
-                              protocol: "No especificado",
-                              suggestions: "",
-                              comments: ""
-                            })
-                          }
-                        >
-                          Agregar
-                        </Button>
+                        {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                          <Button
+                            className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
+                            onClick={() =>
+                              handleAddToCart({
+                                id: 1000 + i,
+                                name: profile.title,
+                                price: profile.price,
+                                category: "Perfil",
+                                conditions: "No especificado",
+                                sample: "No especificado",
+                                protocol: "No especificado",
+                                suggestions: "",
+                                comments: ""
+                              })
+                            }
+                          >
+                            Agregar
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -1483,7 +1489,7 @@ export default function AnalisisPage() {
                           <Calendar className="h-4 w-4 text-blue-600" />
                           <span className="text-sm">Resultados: {test.turnaround}</span>
                         </div>
-                        <div className="font-bold">S/. {test.price.toFixed(2)}</div>
+                        <div className="font-bold">{user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") ? `S/. ${test.price.toFixed(2)}` : ''}</div>
                       </div>
                     </div>
                   </CardContent>
@@ -1491,24 +1497,26 @@ export default function AnalisisPage() {
                     <Button variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50">
                       Más info
                     </Button>
-                    <Button
-                      className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
-                      onClick={() =>
-                        handleAddToCart({
-                          id: 2000 + i,
-                          name: test.title,
-                          price: test.price,
-                          category: "Test",
-                          conditions: "No especificado",
-                          sample: "No especificado",
-                          protocol: "No especificado",
-                          suggestions: "",
-                          comments: ""
-                        })
-                      }
-                    >
-                      Agregar
-                    </Button>
+                    {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                      <Button
+                        className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
+                        onClick={() =>
+                          handleAddToCart({
+                            id: 2000 + i,
+                            name: test.title,
+                            price: test.price,
+                            category: "Test",
+                            conditions: "No especificado",
+                            sample: "No especificado",
+                            protocol: "No especificado",
+                            suggestions: "",
+                            comments: ""
+                          })
+                        }
+                      >
+                        Agregar
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               ))}

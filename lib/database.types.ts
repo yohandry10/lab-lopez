@@ -14,7 +14,6 @@ export interface Database {
           created_at: string
           updated_at: string
           patient_code: string | null
-          specialty: string | null
           company_name: string | null
           company_ruc: string | null
           company_position: string | null
@@ -32,7 +31,6 @@ export interface Database {
           created_at?: string
           updated_at?: string
           patient_code?: string | null
-          specialty?: string | null
           company_name?: string | null
           company_ruc?: string | null
           company_position?: string | null
@@ -50,7 +48,6 @@ export interface Database {
           created_at?: string
           updated_at?: string
           patient_code?: string | null
-          specialty?: string | null
           company_name?: string | null
           company_ruc?: string | null
           company_position?: string | null

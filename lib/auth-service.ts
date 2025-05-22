@@ -1,13 +1,18 @@
+/* -------------------------------------------------------------------------- *
+ *  AUTH-SERVICE – Next.js + Supabase v2                                      *
+ * -------------------------------------------------------------------------- */
+
 import { getSupabaseClient } from "./supabase-client"
 import type { User } from "./supabase-client"
 
-type AuthResponse = {
+/* ---------- Tipos --------------------------------------------------------- */
+export type AuthResponse = {
   success: boolean
   error?: string
   user?: User
 }
 
-type SignUpData = {
+export type SignUpData = {
   email: string
   password: string
   username: string
@@ -16,165 +21,171 @@ type SignUpData = {
   user_type: "patient" | "doctor" | "company"
   accepted_terms: boolean
   accepted_marketing: boolean
-  specialty?: string
   company_name?: string
   company_ruc?: string
   company_position?: string
   is_company_admin?: boolean
 }
 
-// Función para registrar un nuevo usuario
+/* -------------------------------------------------------------------------- *
+ *  REGISTRO                                                                  *
+ * -------------------------------------------------------------------------- */
 export async function signUp(userData: SignUpData): Promise<AuthResponse> {
   try {
     const supabase = getSupabaseClient()
 
-    console.log("Iniciando registro de usuario:", userData.email)
-
-    // Registrar usuario en Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: userData.email,
-      password: userData.password,
-    })
-
-    if (authError || !authData.user) {
-      console.error("Error en registro de autenticación:", authError)
-      return { success: false, error: authError?.message || "No se pudo crear el usuario" }
+    if (
+      userData.user_type === "company" &&
+      (!userData.company_name || !userData.company_ruc)
+    ) {
+      return {
+        success: false,
+        error: "Para cuentas de empresa se requiere nombre y RUC."
+      }
     }
 
-    console.log("Usuario creado en Auth:", authData.user.id)
+    const { data: authData, error: authErr } = await supabase.auth.signUp({
+      email: userData.email,
+      password: userData.password
+    })
 
-    // Crear registro en la tabla users
-    const { data: insertedUser, error: userError } = await supabase
-      .from("users")
-      .upsert([{
-        id: authData.user.id,
-        email: userData.email,
-        username: userData.username,
-        first_name: userData.first_name,
-        last_name: userData.last_name,
-        user_type: userData.user_type,
-        accepted_terms: userData.accepted_terms,
-        accepted_marketing: userData.accepted_marketing,
-        specialty: userData.specialty,
+    if (authErr && authErr.message.includes("already registered")) {
+      return {
+        success: false,
+        error: "El correo ya existe. Inicia sesión o recupera tu contraseña."
+      }
+    }
+    if (authErr || !authData.user) {
+      return { success: false, error: authErr?.message ?? "Fallo en Auth" }
+    }
+
+    const now = new Date().toISOString()
+    const record: Record<string, unknown> = {
+      id: authData.user.id,
+      email: userData.email,
+      username: userData.username,
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      user_type: userData.user_type,
+      accepted_terms: userData.accepted_terms,
+      accepted_marketing: userData.accepted_marketing,
+      created_at: now,
+      updated_at: now
+    }
+
+    if (userData.user_type === "company") {
+      Object.assign(record, {
         company_name: userData.company_name,
         company_ruc: userData.company_ruc,
         company_position: userData.company_position,
-        is_company_admin: userData.is_company_admin,
-      }])
-      .select()
+        is_company_admin: userData.is_company_admin ?? false
+      })
+    }
+
+    Object.keys(record).forEach(k => record[k] === undefined && delete record[k])
+
+    const { error: insErr } = await supabase.from("users").insert(record)
+
+    if (insErr) {
+      const { error: upsErr } = await supabase
+        .from("users")
+        .upsert(record, { onConflict: "id" })
+      if (upsErr) {
+        return { success: false, error: upsErr.message }
+      }
+    }
+
+    const { data: profile, error: selErr } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", authData.user.id)
       .single()
 
-    if (userError || !insertedUser) {
-      console.error("Error al crear perfil de usuario:", userError)
-      return { success: false, error: userError?.message || "Error al crear perfil de usuario" }
+    if (selErr || !profile) {
+      return {
+        success: false,
+        error: selErr?.message ?? "Usuario creado, pero no se pudo leer perfil"
+      }
     }
 
-    console.log("Perfil de usuario creado:", insertedUser)
-
-    return { 
-      success: true, 
-      user: insertedUser as User
-    }
-  } catch (error) {
-    console.error("Error inesperado en registro:", error)
-    return { success: false, error: "Error inesperado al registrar usuario" }
+    return { success: true, user: profile as User }
+  } catch (err: any) {
+    return { success: false, error: err?.message ?? String(err) }
   }
 }
 
-// Función para iniciar sesión
-export async function signIn(email: string, password: string): Promise<AuthResponse> {
+/* -------------------------------------------------------------------------- *
+ *  INICIO DE SESIÓN                                                          *
+ * -------------------------------------------------------------------------- */
+export async function signIn(
+  email: string,
+  password: string
+): Promise<AuthResponse> {
   try {
     const supabase = getSupabaseClient()
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { data: auth, error: authErr } =
+      await supabase.auth.signInWithPassword({ email, password })
 
-    if (error || !data.user) {
-      return { success: false, error: error?.message || "No se encontró el usuario" }
+    if (authErr || !auth.user) {
+      return { success: false, error: authErr?.message ?? "Credenciales inválidas" }
     }
 
-    const { data: userData, error: userError } = await supabase
+    const { data: profile, error } = await supabase
       .from("users")
       .select("*")
-      .eq("id", data.user.id)
+      .eq("id", auth.user.id)
       .single()
 
-    if (userError || !userData) {
-      return { success: false, error: userError?.message || "Error al obtener datos del usuario" }
+    if (error || !profile) {
+      return { success: false, error: error?.message ?? "Perfil no encontrado" }
     }
 
-    return { success: true, user: userData as User }
-  } catch (error) {
-    console.error("Error inesperado al iniciar sesión:", error)
-    return { success: false, error: "Error inesperado al iniciar sesión" }
+    return { success: true, user: profile as User }
+  } catch {
+    return { success: false, error: "Fallo inesperado en login" }
   }
 }
 
-// Función para cerrar sesión
+/* -------------------------------------------------------------------------- *
+ *  CIERRE DE SESIÓN                                                          *
+ * -------------------------------------------------------------------------- */
 export async function signOut(): Promise<AuthResponse> {
-  try {
-    const supabase = getSupabaseClient()
-    const { error } = await supabase.auth.signOut()
-    
-    if (error) {
-      return { success: false, error: error.message }
-    }
-
-    return { success: true }
-  } catch (error) {
-    console.error("Error inesperado al cerrar sesión:", error)
-    return { success: false, error: "Error inesperado al cerrar sesión" }
-  }
+  const { error } = await getSupabaseClient().auth.signOut()
+  return error ? { success: false, error: error.message } : { success: true }
 }
 
-// Función para obtener el usuario actual
+/* -------------------------------------------------------------------------- *
+ *  PERFIL – obtener y actualizar                                             *
+ * -------------------------------------------------------------------------- */
 export async function getCurrentUser(): Promise<User | null> {
-  try {
-    const supabase = getSupabaseClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+  const supabase = getSupabaseClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
 
-    if (authError || !user) {
-      return null
-    }
+  const { data } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .single()
 
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", user.id)
-      .single()
-
-    if (userError || !userData) {
-      return null
-    }
-
-    return userData as User
-  } catch (error) {
-    console.error("Error inesperado al obtener usuario actual:", error)
-    return null
-  }
+  return data as User | null
 }
 
-// Función para actualizar el perfil del usuario
-export async function updateUser(userId: string, updates: Partial<User>): Promise<AuthResponse> {
-  try {
-    const supabase = getSupabaseClient()
-    const { data, error } = await supabase
-      .from("users")
-      .update(updates)
-      .eq("id", userId)
-      .select()
-      .single()
+export async function updateUser(
+  userId: string,
+  updates: Partial<User>
+): Promise<AuthResponse> {
+  const supabase = getSupabaseClient()
 
-    if (error || !data) {
-      return { success: false, error: error?.message || "Error al actualizar usuario" }
-    }
+  const { data, error } = await supabase
+    .from("users")
+    .update(updates)
+    .eq("id", userId)
+    .select("*")
+    .single()
 
-    return { success: true, user: data as User }
-  } catch (error) {
-    console.error("Error inesperado al actualizar usuario:", error)
-    return { success: false, error: "Error inesperado al actualizar usuario" }
-  }
+  return error || !data
+    ? { success: false, error: error?.message ?? "No se pudo actualizar" }
+    : { success: true, user: data as User }
 }
-

@@ -21,7 +21,6 @@ export async function GET() {
           last_name: "Rodríguez",
           username: "carlosrodriguez",
           user_type: "doctor",
-          specialty: "Medicina General",
         },
         {
           email: "empresa@lopez.com",

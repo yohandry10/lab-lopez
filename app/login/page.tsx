@@ -89,6 +89,7 @@ export default function LoginPage() {
       // Login con identificador y contraseña
       const result = await login(formData.identifier, formData.password)
       if (result.success) {
+        // Siempre redirigir a la página de inicio
         router.push("/")
       }
     } finally {

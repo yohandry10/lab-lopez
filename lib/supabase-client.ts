@@ -7,12 +7,16 @@ export type User = {
   username: string
   first_name: string
   last_name: string
-  user_type: "patient" | "doctor" | "admin"
+  user_type: "patient" | "doctor" | "admin" | "company"
   created_at?: string
   updated_at?: string
   patient_code?: string
   accepted_terms: boolean
   accepted_marketing: boolean
+  company_name?: string
+  company_ruc?: string
+  company_position?: string
+  is_company_admin?: boolean
 }
 
 export type Patient = {

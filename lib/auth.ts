@@ -16,7 +16,6 @@ type SignUpData = {
   user_type: "patient" | "doctor" | "company"
   accepted_terms: boolean
   accepted_marketing: boolean
-  specialty?: string
   company_name?: string
   company_ruc?: string
   company_position?: string
@@ -55,7 +54,6 @@ export async function signUp(userData: SignUpData): Promise<AuthResponse> {
         user_type: userData.user_type,
         accepted_terms: userData.accepted_terms,
         accepted_marketing: userData.accepted_marketing,
-        specialty: userData.specialty,
         company_name: userData.company_name,
         company_ruc: userData.company_ruc,
         company_position: userData.company_position,

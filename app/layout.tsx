@@ -9,12 +9,12 @@ import { Preloader } from "@/components/preloader"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Laboratorio lOPEZ",
-  description: "Laboratorio LOPEZ - Servicios de análisis clínicos",
+  title: "Laboratorio LOPEZ",
+  description: "Laboratorio LOPEZ - Servicios de análisis clínicos"
 }
 
 export default function RootLayout({
-  children,
+  children
 }: {
   children: React.ReactNode
 }) {

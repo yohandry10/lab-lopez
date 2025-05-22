@@ -18,7 +18,7 @@ const slides = [
   },
   {
     id: 2,
-    image: "/dos.jpg",
+    image: "/lab.webp	",
     title: "Tecnología de",
     subtitle: "vanguardia",
     description: "Resultados precisos y confiables",

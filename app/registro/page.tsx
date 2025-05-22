@@ -29,7 +29,11 @@ type FormData = {
   username: string
   password: string
   confirmPassword: string
-  user_type: "patient"
+  user_type: "patient" | "doctor" | "company"
+  company_name?: string
+  company_ruc?: string
+  company_position?: string
+  is_company_admin?: boolean
   accepted_terms: boolean
   accepted_marketing: boolean
 }
@@ -54,6 +58,10 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     user_type: "patient",
+    company_name: "",
+    company_ruc: "",
+    company_position: "",
+    is_company_admin: false,
     accepted_terms: false,
     accepted_marketing: false,
   })
@@ -74,7 +82,7 @@ export default function RegisterPage() {
     }
   }
 
-  const handleUserTypeChange = (value: "patient" | "doctor") => {
+  const handleUserTypeChange = (value: "patient" | "doctor" | "company") => {
     setFormData((prev) => ({ ...prev, user_type: value }))
     if (errors.user_type) {
       setErrors((prev) => ({ ...prev, user_type: undefined }))
@@ -116,6 +124,19 @@ export default function RegisterPage() {
       newErrors.confirmPassword = "Las contraseñas no coinciden"
     }
 
+    // Validaciones específicas por tipo de usuario
+    if (formData.user_type === "company") {
+      if (!formData.company_name || formData.company_name.trim() === "") {
+        newErrors.company_name = "El nombre de la empresa es requerido"
+      }
+      
+      if (!formData.company_ruc || formData.company_ruc.trim() === "") {
+        newErrors.company_ruc = "El RUC de la empresa es requerido"
+      } else if (!/^\d{11}$/.test(formData.company_ruc.trim())) {
+        newErrors.company_ruc = "El RUC debe tener 11 dígitos"
+      }
+    }
+
     if (!formData.accepted_terms) {
       newErrors.accepted_terms = "Debes aceptar los términos y condiciones para continuar"
     }
@@ -137,19 +158,27 @@ export default function RegisterPage() {
     if (!validateForm()) return
 
     setIsLoading(true)
+    setErrors({})
 
     try {
       const { confirmPassword, ...registerData } = formData
+
+      console.log("Enviando datos de registro:", registerData)
 
       const result = await register(registerData)
 
       if (result.success) {
         setIsSuccess(true)
       } else if (result.error) {
+        console.error("Error en el registro:", result.error)
         setErrors((prev) => ({ ...prev, submit: result.error }))
       }
-    } catch (error) {
-      setErrors((prev) => ({ ...prev, submit: "Error al procesar el registro" }))
+    } catch (error: any) {
+      console.error("Excepción al procesar el registro:", error)
+      setErrors((prev) => ({ 
+        ...prev, 
+        submit: error?.message || "Error al procesar el registro" 
+      }))
     } finally {
       setIsLoading(false)
     }
@@ -362,6 +391,26 @@ export default function RegisterPage() {
                     </label>
                   </div>
                 </div>
+
+                <input type="hidden" name="user_type" value="patient" />
+
+                {errors.submit && (
+                  <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm mb-4">
+                    {errors.submit}
+                    {errors.submit.includes("ya está registrado") && (
+                      <div className="mt-2">
+                        <Button 
+                          variant="outline"
+                          type="button" 
+                          onClick={() => router.push("/login")}
+                          className="w-full"
+                        >
+                          Ir a Iniciar Sesión
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <Button type="submit" className="bg-blue-700 hover:bg-blue-800" disabled={isLoading}>
                   {isLoading ? (

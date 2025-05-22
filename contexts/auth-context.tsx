@@ -14,7 +14,6 @@ type RegisterData = {
   accepted_terms: boolean
   accepted_marketing: boolean
   patient_code?: string
-  specialty?: string
   company_name?: string
   company_ruc?: string
   company_position?: string

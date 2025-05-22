@@ -1,52 +1,12 @@
 "use client"
 
 import dynamic from 'next/dynamic'
-import { Suspense, useEffect, useState } from 'react'
-import { ParallaxProvider } from "react-scroll-parallax"
+import { ParallaxProvider } from 'react-scroll-parallax'
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { User, Stethoscope, Building2, TestTubes } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
-const LoadingSpinner = () => (
-  <div className="flex items-center justify-center w-full h-96 bg-[#f3f9fe]">
-    <div className="relative w-24 h-24">
-      {/* Tubo de ensayo */}
-      <div className="absolute w-4 h-16 bg-white border-2 border-[#1e5fad] rounded-b-lg left-1/2 -translate-x-1/2">
-        {/* Líquido animado */}
-        <div className="absolute bottom-0 w-full bg-[#1e5fad] rounded-b-lg animate-wave" style={{ height: '60%' }}></div>
-      </div>
-      {/* Burbujas */}
-      <div className="absolute w-1 h-1 bg-white rounded-full left-[45%] bottom-6 animate-bubble1"></div>
-      <div className="absolute w-1.5 h-1.5 bg-white rounded-full left-[55%] bottom-8 animate-bubble2"></div>
-      <style jsx>{`
-        @keyframes wave {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-5px); }
-        }
-        @keyframes bubble1 {
-          0% { transform: translateY(0); opacity: 0; }
-          50% { opacity: 1; }
-          100% { transform: translateY(-20px); opacity: 0; }
-        }
-        @keyframes bubble2 {
-          0% { transform: translateY(0); opacity: 0; }
-          50% { opacity: 1; }
-          100% { transform: translateY(-25px); opacity: 0; }
-        }
-        .animate-wave {
-          animation: wave 2s ease-in-out infinite;
-        }
-        .animate-bubble1 {
-          animation: bubble1 2s ease-in-out infinite;
-        }
-        .animate-bubble2 {
-          animation: bubble2 2.5s ease-in-out infinite;
-        }
-      `}</style>
-    </div>
-  </div>
-)
+import { ImageGallery } from "@/components/image-gallery"
 
 // Lazy load components with no SSR
 const HeroSlider = dynamic(() => import("@/components/hero-slider"), { ssr: false })
@@ -77,20 +37,6 @@ const UserTypeLink = ({ href, icon: Icon, label }: { href: string; icon: any; la
 )
 
 export default function Home() {
-  const [isClient, setIsClient] = useState(false)
-
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
-
-  if (!isClient) {
-    return (
-      <div className="h-screen bg-[#f3f9fe] flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    )
-  }
-
   return (
     <ParallaxProvider>
       <AnimatePresence mode="sync">
@@ -117,7 +63,7 @@ export default function Home() {
                   </div>
 
                   <div className="md:col-span-3 flex justify-between px-8 gap-8">
-                    <UserTypeLink href="/login" icon={User} label="Pacientes" />
+                    <UserTypeLink href="/resultados?type=patient" icon={User} label="Pacientes" />
                     <UserTypeLink href="/login" icon={Stethoscope} label="Médicos" />
                     <UserTypeLink href="/login" icon={Building2} label="Empresas" />
                   </div>
@@ -146,6 +92,13 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
+          >
+            <ImageGallery />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
           >
             <DigitalLibrary />
           </motion.div>
