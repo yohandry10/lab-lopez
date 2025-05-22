@@ -7,6 +7,9 @@ interface TestResult {
   resultado: string;
   unidad: string;
   valor_referencia: string;
+  isSubtitulo?: boolean;
+  isMetodo?: boolean;
+  isResultado?: boolean;
 }
 
 interface TestResultsModalProps {

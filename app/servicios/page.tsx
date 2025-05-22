@@ -13,8 +13,28 @@ import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/auth-context"
 import { Pencil, Trash2 } from "lucide-react"
 
+// Definición del tipo para un perfil
+interface Profile {
+  title: string
+  description: string
+  content: string
+  price: number
+  image: string
+  locations: string[] | string
+  sampleType: string | string[]
+  ageRequirement: string
+  tests: string[]
+  conditions: string[]
+  slug?: string // Slug opcional para identificar el perfil
+}
+
+// Tipo para el objeto de perfiles con índice de string
+interface ProfilesData {
+  [key: string]: Profile
+}
+
 // Datos de los perfiles
-const profiles = {
+const profiles: ProfilesData = {
   "prevencion-total": {
     title: "Perfil Prevención total",
     description:
@@ -197,12 +217,12 @@ const profiles = {
 }
 
 export default function ServiciosPage() {
-  const [profilesData, setProfilesData] = useState(profiles)
+  const [profilesData, setProfilesData] = useState<ProfilesData>(profiles)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [editingProfile, setEditingProfile] = useState<any>(null)
+  const [editingProfile, setEditingProfile] = useState<Profile | null>(null)
   const { user } = useAuth()
 
-  const handleEditProfile = (profile: any) => {
+  const handleEditProfile = (profile: Profile) => {
     setEditingProfile(profile)
     setIsEditModalOpen(true)
   }
@@ -233,10 +253,15 @@ export default function ServiciosPage() {
     setIsEditModalOpen(true)
   }
 
-  const handleSaveProfile = (updatedProfile: any) => {
+  const handleSaveProfile = (updatedProfile: Profile) => {
+    if (!updatedProfile.slug) {
+      console.error("Error: Slug is required to save profile");
+      return;
+    }
+    
     setProfilesData(prevProfiles => ({
       ...prevProfiles,
-      [updatedProfile.slug]: updatedProfile
+      [updatedProfile.slug!]: updatedProfile
     }))
     setIsEditModalOpen(false)
     setEditingProfile(null)
@@ -323,14 +348,25 @@ export default function ServiciosPage() {
           <form onSubmit={(e) => {
             e.preventDefault()
             const formData = new FormData(e.currentTarget)
-            const updatedProfile = {
+            
+            // Procesar locations y sampleType
+            const locationsStr = formData.get('locations') as string;
+            const locations = locationsStr ? locationsStr.split(',').map(loc => loc.trim()) : [];
+            
+            const sampleTypeStr = formData.get('sampleType') as string;
+            // Mantener sampleType como string si es un solo valor, o convertirlo en array si contiene comas
+            const sampleType = sampleTypeStr.includes(',') 
+              ? sampleTypeStr.split(',').map(st => st.trim()) 
+              : sampleTypeStr;
+            
+            const updatedProfile: Profile = {
               title: formData.get('title') as string,
               description: formData.get('description') as string,
               content: formData.get('content') as string,
               price: parseFloat(formData.get('price') as string) || 0,
               image: formData.get('image') as string,
-              locations: formData.get('locations')?.toString().split(',').map(loc => loc.trim()) || [],
-              sampleType: formData.get('sampleType') as string,
+              locations: locations,
+              sampleType: sampleType,
               ageRequirement: formData.get('ageRequirement') as string,
               tests: formData.get('tests')?.toString().split('\n').filter(test => test.trim()) || [],
               conditions: formData.get('conditions')?.toString().split('\n').filter(condition => condition.trim()) || [],
@@ -413,7 +449,11 @@ export default function ServiciosPage() {
                 <Input
                   id="locations"
                   name="locations"
-                  defaultValue={editingProfile?.locations?.join(', ')}
+                  defaultValue={
+                    Array.isArray(editingProfile?.locations) 
+                      ? editingProfile?.locations.join(', ') 
+                      : editingProfile?.locations
+                  }
                   className="col-span-3"
                   required
                 />
@@ -424,7 +464,11 @@ export default function ServiciosPage() {
                 <Input
                   id="sampleType"
                   name="sampleType"
-                  defaultValue={editingProfile?.sampleType}
+                  defaultValue={
+                    Array.isArray(editingProfile?.sampleType) 
+                      ? editingProfile?.sampleType.join(', ') 
+                      : editingProfile?.sampleType
+                  }
                   className="col-span-3"
                   required
                 />

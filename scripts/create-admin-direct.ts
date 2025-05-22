@@ -1,4 +1,4 @@
-const { createClient } = require('@supabase/supabase-js')
+const { createClient: supabaseClient } = require('@supabase/supabase-js')
 require('dotenv').config({ path: '.env.local' })
 
 interface User {
@@ -7,7 +7,7 @@ interface User {
 }
 
 async function createOrUpdateAdminUser() {
-  const supabase = createClient(
+  const supabase = supabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_KEY
   )

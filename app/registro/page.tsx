@@ -40,7 +40,7 @@ type FormData = {
 
 type FormErrors = {
   [K in keyof FormData]?: string
-}
+} & { submit?: string }
 
 export default function RegisterPage() {
   const router = useRouter()

@@ -7,15 +7,14 @@ import {
   CardFooter,
   CardHeader,
   CardTitle
-} from './ui/card';
-import { Button } from './ui/button';
-import TestResultsModal from './test-results-modal';
-import DoctorModal from './doctor-modal';
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { TestResultsModal } from '@/components/test-results-modal';
 import { format } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { MdOpenInNew } from 'react-icons/md';
 import { FaUserDoctor } from 'react-icons/fa6';
-import { Table, TableCell, TableRow } from './ui/table';
+import { Table, TableCell, TableRow } from '@/components/ui/table';
 
 const statusColors = {
   'COMPLETADO': 'bg-green-100 text-green-800 border-green-300',
@@ -67,7 +66,6 @@ interface TestOrdersTableProps {
 
 export default function TestOrdersTable({ orders, isLoading = false }: TestOrdersTableProps) {
   const [resultModalOrder, setResultModalOrder] = useState<TestOrder | null>(null);
-  const [doctorModalData, setDoctorModalData] = useState<any | null>(null);
 
   if (isLoading) {
     return (
@@ -165,17 +163,6 @@ export default function TestOrdersTable({ orders, isLoading = false }: TestOrder
                               <span>Ver resultados</span>
                             </Button>
                           </TableCell>
-                          <TableCell className="px-2 py-3 text-center">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="text-xs flex items-center gap-1"
-                              onClick={() => setDoctorModalData(order.medico)}
-                            >
-                              <FaUserDoctor className="h-3 w-3" />
-                              <span>Médico</span>
-                            </Button>
-                          </TableCell>
                         </TableRow>
                       ))
                     )}
@@ -190,19 +177,13 @@ export default function TestOrdersTable({ orders, isLoading = false }: TestOrder
       {/* Modal para mostrar resultados */}
       {resultModalOrder && (
         <TestResultsModal
-          isOpen={!!resultModalOrder}
-          onClose={() => setResultModalOrder(null)} 
+          open={!!resultModalOrder}
+          onOpenChange={() => setResultModalOrder(null)} 
           orderId={resultModalOrder.id}
           orderNumber={resultModalOrder.numero_orden}
-        />
-      )}
-
-      {/* Modal para mostrar información del médico */}
-      {doctorModalData && (
-        <DoctorModal
-          isOpen={!!doctorModalData}
-          onClose={() => setDoctorModalData(null)}
-          doctor={doctorModalData}
+          patientName={resultModalOrder.paciente.nombre}
+          patientId={resultModalOrder.paciente.identificacion}
+          testDate={formatDate(resultModalOrder.fecha)}
         />
       )}
     </div>

@@ -93,7 +93,7 @@ export default function ResultadosPage() {
         
         if (ordenJson.success && Array.isArray(ordenJson.data) && ordenJson.data.length) {
           // Filtrar solo los resultados que coincidan con ambos criterios
-          const filteredResults = ordenJson.data.filter(orden => 
+          const filteredResults = ordenJson.data.filter((orden: OrdenResponse) => 
             orden.paciente?.numero_identificacion === dni.trim()
           );
           
