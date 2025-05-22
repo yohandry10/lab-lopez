@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 const slides = [
   {
     id: 1,
-    image: "/1.jpg",
+    image: "/dr1.jpg",
     title: "Desde 1953",
     subtitle: "cuidamos de ti y tu familia",
     description: "70 años juntos",
@@ -18,7 +18,7 @@ const slides = [
   },
   {
     id: 2,
-    image: "/lab.webp	",
+    image: "/lab.webp",
     title: "Tecnología de",
     subtitle: "vanguardia",
     description: "Resultados precisos y confiables",
@@ -27,7 +27,7 @@ const slides = [
   },
   {
     id: 3,
-    image: "/3.jpg",
+    image: "/dr2.jpg",
     title: "Atención",
     subtitle: "personalizada",
     description: "Tu salud es nuestra prioridad",
@@ -68,8 +68,10 @@ export default function HeroSlider() {
         {slides.map((slide, index) => (
           <div
             key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              currentSlide === index ? "opacity-100" : "opacity-0"
+            className={`absolute inset-0 transition-all duration-1000 ${
+              currentSlide === index 
+                ? "opacity-100 z-10" 
+                : "opacity-0 z-0"
             }`}
           >
             <Image
@@ -77,7 +79,7 @@ export default function HeroSlider() {
               alt={slide.title}
               fill
               className="object-cover"
-              priority={index === 0}
+              priority={true}
             />
             <div className="absolute inset-0 bg-black/20" />
             <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
