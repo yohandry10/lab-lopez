@@ -47,7 +47,7 @@ const RelatedArticles = ({ articles, category }: { articles: Analysis[], categor
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">Análisis relacionados</h2>
+      <h2 className="text-xl sm:text-2xl font-bold mb-6">Análisis relacionados</h2>
       <div className="grid gap-6 md:grid-cols-2">
         {relatedArticles.map((relatedArticle) => (
           <Link
@@ -149,11 +149,11 @@ export default function AnalysisPage() {
     }
 
     return (
-      <div className="container mx-auto px-4 pt-32 pb-16">
+      <div className="container mx-auto px-4 pt-24 sm:pt-32 pb-12 sm:pb-16">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-4">{foundArticle.title}</h1>
-            <div className="flex items-center gap-4 text-gray-600">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">{foundArticle.title}</h1>
+            <div className="flex items-center gap-4 text-gray-600 flex-wrap">
               <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
                 {foundArticle.category}
               </span>

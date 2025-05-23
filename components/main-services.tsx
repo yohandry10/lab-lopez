@@ -68,28 +68,24 @@ export default function MainServices() {
       >
         <div className="container px-4 md:px-6 relative z-10">
           <motion.div
-            className="flex flex-col items-center space-y-4 text-center"
+            className="flex flex-col items-center space-y-4 text-center mb-8 md:mb-12"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="relative w-full">
-              <h2 className="text-3xl font-light tracking-tighter sm:text-4xl md:text-5xl text-center text-black font-sans">
+            <div className="relative w-full flex flex-col items-center md:flex-row md:justify-center md:items-center">
+              <h2 className="text-3xl font-light tracking-tighter sm:text-4xl md:text-5xl text-center text-black font-sans md:text-left md:mr-8">
                 Perfiles de bienestar
               </h2>
-              <div className="absolute right-20 -top-6 transform -translate-y-1/2">
-                <div className="relative">
-                  <Link href="/servicios" passHref>
-                    <Button
-                      asChild
-                      className="bg-[#3da64a] hover:bg-[#3da64a]/90 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg relative z-10"
-                    >
-                      <span>VER MAS</span>
-                    </Button>
-                  </Link>
-                  <div className="absolute -bottom-2 left-4 w-4 h-4 bg-[#3da64a] rounded-full"></div>
-                  <div className="absolute -bottom-4 left-2 w-2 h-2 bg-[#3da64a] rounded-full"></div>
-                </div>
+              <div className="mt-4 md:mt-0 md:relative">
+                <Link href="/servicios" passHref>
+                  <Button
+                    asChild
+                    className="bg-[#3da64a] hover:bg-[#3da64a]/90 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg transition-transform hover:scale-105"
+                  >
+                    <span>VER MAS</span>
+                  </Button>
+                </Link>
               </div>
             </div>
             <p className="mt-4 max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">

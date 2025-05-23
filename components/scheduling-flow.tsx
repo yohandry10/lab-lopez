@@ -16,7 +16,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { es } from "date-fns/locale"
-import { GoogleMapPicker } from "./google-map-picker"
 import { Home, MapPin } from "lucide-react"
 
 interface SchedulingFlowProps {
@@ -163,15 +162,6 @@ export function SchedulingFlow({
 
   const handleDateChange = (date: Date | undefined) => {
     setFormData({ ...formData, date })
-  }
-
-  const handleLocationSelect = (location: { lat: number; lng: number; address: string }) => {
-    setFormData({
-      ...formData,
-      latitude: location.lat,
-      longitude: location.lng,
-      address: location.address,
-    })
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -344,26 +334,21 @@ export function SchedulingFlow({
                           <p className="text-sm text-gray-600">{selectedSedeInfo.address}</p>
                         </div>
                       </div>
-                      <div className="h-[300px] rounded-lg overflow-hidden border">
-                        <GoogleMapPicker
-                          readOnly={true}
-                          initialLocation={{
-                            lat: selectedSedeInfo.lat,
-                            lng: selectedSedeInfo.lng,
-                            address: selectedSedeInfo.address
-                          }}
-                        />
-                      </div>
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div>
-                    <Label className="font-medium">Selecciona tu ubicación en el mapa *</Label>
-                    <div className="mt-2">
-                      <GoogleMapPicker onLocationSelect={handleLocationSelect} initialAddress={formData.address} />
-                    </div>
+                    <Label htmlFor="address">Dirección completa *</Label>
+                    <Input
+                      id="address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      placeholder="Ingrese su dirección completa"
+                      className="mt-1"
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

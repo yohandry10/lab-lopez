@@ -33,7 +33,7 @@ export function ImageGallery() {
   return (
     <section className="py-12 bg-white">
       <div className="container mx-auto px-4">
-        <h2 className="text-4xl font-light text-gray-900 mb-8 text-center">Nuestros Aliados</h2>
+        <h2 className="text-3xl sm:text-4xl font-light text-gray-900 mb-8 text-center">Nuestros Aliados</h2>
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex gap-6">
             {partners.map((partner, idx) => (

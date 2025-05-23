@@ -16,22 +16,22 @@ const DigitalLibrary = dynamic(() => import("@/components/digital-library"), { s
 
 // Memoized user type link component
 const UserTypeLink = ({ href, icon: Icon, label }: { href: string; icon: any; label: string }) => (
-  <div className="relative">
+  <div className="relative w-full sm:w-auto">
     <Link
       href={href}
       className="flex flex-col items-center justify-center
-                 w-56 h-56
+                 w-48 h-48 sm:w-56 sm:h-56
                  bg-[#1e5fad] hover:bg-[#1e5fad]/90
                  rounded-full text-white
-                 transition-colors group relative z-10"
+                 transition-colors group relative z-10 shadow-lg hover:shadow-xl"
     >
-      <Icon className="h-16 w-16 mb-4" />
-      <span className="text-xl font-bold">{label}</span>
+      <Icon className="h-12 w-12 sm:h-16 sm:w-16 mb-3 sm:mb-4" />
+      <span className="text-lg sm:text-xl font-bold text-center px-2">{label}</span>
     </Link>
     <div
-      className="absolute -left-5 top-1/2
-                 w-12 h-12 bg-[#1e5fad]
-                 transform rotate-45 -translate-y-1/2 z-0"
+      className="absolute -left-3 sm:-left-5 top-1/2
+                 w-10 h-10 sm:w-12 sm:h-12 bg-[#1e5fad]/50
+                 transform rotate-45 -translate-y-1/2 z-0 hidden sm:block"
     ></div>
   </div>
 )
@@ -55,14 +55,14 @@ export default function Home() {
             transition={{ delay: 0.2 }}
           >
             <div className="container mx-auto px-4">
-              <div className="bg-[#f3f9fe] shadow-lg rounded-lg p-8 relative -mt-16 z-10">
+              <div className="bg-[#f3f9fe] shadow-lg rounded-lg p-6 sm:p-8 relative -mt-12 sm:-mt-16 z-10">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
-                  <div className="md:col-span-1 text-left">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Consulta tus resultados</h2>
-                    <p className="text-sm text-blue-600">Revisa el estado y detalle de tus análisis</p>
+                  <div className="md:col-span-1 text-center md:text-left">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Consulta tus resultados</h2>
+                    <p className="text-xs sm:text-sm text-blue-600">Revisa el estado y detalle de tus análisis</p>
                   </div>
 
-                  <div className="md:col-span-3 flex justify-between px-8 gap-8">
+                  <div className="md:col-span-3 flex flex-col items-center gap-8 mt-6 md:mt-0 md:flex-row md:justify-around lg:justify-between md:px-0 lg:px-8">
                     <UserTypeLink href="/resultados?type=patient" icon={User} label="Pacientes" />
                     <UserTypeLink href="/login" icon={Stethoscope} label="Médicos" />
                     <UserTypeLink href="/login" icon={Building2} label="Empresas" />

@@ -221,7 +221,7 @@ export function Navbar() {
                     {hasDropdown && showResultadosDropdown && (
                       <div
                         ref={dropdownRef}
-                        className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4 w-[800px] bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 z-50 animate-in fade-in-50 zoom-in-95 slide-in-from-top-5"
+                        className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4 w-full md:w-[800px] bg-white/95 backdrop-blur-sm rounded-xl shadow-xl p-6 z-50 animate-in fade-in-50 zoom-in-95 slide-in-from-top-5"
                       >
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                           {/* Texto descriptivo */}
@@ -233,11 +233,11 @@ export function Navbar() {
                           </div>
 
                           {/* Botones (Pacientes, Médicos, Empresas) */}
-                          <div className="md:col-span-4 flex justify-center gap-6">
+                          <div className="md:col-span-4 flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6">
                             {/* Pacientes */}
                             <Link
                               href="/resultados?type=patient"
-                              className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-56"
+                              className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-full sm:w-56"
                             >
                               <div className="w-10 h-10 rounded-full bg-[#1e5fad] flex items-center justify-center flex-shrink-0">
                                 <User className="h-5 w-5 text-white" />
@@ -248,7 +248,7 @@ export function Navbar() {
                             {/* Médicos */}
                             <Link
                               href="/resultados?type=doctor"
-                              className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-56"
+                              className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-full sm:w-56"
                             >
                               <div className="w-10 h-10 rounded-full bg-[#1e5fad] flex items-center justify-center flex-shrink-0">
                                 <Stethoscope className="h-5 w-5 text-white" />
@@ -259,7 +259,7 @@ export function Navbar() {
                             {/* Empresas */}
                             <Link
                               href="/resultados?type=company"
-                              className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-56"
+                              className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-full sm:w-56"
                             >
                               <div className="w-10 h-10 rounded-full bg-[#1e5fad] flex items-center justify-center flex-shrink-0">
                                 <Building2 className="h-5 w-5 text-white" />
@@ -366,35 +366,147 @@ export function Navbar() {
                       <Menu className="h-6 w-6 text-gray-700" />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-                    <nav className="flex flex-col gap-4">
+                  <SheetContent side="left" className="w-[300px] sm:w-[350px] p-6 flex flex-col">
+                    <nav className="flex flex-col gap-6 pt-8 flex-grow">
                       {mobileNavItems.map(({ href, etiqueta, icono: Icon, hasDropdown }) => (
                         <div key={etiqueta}>
                           {hasDropdown ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <button className="flex items-center gap-2 text-lg font-medium text-gray-600 hover:text-gray-900">
-                                  <Icon className="h-5 w-5" />
-                                  {etiqueta}
-                                  <ChevronDown className="h-4 w-4" />
+                                <button className="flex w-full items-center justify-between text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors">
+                                  <div className="flex items-center gap-3">
+                                    <Icon className="h-6 w-6 text-blue-500" />
+                                    <span>{etiqueta}</span>
+                                  </div>
+                                  <ChevronDown className="h-5 w-5" />
                                 </button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start" className="w-[300px]">
-                                {/* Contenido del dropdown */}
+                              <DropdownMenuContent align="start" className="w-[calc(100%-2rem)] max-w-xs mt-2 p-2">
+                                <DropdownMenuItem asChild>
+                                  <SheetClose asChild>
+                                    <Link href="/resultados?type=patient" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
+                                      <User className="h-5 w-5 text-blue-500" />
+                                      <span>Pacientes</span>
+                                    </Link>
+                                  </SheetClose>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <SheetClose asChild>
+                                    <Link href="/resultados?type=doctor" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
+                                      <Stethoscope className="h-5 w-5 text-blue-500" />
+                                      <span>Médicos</span>
+                                    </Link>
+                                  </SheetClose>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <SheetClose asChild>
+                                    <Link href="/resultados?type=company" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
+                                      <Building2 className="h-5 w-5 text-blue-500" />
+                                      <span>Empresas</span>
+                                    </Link>
+                                  </SheetClose>
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           ) : (
-                            <Link
-                              href={href}
-                              className="flex items-center gap-2 text-lg font-medium text-gray-600 hover:text-gray-900"
-                            >
-                              <Icon className="h-5 w-5" />
-                              {etiqueta}
-                            </Link>
+                            <SheetClose asChild>
+                              <Link
+                                href={href}
+                                className="flex items-center gap-3 text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors"
+                                onClick={() => setIsOpen(false)}
+                              >
+                                <Icon className="h-6 w-6 text-blue-500" />
+                                <span>{etiqueta}</span>
+                              </Link>
+                            </SheetClose>
                           )}
                         </div>
                       ))}
                     </nav>
+                    {/* Auth buttons for mobile */}
+                    <div className="mt-auto pt-6 border-t border-gray-200">
+                      {user ? (
+                        <>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="flex w-full items-center justify-between text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors mb-4">
+                                <div className="flex items-center gap-3">
+                                  <User className="h-6 w-6 text-blue-500" />
+                                  <span>{user.first_name}</span>
+                                </div>
+                                <ChevronDown className="h-5 w-5" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-[calc(100%-2rem)] max-w-xs p-2">
+                              <DropdownMenuLabel className="px-3 py-2 font-normal">
+                                <div className="flex flex-col space-y-1">
+                                  <p className="text-sm font-medium leading-none">{user.first_name} {user.last_name}</p>
+                                  <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                                </div>
+                              </DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {user.user_type === "admin" && (
+                                <DropdownMenuItem asChild>
+                                  <SheetClose asChild>
+                                    <Link href="/admin/registrar-usuario" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
+                                      <User className="mr-2 h-4 w-4" />
+                                      <span>Registrar Usuario</span>
+                                    </Link>
+                                  </SheetClose>
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem asChild>
+                                <SheetClose asChild>
+                                  <Link href="/perfil" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
+                                    <User className="mr-2 h-4 w-4" />
+                                    <span>Mi Perfil</span>
+                                  </Link>
+                                </SheetClose>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="flex items-center gap-3 p-3 text-base text-red-600 hover:bg-red-50 rounded-md focus:text-red-600 focus:bg-red-50"
+                                onClick={async () => {
+                                  await logout();
+                                  router.push("/");
+                                  setIsOpen(false);
+                                }}
+                              >
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>Cerrar Sesión</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <SheetClose asChild>
+                            <Link href="/carrito" className="w-full" onClick={() => setIsOpen(false)}>
+                              <Button className="w-full justify-center gap-2 bg-[#3da64a] hover:bg-[#2c7f36] text-white">
+                                <ShoppingCart className="h-5 w-5" />
+                                <span>Carrito ({itemCount})</span>
+                              </Button>
+                            </Link>
+                          </SheetClose>
+                        </>
+                      ) : (
+                        <>
+                          <SheetClose asChild>
+                            <Link href="/login" className="w-full" onClick={() => setIsOpen(false)}>
+                              <Button variant="outline" className="w-full justify-center gap-2 border-blue-600 text-blue-600 hover:bg-blue-50 mb-3">
+                                <User className="h-5 w-5" />
+                                <span>Iniciar Sesión</span>
+                              </Button>
+                            </Link>
+                          </SheetClose>
+                          <SheetClose asChild>
+                            <Link href="/carrito" className="w-full" onClick={() => setIsOpen(false)}>
+                              <Button className="w-full justify-center gap-2 bg-[#3da64a] hover:bg-[#2c7f36] text-white">
+                                <ShoppingCart className="h-5 w-5" />
+                                <span>Carrito ({itemCount})</span>
+                              </Button>
+                            </Link>
+                          </SheetClose>
+                        </>
+                      )}
+                    </div>
                   </SheetContent>
                 </Sheet>
               </div>

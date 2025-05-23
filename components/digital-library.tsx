@@ -458,8 +458,8 @@ export default function DigitalLibrary() {
     <section className="py-16">
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center mb-8">
-          <h2 className="text-4xl font-light text-gray-900 mb-2">Biblioteca Digital</h2>
-          <p className="text-gray-500 text-lg">Servicios diseñados para mejorar tu calidad de vida</p>
+          <h2 className="text-3xl sm:text-4xl font-light text-gray-900 mb-2 text-center">Biblioteca Digital</h2>
+          <p className="text-gray-500 text-base sm:text-lg text-center">Servicios diseñados para mejorar tu calidad de vida</p>
           
           {user?.user_type === "admin" && (
             <Button 
@@ -531,73 +531,73 @@ export default function DigitalLibrary() {
       </div>
 
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editingArticle ? 'Editar artículo' : 'Nuevo artículo'}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveArticle}>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="title" className="text-right">Título</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                <Label htmlFor="title" className="sm:text-right">Título</Label>
                 <Input
                   id="title"
                   name="title"
                   defaultValue={editingArticle?.title}
-                  className="col-span-3"
+                  className="sm:col-span-3"
                   required
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="description" className="text-right">Descripción</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                <Label htmlFor="description" className="sm:text-right">Descripción</Label>
                 <Textarea
                   id="description"
                   name="description"
                   defaultValue={editingArticle?.description}
-                  className="col-span-3"
+                  className="sm:col-span-3"
                   required
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="content" className="text-right">Contenido</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                <Label htmlFor="content" className="sm:text-right">Contenido</Label>
                 <Textarea
                   id="content"
                   name="content"
                   defaultValue={editingArticle?.content}
-                  className="col-span-3"
+                  className="sm:col-span-3"
                   required
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="image" className="text-right">URL Imagen</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                <Label htmlFor="image" className="sm:text-right">URL Imagen</Label>
                 <Input
                   id="image"
                   name="image"
                   defaultValue={editingArticle?.image}
-                  className="col-span-3"
+                  className="sm:col-span-3"
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="category" className="text-right">Categoría</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                <Label htmlFor="category" className="sm:text-right">Categoría</Label>
                 <Input
                   id="category"
                   name="category"
                   defaultValue={editingArticle?.category}
-                  className="col-span-3"
+                  className="sm:col-span-3"
                   required
                 />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="slug" className="text-right">Slug</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                <Label htmlFor="slug" className="sm:text-right">Slug</Label>
                 <Input
                   id="slug"
                   name="slug"
                   defaultValue={editingArticle?.slug}
-                  className="col-span-3"
+                  className="sm:col-span-3"
                   required
                 />
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-0">
               <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>
                 Cancelar
               </Button>

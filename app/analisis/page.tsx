@@ -1113,14 +1113,14 @@ export default function AnalisisPage() {
                 <Input
                   type="text"
                   placeholder="Buscar por análisis"
-                  className="pl-8 sm:pl-10 h-10 sm:h-12 text-sm sm:text-base border-gray-300 focus:border-[#1E5FAD] focus:ring-[#1E5FAD] transition-all duration-300"
+                  className="pl-8 sm:pl-10 h-10 sm:h-12 text-sm sm:text-base border-gray-300 focus:border-[#1E5FAD] focus:ring-[#1E5FAD] transition-all duration-300 w-full"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
                 <Select value={selectedCategory || "all"} onValueChange={handleCategoryChange}>
-                  <SelectTrigger className="h-10 sm:h-12 min-w-[180px] border-gray-300 focus:border-[#1E5FAD] focus:ring-[#1E5FAD] transition-all duration-300">
+                  <SelectTrigger className="h-10 sm:h-12 w-full sm:w-auto sm:min-w-[180px] border-gray-300 focus:border-[#1E5FAD] focus:ring-[#1E5FAD] transition-all duration-300">
                     <SelectValue placeholder="Categoría" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1255,11 +1255,11 @@ export default function AnalisisPage() {
 
                 {/* Paginación - Solo si hay muchos resultados */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-700">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-6 sm:mt-8">
+                    <div className="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
                       Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredAnalysis.length)} de {filteredAnalysis.length} resultados
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                       <Button
                         variant="outline"
                         onClick={() => handlePageChange(currentPage - 1)}
@@ -1301,15 +1301,15 @@ export default function AnalisisPage() {
               </div>
             ) : (searchTerm || selectedCategory || selectedLetter) && filteredAnalysis.length === 0 ? (
               /* No hay resultados */
-              <div className="text-center py-12 bg-gradient-to-br from-red-50 to-orange-100 rounded-xl border border-red-200">
-                <div className="max-w-2xl mx-auto">
-                  <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Search className="h-8 w-8 text-white" />
+              <div className="text-center py-10 sm:py-12 bg-gradient-to-br from-red-50 to-orange-100 rounded-xl border border-red-200">
+                <div className="max-w-md sm:max-w-lg mx-auto px-4">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
                   </div>
-                  <h3 className="text-2xl font-semibold text-red-600 mb-3">
+                  <h3 className="text-xl sm:text-2xl font-semibold text-red-600 mb-3">
                     No se encontraron resultados
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-sm sm:text-base text-gray-600 mb-6">
                     No encontramos análisis que coincidan con tu búsqueda
                     {searchTerm && ` para "${searchTerm}"`}
                     {selectedCategory && ` en ${selectedCategory}`}
@@ -1329,26 +1329,26 @@ export default function AnalisisPage() {
               </div>
             ) : (
               /* Mensaje de bienvenida - Solo cuando NO hay búsqueda */
-              <div className="text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl border border-[#1E5FAD]/20">
-                <div className="max-w-2xl mx-auto">
-                  <div className="w-16 h-16 bg-[#1E5FAD] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Search className="h-8 w-8 text-white" />
+              <div className="text-center py-10 sm:py-12 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl border border-[#1E5FAD]/20">
+                <div className="max-w-md sm:max-w-lg mx-auto px-4">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#1E5FAD] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
                   </div>
-                  <h3 className="text-2xl font-semibold text-[#1E5FAD] mb-3">
+                  <h3 className="text-xl sm:text-2xl font-semibold text-[#1E5FAD] mb-3">
                     Encuentra el análisis que necesitas
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-sm sm:text-base text-gray-600 mb-6">
                     Utiliza el buscador o selecciona una categoría para encontrar rápidamente el análisis clínico que estás buscando.
                     Tenemos más de 200 análisis disponibles para ti.
                   </p>
-                  <div className="space-y-3">
-                    <div className="text-lg text-gray-700">
+                  <div className="space-y-2 sm:space-y-3">
+                    <div className="text-base sm:text-lg text-gray-700">
                       🔬 Análisis de laboratorio con tecnología de vanguardia
                     </div>
-                    <div className="text-lg text-gray-700">
+                    <div className="text-base sm:text-lg text-gray-700">
                       📋 Más de 15 categorías especializadas disponibles
                     </div>
-                    <div className="text-lg text-gray-700">
+                    <div className="text-base sm:text-lg text-gray-700">
                       ⚡ Resultados rápidos y precisos
                     </div>
                   </div>
@@ -1543,6 +1543,7 @@ export default function AnalisisPage() {
         isOpen={selectedAnalysis !== null}
         onClose={() => setSelectedAnalysis(null)}
         analysis={selectedAnalysis}
+        user={user}
       />
 
       {selectedTest && (
