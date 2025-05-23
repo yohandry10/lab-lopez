@@ -834,7 +834,7 @@ export default function AnalisisPage() {
       title: "Perfil Básico",
       description: "Evaluación general de tu salud",
       price: 180.00,
-      image: "/placeholder.svg",
+      image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
       tests: [
         "Hemograma completo",
         "Glucosa",
@@ -848,7 +848,7 @@ export default function AnalisisPage() {
       title: "Perfil Lipídico",
       description: "Evaluación completa de grasas en sangre",
       price: 220.00,
-      image: "/placeholder.svg",
+      image: "https://images.unsplash.com/photo-1576086213369-97a306d36557?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
       tests: [
         "Colesterol total",
         "Colesterol HDL",
@@ -861,7 +861,7 @@ export default function AnalisisPage() {
       title: "Perfil Hepático",
       description: "Evaluación de la función del hígado",
       price: 250.00,
-      image: "/placeholder.svg",
+      image: "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
       tests: [
         "TGO",
         "TGP",
@@ -1048,7 +1048,7 @@ export default function AnalisisPage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Updated Hero Section */}
-      <section className="relative w-full h-[500px] overflow-hidden">
+      <section className="relative w-full h-[350px] sm:h-[400px] md:h-[450px] lg:h-[500px] overflow-hidden">
         {/* Background image */}
         <Image src="/lab.webp" alt="Análisis Clínicos" fill className="object-cover" priority />
 
@@ -1056,23 +1056,23 @@ export default function AnalisisPage() {
         <div className="absolute inset-0 bg-[#EAF7FF]/50" />
 
         {/* Content */}
-        <div className="container relative h-full flex flex-col justify-between max-w-[1200px] mx-auto px-4 py-12">
+        <div className="container relative h-full flex flex-col justify-between max-w-[1200px] mx-auto px-4 py-6 sm:py-8 md:py-12">
           <div className="flex flex-col items-start max-w-3xl mt-auto">
-            <p className="text-lg font-medium mb-4">
-              <span className="text-[#2F71B8]">Más de 2500 análisis</span>{" "}
+            <p className="text-sm sm:text-base md:text-lg font-medium mb-2 sm:mb-3 md:mb-4">
+              <span className="text-[#2F71B8]">Más de 200 análisis</span>{" "}
               <span className="text-gray-600">a tu disposición</span>
             </p>
-            <h3 className="text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight mb-6 font-sans">
+            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-normal tracking-tight mb-4 sm:mb-5 md:mb-6 font-sans leading-tight">
               <span className="text-[#2F71B8]">Directorio</span> <span className="text-black">de análisis</span>
             </h3>
           </div>
-          <div className="flex justify-end mt-auto">
+          <div className="flex justify-center sm:justify-end mt-auto">
             <Button
               size="lg"
-              className="bg-[#2F71B8] hover:bg-[#2EB9A5] text-white px-8 py-6 h-auto text-lg transition-all duration-300 hover:shadow-lg"
+              className="bg-[#2F71B8] hover:bg-[#2EB9A5] text-white px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-6 h-auto text-sm sm:text-base md:text-lg transition-all duration-300 hover:shadow-lg"
               onClick={() => setIsHeroSchedulingOpen(true)}
             >
-              <Syringe className="mr-2 h-5 w-5" />
+              <Syringe className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
               Agenda tus análisis
             </Button>
           </div>
@@ -1080,68 +1080,88 @@ export default function AnalisisPage() {
       </section>
 
       {/* Rest of the content */}
-      <div className="max-w-[1200px] mx-auto px-4 py-12">
+      <div className="max-w-[1200px] mx-auto px-4 py-6 sm:py-8 md:py-12">
         {/* Tabs para perfiles populares */}
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="w-full max-w-3xl mx-auto">
-            <TabsTrigger value="all">Todos los análisis</TabsTrigger>
-            <TabsTrigger value="popular">Perfiles populares</TabsTrigger>
-            <TabsTrigger value="covid">COVID-19</TabsTrigger>
+          <TabsList className="w-full max-w-3xl mx-auto bg-gray-100 p-1 rounded-xl h-12 sm:h-14 flex">
+            <TabsTrigger 
+              value="all" 
+              className="flex-1 h-10 sm:h-12 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 data-[state=active]:bg-[#1E5FAD] data-[state=active]:text-white data-[state=active]:shadow-lg transform hover:scale-105 data-[state=active]:transform data-[state=active]:scale-105"
+            >
+              <span className="hidden sm:inline">Todos los análisis</span>
+              <span className="sm:hidden">Todos</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="popular" 
+              className="flex-1 h-10 sm:h-12 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 data-[state=active]:bg-[#1E5FAD] data-[state=active]:text-white data-[state=active]:shadow-lg transform hover:scale-105 data-[state=active]:transform data-[state=active]:scale-105"
+            >
+              <span className="hidden sm:inline">Perfiles populares</span>
+              <span className="sm:hidden">Perfiles</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="covid" 
+              className="flex-1 h-10 sm:h-12 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 data-[state=active]:bg-[#1E5FAD] data-[state=active]:text-white data-[state=active]:shadow-lg transform hover:scale-105 data-[state=active]:transform data-[state=active]:scale-105"
+            >
+              COVID-19
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-6">
             {/* Barra de búsqueda */}
-            <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 mb-6">
               <div className="relative flex-1 w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                 <Input
                   type="text"
                   placeholder="Buscar por análisis"
-                  className="pl-10 h-12 text-base border-gray-300"
+                  className="pl-8 sm:pl-10 h-10 sm:h-12 text-sm sm:text-base border-gray-300 focus:border-[#1E5FAD] focus:ring-[#1E5FAD] transition-all duration-300"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <div className="flex items-center gap-2 w-full md:w-auto">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
                 <Select value={selectedCategory || "all"} onValueChange={handleCategoryChange}>
-                  <SelectTrigger className="h-12 min-w-[180px]">
+                  <SelectTrigger className="h-10 sm:h-12 min-w-[180px] border-gray-300 focus:border-[#1E5FAD] focus:ring-[#1E5FAD] transition-all duration-300">
                     <SelectValue placeholder="Categoría" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todas las categorías</SelectItem>
+                    <SelectItem value="all" className="focus:bg-[#1E5FAD] focus:text-white">Todas las categorías</SelectItem>
                     {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
+                      <SelectItem key={category} value={category} className="focus:bg-[#1E5FAD] focus:text-white transition-colors duration-200">
                         {category}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Button className="h-12 px-8 bg-[#1E5FAD] hover:bg-[#3DA64A] text-base">Buscar</Button>
+                <Button className="h-10 sm:h-12 px-4 sm:px-8 bg-[#1E5FAD] hover:bg-[#3DA64A] text-sm sm:text-base transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
+                  Buscar
+                </Button>
               </div>
             </div>
 
             {/* Búsqueda alfabética */}
             <div className="space-y-3 mb-6">
-              <div className="text-sm text-gray-500">Búsqueda alfabética</div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 lg:grid-cols-9 gap-2">
+              <div className="text-xs sm:text-sm text-gray-500">Búsqueda alfabética</div>
+              <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-9 xl:grid-cols-10 gap-1 sm:gap-2">
                 <Button
                   variant={selectedLetter === null ? "default" : "outline"}
-                  className={`h-12 text-base font-medium ${
+                  className={`h-8 sm:h-10 md:h-12 text-xs sm:text-sm md:text-base font-medium transition-all duration-300 transform hover:scale-110 hover:shadow-xl ${
                     selectedLetter === null
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                      ? "bg-[#1E5FAD] hover:bg-[#3DA64A] shadow-lg scale-105"
+                      : "bg-gradient-to-br from-blue-50 to-blue-100 text-[#1E5FAD] hover:from-[#1E5FAD] hover:to-[#3DA64A] hover:text-white border-[#1E5FAD]/30 hover:border-[#1E5FAD] hover:shadow-lg"
                   }`}
                   onClick={() => setSelectedLetter(null)}
                 >
-                  Todos
+                  <span className="hidden sm:inline">Todos</span>
+                  <span className="sm:hidden">*</span>
                 </Button>
                 {Array.from("ABCDEFGHIJKLMNOPQRSTUVWXYZ").map((letter) => (
                   <Button
                     key={letter}
                     variant="outline"
-                    className={`h-12 text-base font-medium ${
+                    className={`h-8 sm:h-10 md:h-12 text-xs sm:text-sm md:text-base font-medium transition-all duration-300 transform hover:scale-110 hover:shadow-xl ${
                       selectedLetter === letter
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                        ? "bg-[#1E5FAD] text-white hover:bg-[#3DA64A] shadow-lg border-[#1E5FAD] scale-105"
+                        : "bg-gradient-to-br from-blue-50 to-blue-100 text-[#1E5FAD] hover:from-[#1E5FAD] hover:to-[#3DA64A] hover:text-white border-[#1E5FAD]/30 hover:border-[#1E5FAD] hover:shadow-lg"
                     }`}
                     onClick={() => handleLetterClick(letter)}
                   >
@@ -1151,205 +1171,187 @@ export default function AnalisisPage() {
               </div>
             </div>
 
-            {/* Controles de visualización */}
-            <div className="flex justify-between items-center mb-4">
-              <div className="text-sm text-gray-500">
-                {filteredAnalysis.length} {filteredAnalysis.length === 1 ? "resultado" : "resultados"} encontrados
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={viewMode === "list" ? "bg-blue-50" : ""}
-                  onClick={() => setViewMode("list")}
-                >
-                  Lista
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className={viewMode === "grid" ? "bg-blue-50" : ""}
-                  onClick={() => setViewMode("grid")}
-                >
-                  Cuadrícula
-                </Button>
-              </div>
-            </div>
-
-            {/* Tabla de resultados */}
-            {viewMode === "list" ? (
-              <div id="analysis-table" className="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">Nombre del análisis</th>
-                      <th className="text-center py-4 px-4 text-sm font-medium text-gray-500 hidden md:table-cell">
-                        Categoría
-                      </th>
-                      <th className="text-center py-4 px-4 text-sm font-medium text-gray-500 hidden md:table-cell">
-                        Precio
-                      </th>
-                      <th className="w-32 text-center py-4 px-4 text-sm font-medium text-gray-500">Detalle</th>
-                      <th className="w-32 text-center py-4 px-4 text-sm font-medium text-gray-500">Carrito</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {currentAnalyses.map((analysis) => (
-                      <tr key={analysis.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="py-4 px-6 text-sm text-gray-900">
-                          <div className="flex items-center justify-between">
-                            <span>{analysis.name}</span>
-                            {user?.user_type === "admin" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setEditingAnalysis(analysis)}
-                                className="ml-2 border-blue-200 hover:bg-blue-50"
-                              >
-                                <Edit className="h-4 w-4 mr-1" />
-                                Editar
-                              </Button>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 text-sm text-gray-500 text-center hidden md:table-cell">
-                          {analysis.category}
-                        </td>
-                        <td className="py-4 px-4 text-sm font-medium text-gray-900 text-center hidden md:table-cell">
-                          {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") ? `S/. ${analysis.price.toFixed(2)}` : ''}
-                        </td>
-                        <td className="py-4 px-4 text-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:border-blue-300 min-w-[80px]"
-                            onClick={() => setSelectedAnalysis(analysis)}
-                          >
-                            VER
-                          </Button>
-                        </td>
-                        <td className="py-4 px-4 text-center">
-                          {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
-                            <Button
-                              size="sm"
-                              className="bg-[#3DA64A] hover:bg-[#1E5FAD] min-w-[80px]"
-                              onClick={() => handleAddToCart(analysis)}
-                            >
-                              AGREGAR
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div id="analysis-table" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {currentAnalyses.map((analysis) => (
-                  <Card key={analysis.id} className="w-full">
-                    <CardHeader>
-                      <div className="flex justify-between items-center">
-                        <CardTitle>{analysis.name}</CardTitle>
-                        <div className="flex gap-2">
-                          {user?.user_type === "admin" && (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setEditingAnalysis(analysis)}
-                                className="border-blue-200 hover:bg-blue-50"
-                              >
-                                <Edit className="h-4 w-4 mr-1" />
-                                Editar
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDeleteAnalysis(analysis)}
-                                className="hover:bg-red-600"
-                              >
-                                <Trash className="h-4 w-4 mr-1" />
-                                Eliminar
-                              </Button>
-                            </>
-                          )}
-                          {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => handleAddToCart(analysis)}
-                              className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
-                            >
-                              Agregar
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      <CardDescription>Categoría: {analysis.category}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <p><strong>Precio:</strong> {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") ? `S/. ${analysis.price.toFixed(2)}` : ''}</p>
-                        <p><strong>Condiciones:</strong> {analysis.conditions}</p>
-                        <p><strong>Muestra:</strong> {analysis.sample}</p>
-                        <p><strong>Protocolo:</strong> {analysis.protocol}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-
-            {filteredAnalysis.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
-                No se encontraron análisis que coincidan con tu búsqueda
-              </div>
-            ) : (
-              <div className="flex flex-col items-center space-y-4 mt-6">
-                <div className="text-sm text-gray-500">
-                  Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1} -{" "}
-                  {Math.min(currentPage * ITEMS_PER_PAGE, filteredAnalysis.length)} de {filteredAnalysis.length}{" "}
-                  resultados
+            {/* Resultados de búsqueda - Solo mostrar cuando hay búsqueda activa */}
+            {(searchTerm || selectedCategory || selectedLetter) && filteredAnalysis.length > 0 ? (
+              <div className="space-y-6">
+                {/* Contador de resultados */}
+                <div className="bg-white rounded-lg p-4 border border-[#1E5FAD]/20">
+                  <p className="text-[#1E5FAD] font-medium">
+                    {filteredAnalysis.length} {filteredAnalysis.length === 1 ? "resultado encontrado" : "resultados encontrados"}
+                    {searchTerm && ` para "${searchTerm}"`}
+                    {selectedCategory && ` en ${selectedCategory}`}
+                    {selectedLetter && ` que comienzan con "${selectedLetter}"`}
+                  </p>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="h-10 w-10"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
+                {/* Tabla de resultados */}
+                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Nombre del análisis
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Categoría
+                          </th>
+                          {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Precio
+                            </th>
+                          )}
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Detalle
+                          </th>
+                          {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Carrito
+                            </th>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {currentAnalyses.map((analysis) => (
+                          <tr key={analysis.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">{analysis.name}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {analysis.category}
+                              </span>
+                            </td>
+                            {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                S/. {analysis.price.toFixed(2)}
+                              </td>
+                            )}
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <Button
+                                variant="outline"
+                                className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                onClick={() => setSelectedAnalysis(analysis)}
+                              >
+                                VER
+                              </Button>
+                            </td>
+                            {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <Button
+                                  className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
+                                  onClick={() => handleAddToCart(analysis)}
+                                >
+                                  Agregar
+                                </Button>
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
 
-                  {getPageNumbers().map((page, index) =>
-                    typeof page === "number" ? (
+                {/* Paginación - Solo si hay muchos resultados */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-700">
+                      Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredAnalysis.length)} de {filteredAnalysis.length} resultados
+                    </div>
+                    <div className="flex items-center space-x-2">
                       <Button
-                        key={index}
-                        variant={currentPage === page ? "default" : "outline"}
-                        className={`h-10 w-10 ${currentPage === page ? "bg-[#1E5FAD] hover:bg-[#3DA64A]" : ""}`}
-                        onClick={() => handlePageChange(page)}
+                        variant="outline"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="border-gray-300"
                       >
-                        {page}
+                        <ChevronLeft className="h-4 w-4" />
+                        Anterior
                       </Button>
-                    ) : (
-                      <span key={index} className="px-2">
-                        {page}
-                      </span>
-                    ),
-                  )}
-
+                      <div className="flex space-x-1">
+                        {getPageNumbers().map((page, index) => (
+                          <Button
+                            key={index}
+                            variant={currentPage === page ? "default" : "outline"}
+                            className={`min-w-[40px] ${
+                              currentPage === page
+                                ? "bg-[#1E5FAD] hover:bg-[#3DA64A]"
+                                : "border-gray-300 hover:bg-gray-50"
+                            }`}
+                            onClick={() => typeof page === "number" && handlePageChange(page)}
+                            disabled={page === "..."}
+                          >
+                            {page}
+                          </Button>
+                        ))}
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="border-gray-300"
+                      >
+                        Siguiente
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (searchTerm || selectedCategory || selectedLetter) && filteredAnalysis.length === 0 ? (
+              /* No hay resultados */
+              <div className="text-center py-12 bg-gradient-to-br from-red-50 to-orange-100 rounded-xl border border-red-200">
+                <div className="max-w-2xl mx-auto">
+                  <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-semibold text-red-600 mb-3">
+                    No se encontraron resultados
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    No encontramos análisis que coincidan con tu búsqueda
+                    {searchTerm && ` para "${searchTerm}"`}
+                    {selectedCategory && ` en ${selectedCategory}`}
+                    {selectedLetter && ` que comienzan con "${selectedLetter}"`}
+                  </p>
                   <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="h-10 w-10"
+                    onClick={() => {
+                      setSearchTerm("")
+                      setSelectedCategory(null)
+                      setSelectedLetter(null)
+                    }}
+                    className="bg-[#1E5FAD] hover:bg-[#3DA64A]"
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    Limpiar búsqueda
                   </Button>
+                </div>
+              </div>
+            ) : (
+              /* Mensaje de bienvenida - Solo cuando NO hay búsqueda */
+              <div className="text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl border border-[#1E5FAD]/20">
+                <div className="max-w-2xl mx-auto">
+                  <div className="w-16 h-16 bg-[#1E5FAD] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="h-8 w-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-semibold text-[#1E5FAD] mb-3">
+                    Encuentra el análisis que necesitas
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Utiliza el buscador o selecciona una categoría para encontrar rápidamente el análisis clínico que estás buscando.
+                    Tenemos más de 200 análisis disponibles para ti.
+                  </p>
+                  <div className="space-y-3">
+                    <div className="text-lg text-gray-700">
+                      🔬 Análisis de laboratorio con tecnología de vanguardia
+                    </div>
+                    <div className="text-lg text-gray-700">
+                      📋 Más de 15 categorías especializadas disponibles
+                    </div>
+                    <div className="text-lg text-gray-700">
+                      ⚡ Resultados rápidos y precisos
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -1449,7 +1451,7 @@ export default function AnalisisPage() {
                   price: 120.0,
                   details: "Detecta proteínas del virus. Ideal para casos sintomáticos recientes.",
                   turnaround: "15-30 minutos",
-                  image: "/placeholder.svg?height=200&width=300&text=Prueba%20Antígeno",
+                  image: "https://images.unsplash.com/photo-1584118624012-df056829fbd0?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
                 },
                 {
                   title: "Prueba PCR COVID-19",
@@ -1457,7 +1459,7 @@ export default function AnalisisPage() {
                   price: 280.0,
                   details: "Detecta material genético del virus. Alta precisión.",
                   turnaround: "24-48 horas",
-                  image: "/placeholder.svg?height=200&width=300&text=Prueba%20PCR",
+                  image: "https://images.unsplash.com/photo-1576671081837-49000212a370?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
                 },
                 {
                   title: "Anticuerpos COVID-19",
@@ -1465,7 +1467,7 @@ export default function AnalisisPage() {
                   price: 180.0,
                   details: "Detecta anticuerpos IgG e IgM. Útil para conocer exposición previa.",
                   turnaround: "24 horas",
-                  image: "/placeholder.svg?height=200&width=300&text=Anticuerpos",
+                  image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
                 },
               ].map((test, i) => (
                 <Card
@@ -1494,8 +1496,19 @@ export default function AnalisisPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="flex justify-between">
-                    <Button variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50">
-                      Más info
+                    <Button 
+                      variant="outline" 
+                      className="bg-[#25d366] hover:bg-[#25d366]/90 text-white border-[#25d366]"
+                      onClick={() => {
+                        const message = `Hola, estoy interesado en la ${test.title}. ¿Podrían darme más información?`
+                        const whatsappUrl = `https://wa.me/51999999999?text=${encodeURIComponent(message)}`
+                        window.open(whatsappUrl, '_blank')
+                      }}
+                    >
+                      <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 2.079.549 4.090 1.595 5.945L0 24l6.256-1.623c1.783.986 3.821 1.514 5.939 1.514 6.624 0 11.99-5.367 11.99-11.988C24.186 5.367 18.641.001 12.017.001zM12.017 21.989c-1.737 0-3.449-.434-4.96-1.263l-.356-.213-3.675.964.983-3.595-.233-.372C2.69 15.963 2.201 14.018 2.201 11.987c0-5.411 4.404-9.815 9.816-9.815 2.618 0 5.082 1.021 6.941 2.88 1.858 1.858 2.88 4.322 2.88 6.941-.001 5.411-4.406 9.816-9.821 9.816zm5.384-7.348c-.295-.148-1.744-.861-2.014-.958-.269-.098-.465-.148-.661.148-.197.295-.762.958-.934 1.155-.172.197-.344.221-.639.074-.295-.148-1.244-.459-2.37-1.462-.875-.781-1.465-1.746-1.637-2.041-.172-.295-.018-.455.129-.602.132-.131.295-.344.443-.516.148-.172.197-.295.295-.492.098-.197.049-.369-.025-.516-.074-.148-.661-1.591-.906-2.18-.238-.574-.479-.496-.661-.504-.172-.008-.369-.01-.565-.01-.197 0-.516.074-.787.369-.271.295-1.034 1.01-1.034 2.463 0 1.453 1.059 2.857 1.207 3.054.148.197 2.080 3.176 5.041 4.456.705.305 1.256.487 1.686.623.708.225 1.353.193 1.863.117.568-.084 1.744-.713 1.989-1.402.246-.689.246-1.279.172-1.402-.074-.123-.271-.197-.566-.345z"/>
+                      </svg>
+                      Consultar por WhatsApp
                     </Button>
                     {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
                       <Button

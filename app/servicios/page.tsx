@@ -42,7 +42,7 @@ const profiles: ProfilesData = {
     content:
       "Este perfil está diseñado para brindarte un panorama general de tu salud. Con exámenes clave, podrás identificar áreas de riesgo y tomar medidas preventivas a tiempo.",
     price: 690.0,
-    image: "/placeholder.svg?height=600&width=1200&text=Prevenci%C3%B3n+total",
+    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     locations: ["Sede", "Domicilio"],
     sampleType: "General",
     ageRequirement: "Cualquier edad",
@@ -71,7 +71,7 @@ const profiles: ProfilesData = {
     content:
       "Pensado para hombres que desean un chequeo integral, este perfil evalúa indicadores clave para que tomes decisiones informadas sobre tu salud.",
     price: 450.0,
-    image: "/placeholder.svg?height=600&width=1200&text=Hombre+saludable",
+    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     locations: ["Sede", "Domicilio"],
     sampleType: "General",
     ageRequirement: "18-45 años",
@@ -107,7 +107,7 @@ const profiles: ProfilesData = {
     content:
       "Diseñado especialmente para mujeres, este perfil te ayudará a mantener un control integral de tu salud, anticipando posibles complicaciones.",
     price: 550.0,
-    image: "/placeholder.svg?height=600&width=1200&text=Mujer+saludable",
+    image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     locations: ["Sede", "Domicilio"],
     sampleType: "General",
     ageRequirement: "Hasta 45 años",
@@ -143,7 +143,7 @@ const profiles: ProfilesData = {
     content:
       "Este perfil reúne las pruebas necesarias para garantizar que estés en óptimas condiciones antes de una cirugía.",
     price: 0,
-    image: "/placeholder.svg?height=600&width=1200&text=Preoperatorio",
+    image: "https://images.unsplash.com/photo-1551190822-a9333d879b1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     locations: ["Sede"],
     sampleType: "General",
     ageRequirement: "Mayor de 18",
@@ -157,7 +157,7 @@ const profiles: ProfilesData = {
     content:
       "Este perfil te permite evaluar tu salud sexual mediante exámenes específicos, garantizando una atención integral y preventiva.",
     price: 300.0,
-    image: "/placeholder.svg?height=600&width=1200&text=Salud+Sexual",
+    image: "https://images.unsplash.com/photo-1576086213369-97a306d36557?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     locations: ["Sede", "Domicilio"],
     sampleType: "Sangre",
     ageRequirement: "18 años en adelante",
@@ -180,7 +180,7 @@ const profiles: ProfilesData = {
     content:
       "Este perfil analiza los procesos metabólicos para brindarte una imagen clara de cómo funciona tu organismo.",
     price: 0,
-    image: "/placeholder.svg?height=600&width=1200&text=Salud+metab%C3%B3lica",
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     locations: ["Sede", "Domicilio"],
     sampleType: "General",
     ageRequirement: "Cualquier edad",
@@ -194,7 +194,7 @@ const profiles: ProfilesData = {
     content:
       "Especialmente diseñado para hombres mayores de 45, este perfil integra diversas pruebas para evaluar tu salud integral y anticipar posibles complicaciones.",
     price: 690.0,
-    image: "/placeholder.svg?height=600&width=1200&text=Edad+de+Oro",
+    image: "https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     locations: ["Sede", "Domicilio"],
     sampleType: ["Sangre", "Orina"],
     ageRequirement: "45 años en adelante",
@@ -207,7 +207,7 @@ const profiles: ProfilesData = {
     content:
       "A través de exámenes específicos, este perfil evalúa tus niveles de glucosa y otros indicadores críticos, permitiéndote tomar medidas preventivas.",
     price: 120.0,
-    image: "/placeholder.svg?height=600&width=1200&text=Diabetes+Control",
+    image: "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
     locations: ["Sede", "Domicilio"],
     sampleType: "Sangre",
     ageRequirement: "18 años en adelante",
@@ -268,12 +268,12 @@ export default function ServiciosPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-light tracking-tight sm:text-5xl text-gray-900 mb-4">
+    <div className="container mx-auto px-4 pt-16 sm:pt-20 md:pt-24 pb-8 sm:pb-10 md:pb-12">
+      <div className="text-center mb-8 sm:mb-10 md:mb-12">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-gray-900 mb-3 sm:mb-4">
           Perfiles de bienestar
         </h1>
-        <p className="text-xl text-gray-500">
+        <p className="text-base sm:text-lg md:text-xl text-gray-500">
           Servicios diseñados para mejorar tu calidad de vida
         </p>
         
@@ -287,15 +287,16 @@ export default function ServiciosPage() {
         )}
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
         {Object.entries(profilesData).map(([slug, profile]) => (
           <motion.div
             key={slug}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
+            className="w-full"
           >
-            <Card className="h-full flex flex-col overflow-hidden">
+            <Card className="h-full flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-300">
               <div className="relative aspect-video">
                 <Image
                   src={profile.image}
@@ -304,30 +305,30 @@ export default function ServiciosPage() {
                   className="object-cover"
                 />
                 {user?.user_type === "admin" && (
-                  <div className="absolute top-4 right-4 flex gap-2">
+                  <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex gap-1 sm:gap-2">
                     <Button
                       onClick={() => handleEditProfile({ ...profile, slug })}
-                      className="bg-[#1E5FAD] hover:bg-[#1E5FAD]/90 text-white p-2 rounded-full"
+                      className="bg-[#1E5FAD] hover:bg-[#1E5FAD]/90 text-white p-1.5 sm:p-2 rounded-full"
                       size="icon"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                     <Button
                       onClick={() => handleDeleteProfile(slug)}
-                      className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full"
+                      className="bg-red-500 hover:bg-red-600 text-white p-1.5 sm:p-2 rounded-full"
                       size="icon"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </div>
                 )}
               </div>
-              <CardContent className="flex-1 p-6">
-                <h2 className="text-2xl font-semibold mb-2">{profile.title}</h2>
-                <p className="text-gray-600 mb-4">{profile.description}</p>
+              <CardContent className="flex-1 p-4 sm:p-6">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-2">{profile.title}</h2>
+                <p className="text-sm sm:text-base text-gray-600 mb-4 line-clamp-3">{profile.description}</p>
                 <div className="mt-auto">
                   <Link href={`/servicios/${slug}`}>
-                    <Button className="w-full bg-[#1E5FAD] hover:bg-[#1E5FAD]/90 text-white">
+                    <Button className="w-full bg-[#1E5FAD] hover:bg-[#1E5FAD]/90 text-white h-10 sm:h-11">
                       Ver detalles
                     </Button>
                   </Link>
