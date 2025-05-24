@@ -1083,24 +1083,30 @@ export default function AnalisisPage() {
       <div className="max-w-[1200px] mx-auto px-4 py-6 sm:py-8 md:py-12">
         {/* Tabs para perfiles populares */}
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="w-full max-w-3xl mx-auto bg-gray-100 p-1 rounded-xl h-12 sm:h-14 flex">
+          <TabsList className="w-full max-w-3xl mx-auto bg-gray-100 p-1 rounded-xl h-12 sm:h-14 flex relative overflow-hidden">
+            {/* Underline animado */}
+            <span id="tab-underline" className="absolute bottom-0 left-0 h-1 w-1/3 bg-gradient-to-r from-[#1E5FAD] via-[#3DA64A] to-[#1E5FAD] rounded-full transition-transform duration-500 ease-out z-0" style={{transform: `translateX(var(--tab-underline-x,0%))`}} />
+            {/* Tabs con gradiente animado y rebote */}
             <TabsTrigger 
               value="all" 
-              className="flex-1 h-10 sm:h-12 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 data-[state=active]:bg-[#1E5FAD] data-[state=active]:text-white data-[state=active]:shadow-lg transform hover:scale-105 data-[state=active]:transform data-[state=active]:scale-105"
+              className="flex-1 h-10 sm:h-12 text-sm sm:text-base font-bold rounded-lg transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1E5FAD] data-[state=active]:to-[#3DA64A] data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:scale-110 data-[state=active]:ring-2 data-[state=active]:ring-[#3DA64A] data-[state=active]:ring-offset-2 transform hover:scale-105 hover:shadow-lg relative z-10 animate-tab-bounce"
+              onMouseEnter={() => { document.documentElement.style.setProperty('--tab-underline-x', '0%') }}
             >
               <span className="hidden sm:inline">Todos los análisis</span>
               <span className="sm:hidden">Todos</span>
             </TabsTrigger>
             <TabsTrigger 
               value="popular" 
-              className="flex-1 h-10 sm:h-12 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 data-[state=active]:bg-[#1E5FAD] data-[state=active]:text-white data-[state=active]:shadow-lg transform hover:scale-105 data-[state=active]:transform data-[state=active]:scale-105"
+              className="flex-1 h-10 sm:h-12 text-sm sm:text-base font-bold rounded-lg transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1E5FAD] data-[state=active]:to-[#3DA64A] data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:scale-110 data-[state=active]:ring-2 data-[state=active]:ring-[#3DA64A] data-[state=active]:ring-offset-2 transform hover:scale-105 hover:shadow-lg relative z-10 animate-tab-bounce"
+              onMouseEnter={() => { document.documentElement.style.setProperty('--tab-underline-x', '100%') }}
             >
               <span className="hidden sm:inline">Perfiles populares</span>
               <span className="sm:hidden">Perfiles</span>
             </TabsTrigger>
             <TabsTrigger 
               value="covid" 
-              className="flex-1 h-10 sm:h-12 text-sm sm:text-base font-medium rounded-lg transition-all duration-300 data-[state=active]:bg-[#1E5FAD] data-[state=active]:text-white data-[state=active]:shadow-lg transform hover:scale-105 data-[state=active]:transform data-[state=active]:scale-105"
+              className="flex-1 h-10 sm:h-12 text-sm sm:text-base font-bold rounded-lg transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1E5FAD] data-[state=active]:to-[#3DA64A] data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:scale-110 data-[state=active]:ring-2 data-[state=active]:ring-[#3DA64A] data-[state=active]:ring-offset-2 transform hover:scale-105 hover:shadow-lg relative z-10 animate-tab-bounce"
+              onMouseEnter={() => { document.documentElement.style.setProperty('--tab-underline-x', '200%') }}
             >
               COVID-19
             </TabsTrigger>
@@ -1360,7 +1366,10 @@ export default function AnalisisPage() {
           <TabsContent value="popular" className="mt-6">
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {popularProfiles.map((profile, i) => (
-                <Card key={i} className="overflow-hidden">
+                <Card
+                  key={i}
+                  className="overflow-hidden transition-all duration-300 shadow hover:shadow-2xl hover:scale-[1.03] hover:border-[#1E5FAD] border border-transparent group"
+                >
                   <CardHeader className="p-0">
                     <div className="relative h-48">
                       <Image
@@ -1399,41 +1408,57 @@ export default function AnalisisPage() {
                         )}
                       </div>
                       <CardDescription className="mt-2">{profile.description}</CardDescription>
-                    </div>
-                    <div className="mb-4">
-                      <div className="font-medium mb-2">Incluye:</div>
-                      <ul className="text-sm space-y-1">
-                        {profile.tests.map((test, index) => (
-                          <li key={index} className="flex items-start">
-                            <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                            <span>{test}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="flex justify-between items-center mt-4">
-                      <div className="font-bold text-lg">{user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") ? `S/. ${profile.price.toFixed(2)}` : ''}</div>
-                      <div className="flex gap-2">
-                        {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                      <div className="mb-4">
+                        <div className="font-medium mb-2">Incluye:</div>
+                        <ul className="text-sm space-y-1">
+                          {profile.tests.map((test, index) => (
+                            <li key={index} className="flex items-start">
+                              <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                              <span>{test}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="flex justify-between items-center mt-4">
+                        <div className="font-bold text-lg">{user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") ? `S/. ${profile.price.toFixed(2)}` : ''}</div>
+                        <div className="flex gap-2">
+                          {/* Botón WhatsApp */}
                           <Button
-                            className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
-                            onClick={() =>
-                              handleAddToCart({
-                                id: 1000 + i,
-                                name: profile.title,
-                                price: profile.price,
-                                category: "Perfil",
-                                conditions: "No especificado",
-                                sample: "No especificado",
-                                protocol: "No especificado",
-                                suggestions: "",
-                                comments: ""
-                              })
-                            }
+                            variant="outline"
+                            className="bg-[#25d366] hover:bg-[#128C7E] text-white border-[#25d366] transition-all duration-200 group-hover:scale-105"
+                            onClick={() => {
+                              const message = `Hola, estoy interesado en el ${profile.title}. ¿Podrían darme más información?`
+                              const whatsappUrl = `https://wa.me/51999999999?text=${encodeURIComponent(message)}`
+                              window.open(whatsappUrl, '_blank')
+                            }}
                           >
-                            Agregar
+                            <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 2.079.549 4.090 1.595 5.945L0 24l6.256-1.623c1.783.986 3.821 1.514 5.939 1.514 6.624 0 11.99-5.367 11.99-11.988C24.186 5.367 18.641.001 12.017.001zM12.017 21.989c-1.737 0-3.449-.434-4.96-1.263l-.356-.213-3.675.964.983-3.595-.233-.372C2.69 15.963 2.201 14.018 2.201 11.987c0-5.411 4.404-9.815 9.816-9.815 2.618 0 5.082 1.021 6.941 2.88 1.858 1.858 2.88 4.322 2.88 6.941-.001 5.411-4.406 9.816-9.821 9.816zm5.384-7.348c-.295-.148-1.744-.861-2.014-.958-.269-.098-.465-.148-.661.148-.197.295-.762.958-.934 1.155-.172.197-.344.221-.639.074-.295-.148-1.244-.459-2.37-1.462-.875-.781-1.465-1.746-1.637-2.041-.172-.295-.018-.455.129-.602.132-.131.295-.344.443-.516.148-.172.197-.295.295-.492.098-.197.049-.369-.025-.516-.074-.148-.661-1.591-.906-2.18-.238-.574-.479-.496-.661-.504-.172-.008-.369-.01-.565-.01-.197 0-.516.074-.787.369-.271.295-1.034 1.01-1.034 2.463 0 1.453 1.059 2.857 1.207 3.054.148.197 2.080 3.176 5.041 4.456.705.305 1.256.487 1.686.623.708.225 1.353.193 1.863.117.568-.084 1.744-.713 1.989-1.402.246-.689.246-1.279.172-1.402-.074-.123-.271-.197-.566-.345z"/>
+                            </svg>
+                            Consultar por WhatsApp
                           </Button>
-                        )}
+                          {/* Botón Agregar solo para usuarios logueados tipo doctor/company/admin */}
+                          {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                            <Button
+                              className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
+                              onClick={() =>
+                                handleAddToCart({
+                                  id: 1000 + i,
+                                  name: profile.title,
+                                  price: profile.price,
+                                  category: "Perfil",
+                                  conditions: "No especificado",
+                                  sample: "No especificado",
+                                  protocol: "No especificado",
+                                  suggestions: "",
+                                  comments: ""
+                                })
+                              }
+                            >
+                              Agregar
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>

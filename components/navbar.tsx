@@ -19,7 +19,7 @@ import {
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -231,7 +231,6 @@ export function Navbar() {
                               <span className="text-[#1e5fad] font-semibold">análisis</span>.
                             </p>
                           </div>
-
                           {/* Botones (Pacientes, Médicos, Empresas) */}
                           <div className="md:col-span-4 flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6">
                             {/* Pacientes */}
@@ -244,28 +243,31 @@ export function Navbar() {
                               </div>
                               <span className="text-lg font-medium">Pacientes</span>
                             </Link>
-
-                            {/* Médicos */}
-                            <Link
-                              href="/resultados?type=doctor"
-                              className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-full sm:w-56"
-                            >
-                              <div className="w-10 h-10 rounded-full bg-[#1e5fad] flex items-center justify-center flex-shrink-0">
-                                <Stethoscope className="h-5 w-5 text-white" />
-                              </div>
-                              <span className="text-lg font-medium">Médicos</span>
-                            </Link>
-
-                            {/* Empresas */}
-                            <Link
-                              href="/resultados?type=company"
-                              className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-full sm:w-56"
-                            >
-                              <div className="w-10 h-10 rounded-full bg-[#1e5fad] flex items-center justify-center flex-shrink-0">
-                                <Building2 className="h-5 w-5 text-white" />
-                              </div>
-                              <span className="text-lg font-medium">Empresas</span>
-                            </Link>
+                            {/* Mostrar solo si está logueado */}
+                            {user && (
+                              <>
+                                {/* Médicos */}
+                                <Link
+                                  href="/resultados?type=doctor"
+                                  className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-full sm:w-56"
+                                >
+                                  <div className="w-10 h-10 rounded-full bg-[#1e5fad] flex items-center justify-center flex-shrink-0">
+                                    <Stethoscope className="h-5 w-5 text-white" />
+                                  </div>
+                                  <span className="text-lg font-medium">Médicos</span>
+                                </Link>
+                                {/* Empresas */}
+                                <Link
+                                  href="/resultados?type=company"
+                                  className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-full sm:w-56"
+                                >
+                                  <div className="w-10 h-10 rounded-full bg-[#1e5fad] flex items-center justify-center flex-shrink-0">
+                                    <Building2 className="h-5 w-5 text-white" />
+                                  </div>
+                                  <span className="text-lg font-medium">Empresas</span>
+                                </Link>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -367,6 +369,9 @@ export function Navbar() {
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="left" className="w-[300px] sm:w-[350px] p-6 flex flex-col">
+                    <SheetHeader>
+                      <SheetTitle className="text-lg font-semibold">Menú principal</SheetTitle>
+                    </SheetHeader>
                     <nav className="flex flex-col gap-6 pt-8 flex-grow">
                       {mobileNavItems.map(({ href, etiqueta, icono: Icon, hasDropdown }) => (
                         <div key={etiqueta}>
@@ -390,22 +395,26 @@ export function Navbar() {
                                     </Link>
                                   </SheetClose>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <SheetClose asChild>
-                                    <Link href="/resultados?type=doctor" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
-                                      <Stethoscope className="h-5 w-5 text-blue-500" />
-                                      <span>Médicos</span>
-                                    </Link>
-                                  </SheetClose>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <SheetClose asChild>
-                                    <Link href="/resultados?type=company" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
-                                      <Building2 className="h-5 w-5 text-blue-500" />
-                                      <span>Empresas</span>
-                                    </Link>
-                                  </SheetClose>
-                                </DropdownMenuItem>
+                                {user && (
+                                  <>
+                                    <DropdownMenuItem asChild>
+                                      <SheetClose asChild>
+                                        <Link href="/resultados?type=doctor" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
+                                          <Stethoscope className="h-5 w-5 text-blue-500" />
+                                          <span>Médicos</span>
+                                        </Link>
+                                      </SheetClose>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                      <SheetClose asChild>
+                                        <Link href="/resultados?type=company" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
+                                          <Building2 className="h-5 w-5 text-blue-500" />
+                                          <span>Empresas</span>
+                                        </Link>
+                                      </SheetClose>
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           ) : (
