@@ -45,6 +45,7 @@ const mobileNavItems = [
   { href: "/analisis", etiqueta: "Análisis", icono: FileText },
   { href: "#", etiqueta: "Resultados", icono: Calendar, hasDropdown: true },
   { href: "/sedes", etiqueta: "Sedes", icono: MapPin },
+  { href: "/domicilio", etiqueta: "Servicio a domicilio", icono: MapPin },
 ]
 
 interface NavbarContextType {
