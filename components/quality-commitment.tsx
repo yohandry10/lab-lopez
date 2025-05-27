@@ -43,7 +43,7 @@ export default function QualityCommitment() {
               viewport={{ once: true }}
               className="relative h-[300px] rounded-lg overflow-hidden"
             >
-              <Image src="/maps.png" alt="Mapa de sedes" fill className="object-contain" priority />
+              <Image src="/captura1.png" alt="Mapa de sedes" fill className="object-contain" priority />
 
               <Link
                 href="/sedes"

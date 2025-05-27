@@ -85,13 +85,18 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/servicios" className="text-sm text-gray-600 hover:text-gray-900">
-                  Servicios
+                <Link href="/sedes" className="text-sm text-gray-600 hover:text-gray-900">
+                  Sedes
                 </Link>
               </li>
               <li>
-                <Link href="/biblioteca" className="text-sm text-gray-600 hover:text-gray-900">
-                  Biblioteca
+                <Link href="/domicilio" className="text-sm text-gray-600 hover:text-gray-900">
+                  Servicio a domicilio
+                </Link>
+              </li>
+              <li>
+                <Link href="/resultados" className="text-sm text-gray-600 hover:text-gray-900">
+                  Resultados
                 </Link>
               </li>
             </ul>
