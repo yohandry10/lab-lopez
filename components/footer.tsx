@@ -100,8 +100,8 @@ export function Footer() {
             <h3 className="font-semibold mb-4">Contacto</h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li>Teléfono: 900 644599</li>
-              <li>Email: reclamos@laboratorioslopez.com</li>
-              <li>Reclamos: reclamos@laboratorioslopez.com</li>
+              <li>Email: referencia@laboratorioslopez.com</li>
+              <li>Reclamos: referencia@laboratorioslopez.com</li>
               <li>San Juan de Miraflores: Av. Miguel Iglesias 825</li>
               <li>Santa Anita: María Parado de Bellido 1106</li>
             </ul>
