@@ -834,6 +834,7 @@ export default function AnalisisPage() {
   console.log("Usuario logueado:", user)
   const [popularProfiles, setPopularProfiles] = useState([
     {
+      id: 1,
       title: "Perfil Básico",
       description: "Evaluación general de tu salud",
       price: 180.00,
@@ -848,6 +849,7 @@ export default function AnalisisPage() {
       ]
     },
     {
+      id: 2,
       title: "Perfil Lipídico",
       description: "Evaluación completa de grasas en sangre",
       price: 220.00,
@@ -861,6 +863,7 @@ export default function AnalisisPage() {
       ]
     },
     {
+      id: 3,
       title: "Perfil Hepático",
       description: "Evaluación de la función del hígado",
       price: 250.00,
@@ -876,6 +879,7 @@ export default function AnalisisPage() {
       ]
     },
     {
+      id: 4,
       title: "Perfil Renal",
       description: "Evaluación completa de la función renal",
       price: 200.00,
@@ -890,6 +894,7 @@ export default function AnalisisPage() {
       ]
     },
     {
+      id: 5,
       title: "Perfil Tiroideo",
       description: "Evaluación completa de la función tiroidea",
       price: 280.00,
@@ -903,6 +908,7 @@ export default function AnalisisPage() {
       ]
     },
     {
+      id: 6,
       title: "Perfil Diabético",
       description: "Control y seguimiento de diabetes",
       price: 190.00,
@@ -916,6 +922,7 @@ export default function AnalisisPage() {
       ]
     },
     {
+      id: 7,
       title: "Perfil Cardiaco",
       description: "Evaluación de riesgo cardiovascular",
       price: 320.00,
@@ -930,6 +937,7 @@ export default function AnalisisPage() {
       ]
     },
     {
+      id: 8,
       title: "Perfil Hormonal Femenino",
       description: "Evaluación hormonal completa para mujeres",
       price: 350.00,
@@ -944,6 +952,7 @@ export default function AnalisisPage() {
       ]
     },
     {
+      id: 9,
       title: "Perfil Hormonal Masculino",
       description: "Evaluación hormonal completa para hombres",
       price: 300.00,
