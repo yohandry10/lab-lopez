@@ -1102,39 +1102,52 @@ export default function AnalisisPage() {
 
   const handleUpdateAnalysis = async (updatedAnalysis: typeof analysisData[0]) => {
     console.log("🔄 Iniciando actualización:", updatedAnalysis);
-    const supabase = getSupabaseClient();
-    // Intentar actualizar en la tabla 'analyses' (ajusta el nombre si es diferente)
-    const { data, error } = await supabase
-      .from("analyses")
-      .update({
-        name: updatedAnalysis.name,
-        price: updatedAnalysis.price,
-        category: updatedAnalysis.category,
-        conditions: updatedAnalysis.conditions,
-        sample: updatedAnalysis.sample,
-        protocol: updatedAnalysis.protocol,
-        suggestions: updatedAnalysis.suggestions,
-        comments: updatedAnalysis.comments,
-      })
-      .eq("id", updatedAnalysis.id)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("❌ Error al guardar en Supabase:", error);
-      alert("Error al guardar en Supabase: " + error.message)
-      return;
-    }
     
-    console.log("✅ Guardado exitoso en Supabase:", data);
-    // Usar el análisis actualizado directamente en lugar del dato de Supabase
-    setLocalAnalysisData(prevData =>
-      prevData.map(item =>
-        item.id === updatedAnalysis.id ? updatedAnalysis : item
+    try {
+      const supabase = getSupabaseClient();
+      
+      // Primero actualizar el estado local para ver el cambio inmediatamente
+      setLocalAnalysisData(prevData =>
+        prevData.map(item =>
+          item.id === updatedAnalysis.id ? updatedAnalysis : item
+        )
       )
-    )
-    setEditingAnalysis(null)
-    console.log("✅ Estado local actualizado");
+      console.log("✅ Estado local actualizado inmediatamente");
+      
+      // Luego actualizar en Supabase
+      const { data, error } = await supabase
+        .from("analyses")
+        .update({
+          name: updatedAnalysis.name,
+          price: updatedAnalysis.price,
+          category: updatedAnalysis.category,
+          conditions: updatedAnalysis.conditions,
+          sample: updatedAnalysis.sample,
+          protocol: updatedAnalysis.protocol,
+          suggestions: updatedAnalysis.suggestions,
+          comments: updatedAnalysis.comments,
+        })
+        .eq("id", updatedAnalysis.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("❌ Error al guardar en Supabase:", error);
+        alert("Error al guardar en Supabase: " + error.message);
+        // Revertir el cambio local si falla
+        window.location.reload(); // Recarga para obtener los datos originales
+        return;
+      }
+      
+      console.log("✅ Guardado exitoso en Supabase:", data);
+      setEditingAnalysis(null);
+      alert("✅ Análisis actualizado correctamente!");
+      
+    } catch (err) {
+      console.error("❌ Error inesperado:", err);
+      alert("Error inesperado: " + String(err));
+      window.location.reload();
+    }
   }
 
 
@@ -1425,6 +1438,18 @@ export default function AnalisisPage() {
               </div>
             </div>
 
+            {/* Botón para agregar análisis (solo admin) */}
+            {user && user.user_type === "admin" && (
+              <div className="mb-6">
+                <Button 
+                  className="bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
+                  onClick={() => setIsAddModalOpen(true)}
+                >
+                  + Agregar análisis
+                </Button>
+              </div>
+            )}
+
             {/* Resultados de búsqueda - Solo mostrar cuando hay búsqueda activa */}
             {analisisParaMostrar.length > 0 ? (
               <div className="space-y-6">
@@ -1465,7 +1490,7 @@ export default function AnalisisPage() {
                           )}
                           {user && user.user_type === "admin" && (
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Editar
+                              Acciones
                             </th>
                           )}
                         </tr>
@@ -1507,13 +1532,26 @@ export default function AnalisisPage() {
                             )}
                             {user && user.user_type === "admin" && (
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <Button
-                                  variant="outline"
-                                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                                  onClick={() => setEditingAnalysis(analysis)}
-                                >
-                                  Editar
-                                </Button>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                    onClick={() => setEditingAnalysis(analysis)}
+                                  >
+                                    <Edit className="h-4 w-4 mr-1" />
+                                    Editar
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="text-red-600 border-red-200 hover:bg-red-50"
+                                    onClick={() => handleDeleteAnalysis(analysis)}
+                                  >
+                                    <Trash className="h-4 w-4 mr-1" />
+                                    Eliminar
+                                  </Button>
+                                </div>
                               </td>
                             )}
                           </tr>
@@ -1768,10 +1806,11 @@ export default function AnalisisPage() {
         <Dialog open={!!editingAnalysis} onOpenChange={() => setEditingAnalysis(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Editar Análisis</DialogTitle>
+              <DialogTitle>Editar Análisis: {editingAnalysis.name}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={(e) => {
+            <form onSubmit={async (e) => {
               e.preventDefault()
+              console.log("📝 Formulario enviado");
               const formData = new FormData(e.currentTarget)
               const updatedAnalysis = {
                 ...editingAnalysis,
@@ -1784,7 +1823,8 @@ export default function AnalisisPage() {
                 suggestions: formData.get('suggestions') as string,
                 comments: formData.get('comments') as string,
               }
-              handleUpdateAnalysis(updatedAnalysis)
+              console.log("📊 Datos a actualizar:", updatedAnalysis);
+              await handleUpdateAnalysis(updatedAnalysis)
             }}>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -1985,12 +2025,7 @@ export default function AnalisisPage() {
         </Dialog>
       )}
 
-      {/* En el render, justo antes de la tabla de análisis: */}
-      {user && user.user_type === "admin" && (
-        <Button className="mb-4 bg-green-600 hover:bg-green-700 text-white" onClick={() => setIsAddModalOpen(true)}>
-          + Agregar análisis
-        </Button>
-      )}
+
     </div>
   )
 }
