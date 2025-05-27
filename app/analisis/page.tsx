@@ -965,6 +965,53 @@ export default function AnalisisPage() {
         "LH",
         "FSH"
       ]
+    },
+    {
+      id: 10,
+      title: "Perfil Pediátrico",
+      description: "Análisis especiales para niños y adolescentes",
+      price: 180.00,
+      image: "https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+      tests: [
+        "Hemograma completo",
+        "Glucosa",
+        "Hierro sérico",
+        "Vitamina D",
+        "Zinc",
+        "Parasitológico"
+      ]
+    },
+    {
+      id: 11,
+      title: "Perfil Geriátrico",
+      description: "Evaluación integral para adultos mayores",
+      price: 350.00,
+      image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+      tests: [
+        "Hemograma completo",
+        "Perfil lipídico",
+        "Función renal",
+        "Función hepática",
+        "Vitamina B12",
+        "Ácido fólico",
+        "TSH"
+      ]
+    },
+    {
+      id: 12,
+      title: "Perfil Deportivo",
+      description: "Análisis para deportistas y personas activas",
+      price: 280.00,
+      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+      tests: [
+        "Hemograma completo",
+        "Ferritina",
+        "Vitamina D",
+        "Testosterona",
+        "Cortisol",
+        "CK total",
+        "Lactato"
+      ]
     }
   ])
 
@@ -1187,10 +1234,21 @@ export default function AnalisisPage() {
 
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null)
 
-  const handleDeleteProfile = (index: number) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este perfil?')) {
-      setPopularProfiles(prevProfiles => prevProfiles.filter((_, i) => i !== index))
+  const handleDeleteProfile = async (index: number) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este perfil?')) return;
+    
+    const profile = popularProfiles[index];
+    const supabase = getSupabaseClient();
+    
+    // Eliminar de Supabase
+    const { error } = await supabase.from("profiles").delete().eq("id", profile.id);
+    if (error) {
+      alert("Error al eliminar perfil: " + error.message);
+      return;
     }
+    
+    // Eliminar del estado local
+    setPopularProfiles(prevProfiles => prevProfiles.filter((_, i) => i !== index));
   }
 
   const handleUpdateProfile = async (updatedProfile: Profile) => {
@@ -1255,6 +1313,7 @@ export default function AnalisisPage() {
 
   // 1. Estado para el modal de agregar análisis
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAddProfileModalOpen, setIsAddProfileModalOpen] = useState(false);
   const [newAnalysis, setNewAnalysis] = useState({
     name: '',
     price: 0,
@@ -1264,6 +1323,14 @@ export default function AnalisisPage() {
     suggestions: '',
     comments: '',
     category: '',
+  });
+  
+  const [newProfile, setNewProfile] = useState({
+    title: '',
+    description: '',
+    price: 0,
+    image: '',
+    tests: [] as string[],
   });
 
   // 2. Función para agregar análisis
@@ -1294,6 +1361,33 @@ export default function AnalisisPage() {
     setIsAddModalOpen(false);
     setNewAnalysis({
       name: '', price: 0, conditions: '', sample: '', protocol: '', suggestions: '', comments: '', category: '',
+    });
+  };
+
+  // Función para agregar perfil
+  const handleAddProfile = async () => {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from("profiles")
+      .insert([newProfile])
+      .select()
+      .single();
+    if (error) {
+      alert("Error al agregar perfil: " + error.message);
+      return;
+    }
+    const newProfileData = {
+      id: Number(data?.id) || Date.now(),
+      title: String(data?.title || newProfile.title),
+      description: String(data?.description || newProfile.description),
+      price: Number(data?.price || newProfile.price),
+      image: String(data?.image || newProfile.image),
+      tests: Array.isArray(data?.tests) ? data.tests : newProfile.tests,
+    };
+    setPopularProfiles(prev => [...prev, newProfileData]);
+    setIsAddProfileModalOpen(false);
+    setNewProfile({
+      title: '', description: '', price: 0, image: '', tests: [],
     });
   };
 
@@ -1699,7 +1793,19 @@ export default function AnalisisPage() {
           </TabsContent>
 
           <TabsContent value="popular" className="mt-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* Botón para agregar perfil (solo admin) */}
+            {user && user.user_type === "admin" && (
+              <div className="mb-6">
+                <Button 
+                  className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
+                  onClick={() => setIsAddProfileModalOpen(true)}
+                >
+                  + Agregar perfil
+                </Button>
+              </div>
+            )}
+            
+            <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {popularProfiles.map((profile, i) => (
                 <Card
                   key={i}
@@ -2053,6 +2159,52 @@ export default function AnalisisPage() {
               <Input placeholder="Comentarios" value={newAnalysis.comments} onChange={e => setNewAnalysis(a => ({ ...a, comments: e.target.value }))} />
               <Input placeholder="Categoría" value={newAnalysis.category} onChange={e => setNewAnalysis(a => ({ ...a, category: e.target.value }))} />
               <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={handleAddAnalysis}>Guardar</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Modal para agregar perfil */}
+      {isAddProfileModalOpen && (
+        <Dialog open={isAddProfileModalOpen} onOpenChange={setIsAddProfileModalOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Agregar nuevo perfil</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input 
+                placeholder="Título del perfil" 
+                value={newProfile.title} 
+                onChange={e => setNewProfile(p => ({ ...p, title: e.target.value }))} 
+              />
+              <Input 
+                placeholder="Descripción" 
+                value={newProfile.description} 
+                onChange={e => setNewProfile(p => ({ ...p, description: e.target.value }))} 
+              />
+              <Input 
+                placeholder="Precio" 
+                type="number" 
+                value={newProfile.price} 
+                onChange={e => setNewProfile(p => ({ ...p, price: Number(e.target.value) }))} 
+              />
+              <Input 
+                placeholder="URL de la imagen" 
+                value={newProfile.image} 
+                onChange={e => setNewProfile(p => ({ ...p, image: e.target.value }))} 
+              />
+              <div>
+                <label className="block text-sm font-medium mb-2">Análisis incluidos (uno por línea):</label>
+                <Textarea 
+                  placeholder="Hemograma completo&#10;Glucosa&#10;Colesterol total"
+                  rows={6}
+                  value={newProfile.tests.join('\n')}
+                  onChange={e => setNewProfile(p => ({ ...p, tests: e.target.value.split('\n').filter(test => test.trim() !== '') }))}
+                />
+              </div>
+              <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white" onClick={handleAddProfile}>
+                Guardar perfil
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
