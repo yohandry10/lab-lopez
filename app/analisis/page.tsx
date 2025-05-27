@@ -1101,6 +1101,7 @@ export default function AnalisisPage() {
   const [editingAnalysis, setEditingAnalysis] = useState<typeof analysisData[0] | null>(null)
 
   const handleUpdateAnalysis = async (updatedAnalysis: typeof analysisData[0]) => {
+    console.log("🔄 Iniciando actualización:", updatedAnalysis);
     const supabase = getSupabaseClient();
     // Intentar actualizar en la tabla 'analyses' (ajusta el nombre si es diferente)
     const { data, error } = await supabase
@@ -1120,9 +1121,12 @@ export default function AnalisisPage() {
       .single();
 
     if (error) {
+      console.error("❌ Error al guardar en Supabase:", error);
       alert("Error al guardar en Supabase: " + error.message)
       return;
     }
+    
+    console.log("✅ Guardado exitoso en Supabase:", data);
     // Usar el análisis actualizado directamente en lugar del dato de Supabase
     setLocalAnalysisData(prevData =>
       prevData.map(item =>
@@ -1130,6 +1134,7 @@ export default function AnalisisPage() {
       )
     )
     setEditingAnalysis(null)
+    console.log("✅ Estado local actualizado");
   }
 
 
