@@ -968,7 +968,7 @@ export default function AnalisisPage() {
     }
   ])
 
-  // States for scheduling flow
+
   const [isSchedulingOpen, setIsSchedulingOpen] = useState(false)
   const [isSuccessOpen, setIsSuccessOpen] = useState(false)
   const [selectedTest, setSelectedTest] = useState<(typeof analysisData)[0] | null>(null)
