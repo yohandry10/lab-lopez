@@ -827,7 +827,7 @@ export default function AnalisisPage() {
   const [selectedAnalysis, setSelectedAnalysis] = useState<(typeof analysisData)[0] | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [viewMode, setViewMode] = useState<"list" | "grid">("list")
-  const [localAnalysisData, setLocalAnalysisData] = useState(analysisData)
+  const [localAnalysisData, setLocalAnalysisData] = useState<typeof analysisData>([])
   const { addItem } = useCart()
   const router = useRouter()
   const { user } = useAuth()
@@ -1262,6 +1262,41 @@ export default function AnalisisPage() {
     }
     setLocalAnalysisData(prevData => prevData.filter(item => item.id !== analysis.id));
   };
+
+  // Cargar análisis desde Supabase al iniciar
+  useEffect(() => {
+    async function fetchAnalyses() {
+      console.log("🔄 Cargando análisis desde Supabase...");
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase.from("analyses").select("*");
+      if (error) {
+        console.error("❌ Error al cargar análisis desde Supabase:", error);
+        // Usar datos locales como fallback
+        setLocalAnalysisData(analysisData);
+        return;
+      }
+      if (data && Array.isArray(data) && data.length > 0) {
+        console.log("✅ Análisis cargados desde Supabase:", data.length);
+        // Mapear datos de Supabase al formato esperado
+        const mappedData = data.map(item => ({
+          id: item.id || 0,
+          name: item.name || '',
+          price: Number(item.price) || 0,
+          conditions: item.conditions || '',
+          sample: item.sample || '',
+          protocol: item.protocol || '',
+          suggestions: item.suggestions || '',
+          comments: item.comments || '',
+          category: item.category || '',
+        }));
+        setLocalAnalysisData(mappedData);
+      } else {
+        console.log("⚠️ No hay datos en Supabase, usando datos locales");
+        setLocalAnalysisData(analysisData);
+      }
+    }
+    fetchAnalyses();
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col">
