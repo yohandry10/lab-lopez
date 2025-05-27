@@ -109,9 +109,8 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Horario</h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li>Lunes a Viernes: 7:00 - 20:00</li>
-              <li>Sábados: 7:00 - 14:00</li>
-              <li>Domingos: 7:00 - 12:00</li>
+              <li>Santa Anita: 7:00 AM - 6:00 PM</li>
+              <li>San Juan de Miraflores: 8:00 AM - 7:00 PM</li>
             </ul>
           </div>
         </div>
