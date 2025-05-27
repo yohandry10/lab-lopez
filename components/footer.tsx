@@ -106,16 +106,13 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-gray-600">
               <li>Teléfono: 900 649599</li>
               <li>Email: referencia@laboratorioslopez.com</li>
-              <li>Reclamos: referencia@laboratorioslopez.com</li>
-              <li>San Juan de Miraflores: Av. Miguel Iglesias 825</li>
-              <li>Santa Anita: María Parado de Bellido 1106</li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-4">Horario</h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li>Santa Anita: 7:00 AM - 6:00 PM</li>
-              <li>San Juan de Miraflores: 8:00 AM - 7:00 PM</li>
+              <li>San Juan de Miraflores: Lunes - Sábado 8:00 - 19:00 horas</li>
+              <li>Santa Anita: Lunes - Sábado 7:00 - 19:00 horas</li>
             </ul>
           </div>
         </div>

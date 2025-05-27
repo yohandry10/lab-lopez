@@ -40,9 +40,7 @@ export default function DomicilioExacto() {
           <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-8 lg:gap-12">
             <div className="space-y-4 sm:space-y-6">
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Pensando siempre en el bienestar de nuestros pacientes, somos los pioneros en
-                incorporar el servicio de toma de muestra a domicilio, manteniendo los altos estándares
-                de seguridad, profesionalismo y servicio; característicos de nuestra atención en sedes.
+                En Laboratorio Clínico Lopez nos adaptamos a las nuevas necesidades de nuestros pacientes ofreciendo un servicio de toma de muestras a domicilio confiable, seguro y cómodo. Con 5 años de experiencia en el sector, brindamos atención personalizada con altos estándares de calidad, precisión y calidez humana. Nuestro objetivo es facilitar el acceso a análisis clínicos desde la tranquilidad de tu hogar, previa coordinación del día y hora de atención a través de los siguientes canales de contacto.
               </p>
 
               <p className="text-sm sm:text-base text-gray-600">
@@ -133,7 +131,7 @@ export default function DomicilioExacto() {
                   "
                 >
                   <Image
-                    src="/icons.jpg"
+                    src="/tinteros.jpeg"
                     alt="Servicios disponibles"
                     width={1000}
                     height={400}

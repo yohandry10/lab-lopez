@@ -20,10 +20,9 @@ const sedesData = [
     address: "Av. Miguel Iglesias 625, San Juan de Mirafl ores 15824",
     mapUrl: "https://www.google.com/maps?cid=7289839656241431265",
     services: [
-      { label: "Análisis clínicos", icon: Beaker },
-      { label: "Prueba molecular PCR", icon: Activity },
       { label: "Atención a domicilio", icon: Home },
-      { label: "Perfiles de bienestar", icon: Heart },
+      { label: "Perfiles de laboratorio", icon: Beaker },
+      { label: "Marcadores tumorales", icon: Activity },
     ],
   },
   {
@@ -31,9 +30,9 @@ const sedesData = [
     address: "María Parado de Bellido 1106, Santa Anita 15008",
     mapUrl: "https://www.google.com/maps/place/Laboratorio+Cl%C3%ADnico+E.I.R.L.+LOPEZ/@-12.0443879,-76.9750924,17z",
     services: [
-      { label: "Análisis clínicos", icon: Beaker },
-      { label: "Prueba antigénica", icon: Activity },
-      { label: "Perfiles de bienestar", icon: Heart },
+      { label: "Atención a domicilio", icon: Home },
+      { label: "Perfiles de laboratorio", icon: Beaker },
+      { label: "Marcadores tumorales", icon: Activity },
     ],
   },
 ]
@@ -178,6 +177,16 @@ export default function SedesPage() {
               />
             </div>
           </div>
+        </div>
+      </section>
+      {/* Horario de atención */}
+      <section className="w-full bg-white py-6 border-t">
+        <div className="container mx-auto px-4 max-w-[1200px]">
+          <h3 className="text-lg font-semibold mb-2 text-[#2F71B8]">Horario de atención</h3>
+          <ul className="text-gray-700 text-base space-y-1">
+            <li><strong>San Juan de Miraflores:</strong> Lunes - Sábado 8:00 - 19:00 horas</li>
+            <li><strong>Santa Anita:</strong> Lunes - Sábado 7:00 - 19:00 horas</li>
+          </ul>
         </div>
       </section>
     </div>
