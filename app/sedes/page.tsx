@@ -17,7 +17,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 const sedesData = [
   {
     name: "Sede San Juan de Miraflores",
-    address: "Av. Miguel Iglesias 625, San Juan de Miraflores 15824",
+    address: "Av. Miguel Iglesias 625, San Juan de Mirafl ores 15824",
     mapUrl: "https://www.google.com/maps?cid=7289839656241431265",
     services: [
       { label: "Análisis clínicos", icon: Beaker },

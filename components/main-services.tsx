@@ -78,14 +78,14 @@ export default function MainServices() {
                 Perfiles de bienestar
               </h2>
               <div className="mt-4 md:mt-0 md:relative">
-                <Link href="/servicios" passHref>
-                  <Button
-                    asChild
+                  <Link href="/servicios" passHref>
+                    <Button
+                      asChild
                     className="bg-[#3da64a] hover:bg-[#3da64a]/90 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg transition-transform hover:scale-105"
-                  >
-                    <span>VER MAS</span>
-                  </Button>
-                </Link>
+                    >
+                      <span>VER MAS</span>
+                    </Button>
+                  </Link>
               </div>
             </div>
             <p className="mt-4 max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">

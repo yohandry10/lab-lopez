@@ -871,6 +871,88 @@ export default function AnalisisPage() {
         "Bilirrubina directa",
         "Proteínas totales"
       ]
+    },
+    {
+      title: "Perfil Renal",
+      description: "Evaluación completa de la función renal",
+      price: 200.00,
+      image: "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+      tests: [
+        "Creatinina",
+        "Urea",
+        "Ácido úrico",
+        "Examen completo de orina",
+        "Microalbuminuria",
+        "Depuración de creatinina"
+      ]
+    },
+    {
+      title: "Perfil Tiroideo",
+      description: "Evaluación completa de la función tiroidea",
+      price: 280.00,
+      image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+      tests: [
+        "TSH",
+        "T3 libre",
+        "T4 libre",
+        "Anticuerpos anti-TPO",
+        "Anticuerpos anti-tiroglobulina"
+      ]
+    },
+    {
+      title: "Perfil Diabético",
+      description: "Control y seguimiento de diabetes",
+      price: 190.00,
+      image: "https://images.unsplash.com/photo-1576671081837-49000212a370?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+      tests: [
+        "Glucosa en ayunas",
+        "Hemoglobina glicosilada",
+        "Insulina",
+        "Péptido C",
+        "Microalbuminuria"
+      ]
+    },
+    {
+      title: "Perfil Cardiaco",
+      description: "Evaluación de riesgo cardiovascular",
+      price: 320.00,
+      image: "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+      tests: [
+        "Troponina I",
+        "CK-MB",
+        "LDH",
+        "Perfil lipídico completo",
+        "Proteína C reactiva",
+        "Homocisteína"
+      ]
+    },
+    {
+      title: "Perfil Hormonal Femenino",
+      description: "Evaluación hormonal completa para mujeres",
+      price: 350.00,
+      image: "https://images.unsplash.com/photo-1576086213369-97a306d36557?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+      tests: [
+        "FSH",
+        "LH",
+        "Estradiol",
+        "Progesterona",
+        "Prolactina",
+        "Testosterona"
+      ]
+    },
+    {
+      title: "Perfil Hormonal Masculino",
+      description: "Evaluación hormonal completa para hombres",
+      price: 300.00,
+      image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
+      tests: [
+        "Testosterona total",
+        "Testosterona libre",
+        "PSA total",
+        "PSA libre",
+        "LH",
+        "FSH"
+      ]
     }
   ])
 
@@ -1102,13 +1184,6 @@ export default function AnalisisPage() {
             >
               <span className="hidden sm:inline">Perfiles populares</span>
               <span className="sm:hidden">Perfiles</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="covid" 
-              className="flex-1 h-10 sm:h-12 text-sm sm:text-base font-bold rounded-lg transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1E5FAD] data-[state=active]:to-[#3DA64A] data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:scale-110 data-[state=active]:ring-2 data-[state=active]:ring-[#3DA64A] data-[state=active]:ring-offset-2 transform hover:scale-105 hover:shadow-lg relative z-10 animate-tab-bounce"
-              onMouseEnter={() => { document.documentElement.style.setProperty('--tab-underline-x', '200%') }}
-            >
-              COVID-19
             </TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-6">
@@ -1408,27 +1483,27 @@ export default function AnalisisPage() {
                         )}
                       </div>
                       <CardDescription className="mt-2">{profile.description}</CardDescription>
-                      <div className="mb-4">
-                        <div className="font-medium mb-2">Incluye:</div>
-                        <ul className="text-sm space-y-1">
-                          {profile.tests.map((test, index) => (
-                            <li key={index} className="flex items-start">
-                              <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                              <span>{test}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="flex justify-between items-center mt-4">
-                        <div className="font-bold text-lg">{user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") ? `S/. ${profile.price.toFixed(2)}` : ''}</div>
-                        <div className="flex gap-2">
+                    <div className="mb-4">
+                      <div className="font-medium mb-2">Incluye:</div>
+                      <ul className="text-sm space-y-1">
+                        {profile.tests.map((test, index) => (
+                          <li key={index} className="flex items-start">
+                            <Check className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                            <span>{test}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="flex justify-between items-center mt-4">
+                      <div className="font-bold text-lg">{user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") ? `S/. ${profile.price.toFixed(2)}` : ''}</div>
+                      <div className="flex gap-2">
                           {/* Botón WhatsApp */}
                           <Button
                             variant="outline"
                             className="bg-[#25d366] hover:bg-[#128C7E] text-white border-[#25d366] transition-all duration-200 group-hover:scale-105"
                             onClick={() => {
                               const message = `Hola, estoy interesado en el ${profile.title}. ¿Podrían darme más información?`
-                              const whatsappUrl = `https://wa.me/51999999999?text=${encodeURIComponent(message)}`
+                              const whatsappUrl = `https://wa.me/51900644599?text=${encodeURIComponent(message)}`
                               window.open(whatsappUrl, '_blank')
                             }}
                           >
@@ -1438,26 +1513,26 @@ export default function AnalisisPage() {
                             Consultar por WhatsApp
                           </Button>
                           {/* Botón Agregar solo para usuarios logueados tipo doctor/company/admin */}
-                          {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
-                            <Button
-                              className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
-                              onClick={() =>
-                                handleAddToCart({
-                                  id: 1000 + i,
-                                  name: profile.title,
-                                  price: profile.price,
-                                  category: "Perfil",
-                                  conditions: "No especificado",
-                                  sample: "No especificado",
-                                  protocol: "No especificado",
-                                  suggestions: "",
-                                  comments: ""
-                                })
-                              }
-                            >
-                              Agregar
-                            </Button>
-                          )}
+                        {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                          <Button
+                            className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
+                            onClick={() =>
+                              handleAddToCart({
+                                id: 1000 + i,
+                                name: profile.title,
+                                price: profile.price,
+                                category: "Perfil",
+                                conditions: "No especificado",
+                                sample: "No especificado",
+                                protocol: "No especificado",
+                                suggestions: "",
+                                comments: ""
+                              })
+                            }
+                          >
+                            Agregar
+                          </Button>
+                        )}
                         </div>
                       </div>
                     </div>
@@ -1467,99 +1542,7 @@ export default function AnalisisPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="covid" className="mt-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {[
-                {
-                  title: "Prueba Antígeno COVID-19",
-                  description: "Resultados en 15-30 minutos",
-                  price: 120.0,
-                  details: "Detecta proteínas del virus. Ideal para casos sintomáticos recientes.",
-                  turnaround: "15-30 minutos",
-                  image: "https://images.unsplash.com/photo-1584118624012-df056829fbd0?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                },
-                {
-                  title: "Prueba PCR COVID-19",
-                  description: "Estándar de oro para diagnóstico",
-                  price: 280.0,
-                  details: "Detecta material genético del virus. Alta precisión.",
-                  turnaround: "24-48 horas",
-                  image: "https://images.unsplash.com/photo-1576671081837-49000212a370?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                },
-                {
-                  title: "Anticuerpos COVID-19",
-                  description: "Evalúa respuesta inmune",
-                  price: 180.0,
-                  details: "Detecta anticuerpos IgG e IgM. Útil para conocer exposición previa.",
-                  turnaround: "24 horas",
-                  image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-                },
-              ].map((test, i) => (
-                <Card
-                  key={i}
-                  className="overflow-hidden border-none shadow-lg hover:shadow-xl transition-shadow card-hover"
-                >
-                  <div className="relative h-40">
-                    <Image src={test.image || "/placeholder.svg"} alt={test.title} fill className="object-cover" />
-                  </div>
-                  <CardHeader>
-                    <CardTitle>{test.title}</CardTitle>
-                    <CardDescription>{test.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-sm text-gray-700">{test.details}</p>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-blue-600" />
-                          <span className="text-sm">Resultados: {test.turnaround}</span>
-                        </div>
-                        <div className="font-bold">{user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") ? `S/. ${test.price.toFixed(2)}` : ''}</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button 
-                      variant="outline" 
-                      className="bg-[#25d366] hover:bg-[#25d366]/90 text-white border-[#25d366]"
-                      onClick={() => {
-                        const message = `Hola, estoy interesado en la ${test.title}. ¿Podrían darme más información?`
-                        const whatsappUrl = `https://wa.me/51999999999?text=${encodeURIComponent(message)}`
-                        window.open(whatsappUrl, '_blank')
-                      }}
-                    >
-                      <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 2.079.549 4.090 1.595 5.945L0 24l6.256-1.623c1.783.986 3.821 1.514 5.939 1.514 6.624 0 11.99-5.367 11.99-11.988C24.186 5.367 18.641.001 12.017.001zM12.017 21.989c-1.737 0-3.449-.434-4.96-1.263l-.356-.213-3.675.964.983-3.595-.233-.372C2.69 15.963 2.201 14.018 2.201 11.987c0-5.411 4.404-9.815 9.816-9.815 2.618 0 5.082 1.021 6.941 2.88 1.858 1.858 2.88 4.322 2.88 6.941-.001 5.411-4.406 9.816-9.821 9.816zm5.384-7.348c-.295-.148-1.744-.861-2.014-.958-.269-.098-.465-.148-.661.148-.197.295-.762.958-.934 1.155-.172.197-.344.221-.639.074-.295-.148-1.244-.459-2.37-1.462-.875-.781-1.465-1.746-1.637-2.041-.172-.295-.018-.455.129-.602.132-.131.295-.344.443-.516.148-.172.197-.295.295-.492.098-.197.049-.369-.025-.516-.074-.148-.661-1.591-.906-2.18-.238-.574-.479-.496-.661-.504-.172-.008-.369-.01-.565-.01-.197 0-.516.074-.787.369-.271.295-1.034 1.01-1.034 2.463 0 1.453 1.059 2.857 1.207 3.054.148.197 2.080 3.176 5.041 4.456.705.305 1.256.487 1.686.623.708.225 1.353.193 1.863.117.568-.084 1.744-.713 1.989-1.402.246-.689.246-1.279.172-1.402-.074-.123-.271-.197-.566-.345z"/>
-                      </svg>
-                      Consultar por WhatsApp
-                    </Button>
-                    {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
-                      <Button
-                        className="bg-[#3DA64A] hover:bg-[#1E5FAD]"
-                        onClick={() =>
-                          handleAddToCart({
-                            id: 2000 + i,
-                            name: test.title,
-                            price: test.price,
-                            category: "Test",
-                            conditions: "No especificado",
-                            sample: "No especificado",
-                            protocol: "No especificado",
-                            suggestions: "",
-                            comments: ""
-                          })
-                        }
-                      >
-                        Agregar
-                      </Button>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
+
         </Tabs>
       </div>
 

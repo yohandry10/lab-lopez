@@ -35,7 +35,7 @@ export function HeroSection({ title, subtitle }: HeroSectionProps) {
 
           <div className="mt-8 flex flex-wrap gap-4 text-center justify-start">
             <div className="block w-full rounded px-12 py-3 text-sm font-medium text-white shadow bg-blue-400/20 backdrop-blur-sm border border-white/10">
-              Más de 20 años de experiencia en análisis clínicos
+              Más de 5 años de experiencia en análisis clínicos
             </div>
           </div>
         </div>

@@ -10,9 +10,9 @@ const slides = [
   {
     id: 1,
     image: "/dr1.jpg",
-    title: "Desde 1953",
-    subtitle: "cuidamos de ti y tu familia",
-    description: "70 años juntos",
+    title: "5 años",
+    subtitle: "de experiencia y confianza",
+    description: "Comprometidos con tu salud",
     buttonText: "Consulta tus resultados",
     buttonLink: "/resultados",
   },

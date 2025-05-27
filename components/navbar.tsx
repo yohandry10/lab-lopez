@@ -244,31 +244,26 @@ export function Navbar() {
                               </div>
                               <span className="text-lg font-medium">Pacientes</span>
                             </Link>
-                            {/* Mostrar solo si está logueado */}
-                            {user && (
-                              <>
-                                {/* Médicos */}
-                                <Link
-                                  href="/resultados?type=doctor"
-                                  className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-full sm:w-56"
-                                >
-                                  <div className="w-10 h-10 rounded-full bg-[#1e5fad] flex items-center justify-center flex-shrink-0">
-                                    <Stethoscope className="h-5 w-5 text-white" />
-                                  </div>
-                                  <span className="text-lg font-medium">Médicos</span>
-                                </Link>
-                                {/* Empresas */}
-                                <Link
-                                  href="/resultados?type=company"
-                                  className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-full sm:w-56"
-                                >
-                                  <div className="w-10 h-10 rounded-full bg-[#1e5fad] flex items-center justify-center flex-shrink-0">
-                                    <Building2 className="h-5 w-5 text-white" />
-                                  </div>
-                                  <span className="text-lg font-medium">Empresas</span>
-                                </Link>
-                              </>
-                            )}
+                            {/* Médicos - Siempre visible */}
+                            <Link
+                              href="/resultados?type=doctor"
+                              className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-full sm:w-56"
+                            >
+                              <div className="w-10 h-10 rounded-full bg-[#1e5fad] flex items-center justify-center flex-shrink-0">
+                                <Stethoscope className="h-5 w-5 text-white" />
+                              </div>
+                              <span className="text-lg font-medium">Médicos</span>
+                            </Link>
+                            {/* Empresas - Siempre visible */}
+                            <Link
+                              href="/resultados?type=company"
+                              className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-full sm:w-56"
+                            >
+                              <div className="w-10 h-10 rounded-full bg-[#1e5fad] flex items-center justify-center flex-shrink-0">
+                                <Building2 className="h-5 w-5 text-white" />
+                              </div>
+                              <span className="text-lg font-medium">Empresas</span>
+                            </Link>
                           </div>
                         </div>
                       </div>
@@ -396,38 +391,34 @@ export function Navbar() {
                                     </Link>
                                   </SheetClose>
                                 </DropdownMenuItem>
-                                {user && (
-                                  <>
-                                    <DropdownMenuItem asChild>
-                                      <SheetClose asChild>
-                                        <Link href="/resultados?type=doctor" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
-                                          <Stethoscope className="h-5 w-5 text-blue-500" />
-                                          <span>Médicos</span>
-                                        </Link>
-                                      </SheetClose>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem asChild>
-                                      <SheetClose asChild>
-                                        <Link href="/resultados?type=company" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
-                                          <Building2 className="h-5 w-5 text-blue-500" />
-                                          <span>Empresas</span>
-                                        </Link>
-                                      </SheetClose>
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
+                                <DropdownMenuItem asChild>
+                                  <SheetClose asChild>
+                                    <Link href="/resultados?type=doctor" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
+                                      <Stethoscope className="h-5 w-5 text-blue-500" />
+                                      <span>Médicos</span>
+                                    </Link>
+                                  </SheetClose>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <SheetClose asChild>
+                                    <Link href="/resultados?type=company" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
+                                      <Building2 className="h-5 w-5 text-blue-500" />
+                                      <span>Empresas</span>
+                                    </Link>
+                                  </SheetClose>
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           ) : (
                             <SheetClose asChild>
-                              <Link
-                                href={href}
+                            <Link
+                              href={href}
                                 className="flex items-center gap-3 text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors"
                                 onClick={() => setIsOpen(false)}
-                              >
+                            >
                                 <Icon className="h-6 w-6 text-blue-500" />
                                 <span>{etiqueta}</span>
-                              </Link>
+                            </Link>
                             </SheetClose>
                           )}
                         </div>

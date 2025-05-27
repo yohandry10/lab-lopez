@@ -73,7 +73,7 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Sobre nosotros</h3>
             <p className="text-sm text-gray-600">
-              Laboratorio LOPEZ, brindando servicios de calidad y confianza desde 1990.
+              Laboratorio LOPEZ, brindando servicios de calidad y confianza desde hace 5 años.
             </p>
           </div>
           <div>
@@ -99,9 +99,11 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Contacto</h3>
             <ul className="space-y-2 text-sm text-gray-600">
-              <li>Teléfono: (01) 123-4567</li>
-              <li>Email: contacto@lopez.com</li>
-              <li>Dirección: Av. Principal 123</li>
+              <li>Teléfono: 900 644599</li>
+              <li>Email: reclamos@laboratorioslopez.com</li>
+              <li>Reclamos: reclamos@laboratorioslopez.com</li>
+              <li>San Juan de Miraflores: Av. Miguel Iglesias 825</li>
+              <li>Santa Anita: María Parado de Bellido 1106</li>
             </ul>
           </div>
           <div>

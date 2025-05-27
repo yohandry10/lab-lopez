@@ -250,14 +250,14 @@ export default function RegisterPage() {
       />
 
       {/* Formulario de registro */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="mx-auto max-w-md">
-          <div className="flex flex-col space-y-2 text-center mb-8">
-            <h2 className="text-2xl font-semibold tracking-tight">Crear una cuenta</h2>
+      <div className="container mx-auto px-4 py-8 sm:py-16">
+        <div className="mx-auto max-w-md sm:max-w-lg">
+          <div className="flex flex-col space-y-2 text-center mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">Crear una cuenta</h2>
             <p className="text-sm text-muted-foreground">Ingresa tus datos para registrarte</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
             <form onSubmit={handleSubmit}>
               <div className="grid gap-4">
                 <div className="grid gap-2">
@@ -358,6 +358,89 @@ export default function RegisterPage() {
                   {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
                 </div>
 
+                <div className="grid gap-2">
+                  <Label>Tipo de usuario</Label>
+                  <RadioGroup
+                    value={formData.user_type}
+                    onValueChange={handleUserTypeChange}
+                    className="flex flex-col sm:flex-row sm:space-x-6 space-y-2 sm:space-y-0"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="patient" id="patient" />
+                      <Label htmlFor="patient" className="text-sm font-normal">Paciente</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="doctor" id="doctor" />
+                      <Label htmlFor="doctor" className="text-sm font-normal">Médico</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="company" id="company" />
+                      <Label htmlFor="company" className="text-sm font-normal">Empresa</Label>
+                    </div>
+                  </RadioGroup>
+                  {errors.user_type && <p className="text-sm text-red-500">{errors.user_type}</p>}
+                </div>
+
+                {/* Campos específicos para empresas */}
+                {formData.user_type === "company" && (
+                  <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h3 className="text-sm font-medium text-blue-900">Información de la empresa</h3>
+                    
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid gap-2 sm:col-span-2">
+                        <Label htmlFor="company_name">Nombre de la empresa *</Label>
+                        <Input
+                          id="company_name"
+                          name="company_name"
+                          value={formData.company_name || ""}
+                          onChange={handleChange}
+                          className={errors.company_name ? "border-red-500" : ""}
+                          placeholder="Ingresa el nombre de tu empresa"
+                        />
+                        {errors.company_name && <p className="text-sm text-red-500">{errors.company_name}</p>}
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="company_ruc">RUC *</Label>
+                        <Input
+                          id="company_ruc"
+                          name="company_ruc"
+                          value={formData.company_ruc || ""}
+                          onChange={handleChange}
+                          className={errors.company_ruc ? "border-red-500" : ""}
+                          placeholder="12345678901"
+                          maxLength={11}
+                        />
+                        {errors.company_ruc && <p className="text-sm text-red-500">{errors.company_ruc}</p>}
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label htmlFor="company_position">Cargo (opcional)</Label>
+                        <Input
+                          id="company_position"
+                          name="company_position"
+                          value={formData.company_position || ""}
+                          onChange={handleChange}
+                          placeholder="Ej: Gerente de RRHH"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="is_company_admin"
+                        checked={formData.is_company_admin || false}
+                        onCheckedChange={(checked) => 
+                          setFormData(prev => ({ ...prev, is_company_admin: checked as boolean }))
+                        }
+                      />
+                      <Label htmlFor="is_company_admin" className="text-sm font-normal">
+                        Administrador de la empresa
+                      </Label>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center space-x-2">
                     <Checkbox
@@ -391,8 +474,6 @@ export default function RegisterPage() {
                     </label>
                   </div>
                 </div>
-
-                <input type="hidden" name="user_type" value="patient" />
 
                 {errors.submit && (
                   <div className="p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm mb-4">

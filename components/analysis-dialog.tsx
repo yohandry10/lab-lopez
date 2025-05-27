@@ -117,11 +117,9 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
           </div>
         </DialogHeader>
         
-        {user && (
-          <div className="bg-blue-50 -mx-6 px-6 py-2 text-right text-sm">
-            Precio S/. {analysis.price.toFixed(2)} incluido IGV
-          </div>
-        )}
+        <div className="bg-blue-50 -mx-6 px-6 py-2 text-right text-sm">
+          <span className="font-medium">Precio: S/. {analysis.price.toFixed(2)}</span> <span className="text-gray-600">(incluido IGV)</span>
+        </div>
         
         <div className="space-y-4 pt-2">
           <div>
@@ -143,92 +141,92 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
             </div>
           )}
           {analysis.comments && (
-            <div>
-              <h4 className="font-medium mb-1">Comentarios</h4>
+          <div>
+            <h4 className="font-medium mb-1">Comentarios</h4>
               <p className="text-gray-600 text-sm">{analysis.comments || "(ninguno)"}</p>
-            </div>
+          </div>
           )}
 
           {user && (
-            <div className="border-t pt-4 mt-4">
-              <h3 className="text-lg font-medium mb-4">Datos del Paciente</h3>
-              <div className="space-y-4">
+          <div className="border-t pt-4 mt-4">
+            <h3 className="text-lg font-medium mb-4">Datos del Paciente</h3>
+            <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="documentType">Tipo de Documento</Label>
+                <div>
+                  <Label htmlFor="documentType">Tipo de Documento</Label>
                     <Select value={formData.documentType} onValueChange={(value) => handleSelectChange("documentType", value)}>
                       <SelectTrigger id="documentType"><SelectValue placeholder="Tipo de documento" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DNI">DNI</SelectItem>
-                        <SelectItem value="CE">Carné de Extranjería</SelectItem>
-                        <SelectItem value="Pasaporte">Pasaporte</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="documentNumber">Número de Documento</Label>
-                    <Input id="documentNumber" name="documentNumber" value={formData.documentNumber} onChange={handleInputChange} placeholder="Ingrese número" />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="patientName">Nombre Completo</Label>
-                  <Input id="patientName" name="patientName" value={formData.patientName} onChange={handleInputChange} placeholder="Ingrese nombre completo" />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="patientAge">Edad</Label>
-                    <Input id="patientAge" name="patientAge" value={formData.patientAge} onChange={handleInputChange} placeholder="Edad" type="number"/>
-                  </div>
-                  <div>
-                    <Label htmlFor="patientGender">Género</Label>
-                    <Select value={formData.patientGender} onValueChange={(value) => handleSelectChange("patientGender", value)}>
-                      <SelectTrigger id="patientGender"><SelectValue placeholder="Seleccione género" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="M">Masculino</SelectItem>
-                        <SelectItem value="F">Femenino</SelectItem>
-                         <SelectItem value="O">Otro</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="correo@ejemplo.com" />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Teléfono</Label>
-                    <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Número de contacto" />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="serviceType">Tipo de Servicio</Label>
-                  <Select value={formData.serviceType} onValueChange={(value) => handleSelectChange("serviceType", value)}>
-                    <SelectTrigger id="serviceType"><SelectValue placeholder="Seleccione tipo de servicio" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="sede">Atención en sede</SelectItem>
-                      <SelectItem value="domicilio">Atención a domicilio</SelectItem>
+                      <SelectItem value="DNI">DNI</SelectItem>
+                      <SelectItem value="CE">Carné de Extranjería</SelectItem>
+                      <SelectItem value="Pasaporte">Pasaporte</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label htmlFor="documentNumber">Número de Documento</Label>
+                    <Input id="documentNumber" name="documentNumber" value={formData.documentNumber} onChange={handleInputChange} placeholder="Ingrese número" />
+                </div>
+              </div>
 
-                {formData.serviceType === "sede" ? (
-                  <div>
-                    <Label htmlFor="location">Sede</Label>
+              <div>
+                <Label htmlFor="patientName">Nombre Completo</Label>
+                  <Input id="patientName" name="patientName" value={formData.patientName} onChange={handleInputChange} placeholder="Ingrese nombre completo" />
+              </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="patientAge">Edad</Label>
+                    <Input id="patientAge" name="patientAge" value={formData.patientAge} onChange={handleInputChange} placeholder="Edad" type="number"/>
+                </div>
+                <div>
+                  <Label htmlFor="patientGender">Género</Label>
+                    <Select value={formData.patientGender} onValueChange={(value) => handleSelectChange("patientGender", value)}>
+                      <SelectTrigger id="patientGender"><SelectValue placeholder="Seleccione género" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="M">Masculino</SelectItem>
+                      <SelectItem value="F">Femenino</SelectItem>
+                         <SelectItem value="O">Otro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                    <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="correo@ejemplo.com" />
+                </div>
+                <div>
+                  <Label htmlFor="phone">Teléfono</Label>
+                    <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Número de contacto" />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="serviceType">Tipo de Servicio</Label>
+                  <Select value={formData.serviceType} onValueChange={(value) => handleSelectChange("serviceType", value)}>
+                    <SelectTrigger id="serviceType"><SelectValue placeholder="Seleccione tipo de servicio" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sede">Atención en sede</SelectItem>
+                    <SelectItem value="domicilio">Atención a domicilio</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.serviceType === "sede" ? (
+                <div>
+                  <Label htmlFor="location">Sede</Label>
                     <Select value={formData.location} onValueChange={(value) => handleSelectChange("location", value)}>
                       <SelectTrigger id="location"><SelectValue placeholder="Seleccione una sede" /></SelectTrigger>
-                      <SelectContent>
+                    <SelectContent>
                         {locations.map((loc) => (<SelectItem key={loc} value={loc}>{loc}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : (
-                  <>
-                    <div>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <>
+                  <div>
                       <Label htmlFor="address">Dirección completa</Label>
                       <Input
                         id="address"
@@ -237,41 +235,41 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
                         onChange={handleInputChange}
                         placeholder="Ingrese su dirección completa"
                       />
-                    </div>
-                    <div>
-                      <Label htmlFor="district">Distrito</Label>
-                      <Select value={formData.district} onValueChange={(value) => handleSelectChange("district", value)}>
-                        <SelectTrigger id="district"><SelectValue placeholder="Seleccione distrito" /></SelectTrigger>
-                        <SelectContent>
-                          {districts.map((district) => (<SelectItem key={district} value={district}>{district}</SelectItem>))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="reference">Referencia</Label>
-                      <Input id="reference" name="reference" value={formData.reference} onChange={handleInputChange} placeholder="Referencias para ubicar la dirección (piso, departamento, etc.)" />
-                    </div>
-                  </>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="date">Fecha</Label>
-                    <Input id="date" name="date" type="date" value={formData.date} onChange={handleInputChange} />
                   </div>
                   <div>
-                    <Label htmlFor="time">Hora</Label>
-                    <Select value={formData.time} onValueChange={(value) => handleSelectChange("time", value)}>
-                      <SelectTrigger id="time"><SelectValue placeholder="Seleccione hora" /></SelectTrigger>
+                    <Label htmlFor="district">Distrito</Label>
+                      <Select value={formData.district} onValueChange={(value) => handleSelectChange("district", value)}>
+                        <SelectTrigger id="district"><SelectValue placeholder="Seleccione distrito" /></SelectTrigger>
                       <SelectContent>
-                        {timeSlots.map((time) => (<SelectItem key={time} value={time}>{time}</SelectItem>))}
+                          {districts.map((district) => (<SelectItem key={district} value={district}>{district}</SelectItem>))}
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
+                  <div>
+                    <Label htmlFor="reference">Referencia</Label>
+                      <Input id="reference" name="reference" value={formData.reference} onChange={handleInputChange} placeholder="Referencias para ubicar la dirección (piso, departamento, etc.)" />
+                  </div>
+                </>
+              )}
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="observations">Observaciones</Label>
+                  <Label htmlFor="date">Fecha</Label>
+                    <Input id="date" name="date" type="date" value={formData.date} onChange={handleInputChange} />
+                </div>
+                <div>
+                  <Label htmlFor="time">Hora</Label>
+                    <Select value={formData.time} onValueChange={(value) => handleSelectChange("time", value)}>
+                      <SelectTrigger id="time"><SelectValue placeholder="Seleccione hora" /></SelectTrigger>
+                    <SelectContent>
+                        {timeSlots.map((time) => (<SelectItem key={time} value={time}>{time}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="observations">Observaciones</Label>
                   <Input id="observations" name="observations" value={formData.observations} onChange={handleInputChange} placeholder="Observaciones adicionales" />
                 </div>
               </div>
@@ -281,12 +279,12 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
         <DialogFooter className="mt-6">
           {user ? (
             <>
-              <Button variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSubmit} className="bg-[#3DA64A] hover:bg-[#1E5FAD]">
-                Agregar al Carrito
-              </Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} className="bg-[#3DA64A] hover:bg-[#1E5FAD]">
+            Agregar al Carrito
+          </Button>
             </>
           ) : (
             <Button variant="outline" onClick={onClose}>

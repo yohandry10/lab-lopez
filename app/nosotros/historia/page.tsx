@@ -39,7 +39,7 @@ export default function HistoriaPage() {
             </div>
             <h3 className="text-4xl md:text-5xl font-bold text-black mb-8 font-sans">Nuestra Historia</h3>
             <p className="text-gray-800 text-lg mb-8">
-              Conoce la trayectoria de más de 70 años de excelencia en servicios de laboratorio
+              Conoce la trayectoria de más de 5 años de excelencia en servicios de laboratorio
             </p>
           </motion.div>
         </div>
@@ -56,7 +56,7 @@ export default function HistoriaPage() {
               className="mb-16"
             >
               <h2 className="text-sm text-blue-600 uppercase tracking-wider mb-4">NUESTRA TRAYECTORIA</h2>
-              <h3 className="text-3xl font-bold mb-6">Más de 70 años de excelencia</h3>
+              <h3 className="text-3xl font-bold mb-6">Más de 5 años de excelencia</h3>
               <div className="prose max-w-none">
                 <p>
                   En el año 1953, el Dr. Carlos Roe Gómez fundó Laboratorio Clínico Roe con una visión clara: ofrecer

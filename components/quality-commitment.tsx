@@ -29,7 +29,7 @@ export default function QualityCommitment() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
                   <Button asChild className="bg-[#1e5fad] hover:bg-[#1e5fad]/90">
-                    <Link href="/nosotros">Nuestra política de calidad</Link>
+                    <Link href="/nosotros">Nosotros</Link>
                   </Button>
                 </div>
               </div>
