@@ -1101,52 +1101,85 @@ export default function AnalisisPage() {
   const [editingAnalysis, setEditingAnalysis] = useState<typeof analysisData[0] | null>(null)
 
   const handleUpdateAnalysis = async (updatedAnalysis: typeof analysisData[0]) => {
-    console.log("🔄 Iniciando actualización:", updatedAnalysis);
+    console.log("🔄 INICIANDO ACTUALIZACIÓN COMPLETA");
+    console.log("📊 Datos a actualizar:", updatedAnalysis);
     
     try {
       const supabase = getSupabaseClient();
+      console.log("🔗 Cliente Supabase obtenido");
       
-      // Primero actualizar el estado local para ver el cambio inmediatamente
+      // Verificar conexión a Supabase primero
+      console.log("🧪 Verificando conexión a Supabase...");
+      const { data: testData, error: testError } = await supabase
+        .from("analyses")
+        .select("count")
+        .limit(1);
+      
+      if (testError) {
+        console.error("❌ ERROR DE CONEXIÓN A SUPABASE:", testError);
+        alert("❌ Error de conexión a Supabase: " + testError.message);
+        return;
+      }
+      
+      console.log("✅ Conexión a Supabase exitosa");
+      
+      // Verificar que el registro existe
+      console.log("🔍 Verificando que el análisis existe...");
+      const { data: existingData, error: existingError } = await supabase
+        .from("analyses")
+        .select("*")
+        .eq("id", updatedAnalysis.id)
+        .single();
+        
+      if (existingError || !existingData) {
+        console.error("❌ El análisis no existe en Supabase:", existingError);
+        alert("❌ Error: El análisis no existe en la base de datos");
+        return;
+      }
+      
+      console.log("✅ Análisis encontrado:", existingData);
+      
+             // Actualizar en Supabase PRIMERO
+       console.log("💾 Actualizando en Supabase...");
+       const { data, error } = await supabase
+         .from("analyses")
+         .update({
+           name: updatedAnalysis.name,
+           price: updatedAnalysis.price,
+           category: updatedAnalysis.category,
+           conditions: updatedAnalysis.conditions,
+           sample: updatedAnalysis.sample,
+           protocol: updatedAnalysis.protocol,
+           suggestions: updatedAnalysis.suggestions,
+           comments: updatedAnalysis.comments,
+         })
+         .eq("id", updatedAnalysis.id)
+         .select()
+         .single();
+
+      if (error) {
+        console.error("❌ ERROR AL GUARDAR EN SUPABASE:", error);
+        console.error("Detalles del error:", error);
+        alert("❌ Error al guardar en Supabase: " + error.message);
+        return;
+      }
+      
+      console.log("✅ GUARDADO EXITOSO EN SUPABASE:", data);
+      
+      // Solo después actualizar el estado local
       setLocalAnalysisData(prevData =>
         prevData.map(item =>
           item.id === updatedAnalysis.id ? updatedAnalysis : item
         )
       )
-      console.log("✅ Estado local actualizado inmediatamente");
+      console.log("✅ Estado local actualizado");
       
-      // Luego actualizar en Supabase
-      const { data, error } = await supabase
-        .from("analyses")
-        .update({
-          name: updatedAnalysis.name,
-          price: updatedAnalysis.price,
-          category: updatedAnalysis.category,
-          conditions: updatedAnalysis.conditions,
-          sample: updatedAnalysis.sample,
-          protocol: updatedAnalysis.protocol,
-          suggestions: updatedAnalysis.suggestions,
-          comments: updatedAnalysis.comments,
-        })
-        .eq("id", updatedAnalysis.id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error("❌ Error al guardar en Supabase:", error);
-        alert("Error al guardar en Supabase: " + error.message);
-        // Revertir el cambio local si falla
-        window.location.reload(); // Recarga para obtener los datos originales
-        return;
-      }
-      
-      console.log("✅ Guardado exitoso en Supabase:", data);
       setEditingAnalysis(null);
-      alert("✅ Análisis actualizado correctamente!");
+      alert("🎉 ¡ANÁLISIS ACTUALIZADO CORRECTAMENTE!");
       
     } catch (err) {
-      console.error("❌ Error inesperado:", err);
-      alert("Error inesperado: " + String(err));
-      window.location.reload();
+      console.error("❌ ERROR INESPERADO:", err);
+      alert("❌ Error inesperado: " + String(err));
     }
   }
 

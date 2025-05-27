@@ -99,13 +99,11 @@ export type Order = {
   updated_at?: string
 }
 
-// Crear cliente de Supabase - usando variables de entorno
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// Crear cliente de Supabase - usando variables de entorno o valores por defecto
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://adxvkmwhklblrxjljmzx.supabase.co"
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkeHZrbXdoa2xibHJ4amxqbXp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzEwMzMyMTUsImV4cCI6MjA0NjYwOTIxNX0.v7fhNBQQj8Jd2Mh_gH_tUQN2nD5_J1DJGLyJZz9F1zA"
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Las variables de entorno de Supabase no están configuradas")
-}
+console.log("🔗 Conectando a Supabase:", supabaseUrl)
 
 // Crear cliente para el lado del cliente (singleton)
 let clientInstance: ReturnType<typeof createClient> | null = null
