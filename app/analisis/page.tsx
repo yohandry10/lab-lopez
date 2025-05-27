@@ -22,6 +22,7 @@ import { useAuth } from "../../contexts/auth-context"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog"
 import { Label } from "../../components/ui/label"
 import { Textarea } from "../../components/ui/textarea"
+import { getSupabaseClient } from "../../lib/supabase-client"
 
 // Lista extendida de análisis
 const analysisData = [
@@ -811,11 +812,12 @@ const categories = [...new Set(analysisData.map((item) => item.category))].sort(
 
 // Definir el tipo para los perfiles
 type Profile = {
-  title: string
-  description: string
-  price: number
-  image: string
-  tests: string[]
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  image: string;
+  tests: string[];
 }
 
 export default function AnalisisPage() {
@@ -829,6 +831,7 @@ export default function AnalisisPage() {
   const { addItem } = useCart()
   const router = useRouter()
   const { user } = useAuth()
+  console.log("Usuario logueado:", user)
   const [popularProfiles, setPopularProfiles] = useState([
     {
       title: "Perfil Básico",
@@ -1088,7 +1091,29 @@ export default function AnalisisPage() {
 
   const [editingAnalysis, setEditingAnalysis] = useState<typeof analysisData[0] | null>(null)
 
-  const handleUpdateAnalysis = (updatedAnalysis: typeof analysisData[0]) => {
+  const handleUpdateAnalysis = async (updatedAnalysis: typeof analysisData[0]) => {
+    const supabase = getSupabaseClient();
+    // Intentar actualizar en la tabla 'analyses' (ajusta el nombre si es diferente)
+    const { data, error } = await supabase
+      .from("analyses")
+      .update({
+        name: updatedAnalysis.name,
+        price: updatedAnalysis.price,
+        category: updatedAnalysis.category,
+        conditions: updatedAnalysis.conditions,
+        sample: updatedAnalysis.sample,
+        protocol: updatedAnalysis.protocol,
+        suggestions: updatedAnalysis.suggestions,
+        comments: updatedAnalysis.comments,
+      })
+      .eq("id", updatedAnalysis.id)
+      .select()
+      .single();
+
+    if (error) {
+      alert("Error al guardar en Supabase: " + error.message)
+      return;
+    }
     setLocalAnalysisData(prevData =>
       prevData.map(item =>
         item.id === updatedAnalysis.id ? updatedAnalysis : item
@@ -1097,11 +1122,7 @@ export default function AnalisisPage() {
     setEditingAnalysis(null)
   }
 
-  const handleDeleteAnalysis = (analysis: typeof analysisData[0]) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este análisis?')) {
-      setLocalAnalysisData(prevData => prevData.filter(item => item.id !== analysis.id))
-    }
-  }
+
 
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null)
 
@@ -1111,21 +1132,94 @@ export default function AnalisisPage() {
     }
   }
 
-  const handleUpdateProfile = (updatedProfile: Profile) => {
-    console.log('Perfil antes de actualizar:', updatedProfile)
-    setPopularProfiles(prevProfiles => {
-      const newProfiles = prevProfiles.map(profile => {
-        if (profile.title === editingProfile?.title) {
-          console.log('Actualizando perfil:', updatedProfile)
-          return updatedProfile
-        }
-        return profile
+  const handleUpdateProfile = async (updatedProfile: Profile) => {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({
+        title: updatedProfile.title,
+        description: updatedProfile.description,
+        price: updatedProfile.price,
+        image: updatedProfile.image,
+        tests: updatedProfile.tests,
       })
-      console.log('Nuevos perfiles:', newProfiles)
-      return newProfiles
-    })
-    setEditingProfile(null)
+      .eq("id", updatedProfile.id)
+      .select()
+      .single();
+    if (error) {
+      alert("Error al guardar perfil en Supabase: " + error.message);
+      return;
+    }
+    setPopularProfiles(prevProfiles =>
+      prevProfiles.map(profile =>
+        profile.id === updatedProfile.id ? updatedProfile : profile
+      )
+    );
+    setEditingProfile(null);
   }
+
+  // Mostrar todos los análisis por defecto si el usuario es admin y no hay búsqueda activa
+  const mostrarTodos = user && user.user_type === "admin" && !searchTerm && !selectedCategory && !selectedLetter;
+  const analisisParaMostrar = mostrarTodos ? localAnalysisData : filteredAnalysis;
+
+  useEffect(() => {
+    async function fetchProfiles() {
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase.from("profiles").select("*");
+      if (error) {
+        alert("Error al cargar perfiles desde Supabase: " + error.message);
+        return;
+      }
+      if (data && Array.isArray(data)) {
+        setPopularProfiles(data);
+      }
+    }
+    fetchProfiles();
+  }, []);
+
+  // 1. Estado para el modal de agregar análisis
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newAnalysis, setNewAnalysis] = useState({
+    name: '',
+    price: 0,
+    conditions: '',
+    sample: '',
+    protocol: '',
+    suggestions: '',
+    comments: '',
+    category: '',
+  });
+
+  // 2. Función para agregar análisis
+  const handleAddAnalysis = async () => {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from("analyses")
+      .insert([newAnalysis])
+      .select()
+      .single();
+    if (error) {
+      alert("Error al agregar análisis: " + error.message);
+      return;
+    }
+    setLocalAnalysisData(prev => [...prev, data]);
+    setIsAddModalOpen(false);
+    setNewAnalysis({
+      name: '', price: 0, conditions: '', sample: '', protocol: '', suggestions: '', comments: '', category: '',
+    });
+  };
+
+  // 3. Modifica handleDeleteAnalysis para borrar en Supabase
+  const handleDeleteAnalysis = async (analysis) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este análisis?')) return;
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.from("analyses").delete().eq("id", analysis.id);
+    if (error) {
+      alert("Error al eliminar análisis: " + error.message);
+      return;
+    }
+    setLocalAnalysisData(prevData => prevData.filter(item => item.id !== analysis.id));
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -1253,12 +1347,12 @@ export default function AnalisisPage() {
             </div>
 
             {/* Resultados de búsqueda - Solo mostrar cuando hay búsqueda activa */}
-            {(searchTerm || selectedCategory || selectedLetter) && filteredAnalysis.length > 0 ? (
+            {analisisParaMostrar.length > 0 ? (
               <div className="space-y-6">
                 {/* Contador de resultados */}
                 <div className="bg-white rounded-lg p-4 border border-[#1E5FAD]/20">
                   <p className="text-[#1E5FAD] font-medium">
-                    {filteredAnalysis.length} {filteredAnalysis.length === 1 ? "resultado encontrado" : "resultados encontrados"}
+                    {analisisParaMostrar.length} {analisisParaMostrar.length === 1 ? "resultado encontrado" : "resultados encontrados"}
                     {searchTerm && ` para "${searchTerm}"`}
                     {selectedCategory && ` en ${selectedCategory}`}
                     {selectedLetter && ` que comienzan con "${selectedLetter}"`}
@@ -1288,6 +1382,11 @@ export default function AnalisisPage() {
                           {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Carrito
+                            </th>
+                          )}
+                          {user && user.user_type === "admin" && (
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Editar
                             </th>
                           )}
                         </tr>
@@ -1327,6 +1426,17 @@ export default function AnalisisPage() {
                                 </Button>
                               </td>
                             )}
+                            {user && user.user_type === "admin" && (
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <Button
+                                  variant="outline"
+                                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                                  onClick={() => setEditingAnalysis(analysis)}
+                                >
+                                  Editar
+                                </Button>
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -1338,7 +1448,7 @@ export default function AnalisisPage() {
                 {totalPages > 1 && (
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-6 sm:mt-8">
                     <div className="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
-                      Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredAnalysis.length)} de {filteredAnalysis.length} resultados
+                      Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, analisisParaMostrar.length)} de {analisisParaMostrar.length} resultados
                     </div>
                     <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                       <Button
@@ -1380,7 +1490,7 @@ export default function AnalisisPage() {
                   </div>
                 )}
               </div>
-            ) : (searchTerm || selectedCategory || selectedLetter) && filteredAnalysis.length === 0 ? (
+            ) : (searchTerm || selectedCategory || selectedLetter) && analisisParaMostrar.length === 0 ? (
               /* No hay resultados */
               <div className="text-center py-10 sm:py-12 bg-gradient-to-br from-red-50 to-orange-100 rounded-xl border border-red-200">
                 <div className="max-w-md sm:max-w-lg mx-auto px-4">
@@ -1772,6 +1882,35 @@ export default function AnalisisPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Modal para agregar análisis */}
+      {isAddModalOpen && (
+        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Agregar nuevo análisis</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Input placeholder="Nombre" value={newAnalysis.name} onChange={e => setNewAnalysis(a => ({ ...a, name: e.target.value }))} />
+              <Input placeholder="Precio" type="number" value={newAnalysis.price} onChange={e => setNewAnalysis(a => ({ ...a, price: Number(e.target.value) }))} />
+              <Input placeholder="Condiciones" value={newAnalysis.conditions} onChange={e => setNewAnalysis(a => ({ ...a, conditions: e.target.value }))} />
+              <Input placeholder="Muestra" value={newAnalysis.sample} onChange={e => setNewAnalysis(a => ({ ...a, sample: e.target.value }))} />
+              <Input placeholder="Protocolo" value={newAnalysis.protocol} onChange={e => setNewAnalysis(a => ({ ...a, protocol: e.target.value }))} />
+              <Input placeholder="Sugerencias" value={newAnalysis.suggestions} onChange={e => setNewAnalysis(a => ({ ...a, suggestions: e.target.value }))} />
+              <Input placeholder="Comentarios" value={newAnalysis.comments} onChange={e => setNewAnalysis(a => ({ ...a, comments: e.target.value }))} />
+              <Input placeholder="Categoría" value={newAnalysis.category} onChange={e => setNewAnalysis(a => ({ ...a, category: e.target.value }))} />
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={handleAddAnalysis}>Guardar</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* En el render, justo antes de la tabla de análisis: */}
+      {user && user.user_type === "admin" && (
+        <Button className="mb-4 bg-green-600 hover:bg-green-700 text-white" onClick={() => setIsAddModalOpen(true)}>
+          + Agregar análisis
+        </Button>
+      )}
     </div>
   )
 }
