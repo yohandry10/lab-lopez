@@ -1503,7 +1503,7 @@ export default function AnalisisPage() {
                             className="bg-[#25d366] hover:bg-[#128C7E] text-white border-[#25d366] transition-all duration-200 group-hover:scale-105"
                             onClick={() => {
                               const message = `Hola, estoy interesado en el ${profile.title}. ¿Podrían darme más información?`
-                              const whatsappUrl = `https://wa.me/51900644599?text=${encodeURIComponent(message)}`
+                              const whatsappUrl = `https://wa.me/51900649599?text=${encodeURIComponent(message)}`
                               window.open(whatsappUrl, '_blank')
                             }}
                           >

@@ -3,7 +3,7 @@
 export default function WhatsAppFloat() {
   const handleWhatsAppClick = () => {
     const message = "Hola, me gustaría obtener más información sobre sus servicios."
-    const whatsappUrl = `https://wa.me/51900644599?text=${encodeURIComponent(message)}`
+    const whatsappUrl = `https://wa.me/51900649599?text=${encodeURIComponent(message)}`
     window.open(whatsappUrl, '_blank')
   }
 

@@ -60,19 +60,19 @@ export default function DomicilioExacto() {
                 </a>
 
                 <a
-                  href="tel:+51900644599"
+                  href="tel:+51900649599"
                   className="flex items-center justify-center gap-2 bg-[#1e5fad] text-white p-3 sm:p-4 rounded-lg hover:bg-[#1e5fad]/90 transition-colors text-sm sm:text-base"
                 >
                   <Phone className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                  <span className="text-center">Infórmanos al: 900 644599</span>
+                  <span className="text-center">Infórmanos al: 900 649599</span>
                 </a>
 
                 <a
-                  href="https://wa.me/51900644599"
+                  href="https://wa.me/51900649599"
                   className="flex items-center justify-center gap-2 bg-[#25D366] text-white p-3 sm:p-4 rounded-lg hover:bg-[#25D366]/90 transition-colors text-sm sm:text-base"
                 >
                   <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                  <span className="text-center">Escríbenos por WhatsApp: +51 900 644599</span>
+                  <span className="text-center">Escríbenos por WhatsApp: +51 900 649599</span>
                 </a>
               </div>
             </div>
