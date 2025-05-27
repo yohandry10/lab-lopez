@@ -1123,6 +1123,7 @@ export default function AnalisisPage() {
       alert("Error al guardar en Supabase: " + error.message)
       return;
     }
+    // Usar el análisis actualizado directamente en lugar del dato de Supabase
     setLocalAnalysisData(prevData =>
       prevData.map(item =>
         item.id === updatedAnalysis.id ? updatedAnalysis : item
@@ -1176,11 +1177,26 @@ export default function AnalisisPage() {
       const supabase = getSupabaseClient();
       const { data, error } = await supabase.from("profiles").select("*");
       if (error) {
-        alert("Error al cargar perfiles desde Supabase: " + error.message);
+        console.error("Error al cargar perfiles desde Supabase:", error.message);
         return;
       }
-      if (data && Array.isArray(data)) {
-        setPopularProfiles(data);
+      if (data && Array.isArray(data) && data.length > 0) {
+        try {
+          // Casting directo y seguro
+          const profiles = data.map((profile: any) => ({
+            id: profile.id || Math.random(),
+            title: profile.title || '',
+            description: profile.description || '',
+            price: Number(profile.price) || 0,
+            image: profile.image || '',
+            tests: Array.isArray(profile.tests) ? profile.tests : []
+          })) as Profile[];
+          
+          setPopularProfiles(profiles);
+        } catch (e) {
+          console.error("Error procesando perfiles:", e);
+          // Mantener los datos locales si hay error
+        }
       }
     }
     fetchProfiles();
@@ -1211,7 +1227,19 @@ export default function AnalisisPage() {
       alert("Error al agregar análisis: " + error.message);
       return;
     }
-    setLocalAnalysisData(prev => [...prev, data]);
+    // Casting más explícito y seguro
+    const newAnalysisData = {
+      id: Number(data?.id) || Date.now(),
+      name: String(data?.name || newAnalysis.name),
+      price: Number(data?.price || newAnalysis.price),
+      conditions: String(data?.conditions || newAnalysis.conditions),
+      sample: String(data?.sample || newAnalysis.sample),
+      protocol: String(data?.protocol || newAnalysis.protocol),
+      suggestions: String(data?.suggestions || newAnalysis.suggestions),
+      comments: String(data?.comments || newAnalysis.comments),
+      category: String(data?.category || newAnalysis.category),
+    };
+    setLocalAnalysisData(prev => [...prev, newAnalysisData]);
     setIsAddModalOpen(false);
     setNewAnalysis({
       name: '', price: 0, conditions: '', sample: '', protocol: '', suggestions: '', comments: '', category: '',
@@ -1219,7 +1247,7 @@ export default function AnalisisPage() {
   };
 
   // 3. Modifica handleDeleteAnalysis para borrar en Supabase
-  const handleDeleteAnalysis = async (analysis) => {
+  const handleDeleteAnalysis = async (analysis: typeof analysisData[0]) => {
     if (!window.confirm('¿Estás seguro de que deseas eliminar este análisis?')) return;
     const supabase = getSupabaseClient();
     const { error } = await supabase.from("analyses").delete().eq("id", analysis.id);
@@ -1823,6 +1851,7 @@ export default function AnalisisPage() {
                 .filter(test => test.trim() !== '')
 
               const updatedProfile: Profile = {
+                id: editingProfile.id,
                 title,
                 description,
                 price,
