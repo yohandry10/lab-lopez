@@ -1278,17 +1278,19 @@ export default function AnalisisPage() {
       if (data && Array.isArray(data) && data.length > 0) {
         console.log("✅ Análisis cargados desde Supabase:", data.length);
         // Mapear datos de Supabase al formato esperado
-        const mappedData = data.map(item => ({
-          id: item.id || 0,
-          name: item.name || '',
-          price: Number(item.price) || 0,
-          conditions: item.conditions || '',
-          sample: item.sample || '',
-          protocol: item.protocol || '',
-          suggestions: item.suggestions || '',
-          comments: item.comments || '',
-          category: item.category || '',
-        }));
+        const mappedData: typeof analysisData = data.map((item: any) => {
+          return {
+            id: parseInt(item.id?.toString() || '0') || 0,
+            name: item.name?.toString() || '',
+            price: parseFloat(item.price?.toString() || '0') || 0,
+            conditions: item.conditions?.toString() || '',
+            sample: item.sample?.toString() || '',
+            protocol: item.protocol?.toString() || '',
+            suggestions: item.suggestions?.toString() || '',
+            comments: item.comments?.toString() || '',
+            category: item.category?.toString() || '',
+          };
+        });
         setLocalAnalysisData(mappedData);
       } else {
         console.log("⚠️ No hay datos en Supabase, usando datos locales");
