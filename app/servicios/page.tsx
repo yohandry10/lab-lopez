@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
@@ -11,9 +11,28 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/auth-context"
-import { Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2, Plus, Edit } from "lucide-react"
+import { getSupabaseClient } from "@/lib/supabase"
+import PerfilBienestarAdminModal from "@/components/perfil-bienestar-admin-modal"
 
-// Definición del tipo para un perfil
+// Definición del tipo para un perfil de bienestar
+interface PerfilBienestar {
+  id?: number
+  slug: string
+  title: string
+  description: string
+  content: string
+  price: number
+  image: string
+  locations: string[]
+  sample_type: string
+  age_requirement: string
+  tests: string[]
+  conditions: string[]
+  is_active?: boolean
+}
+
+// Definición del tipo para un perfil (compatibilidad con código existente)
 interface Profile {
   title: string
   description: string
@@ -25,7 +44,7 @@ interface Profile {
   ageRequirement: string
   tests: string[]
   conditions: string[]
-  slug?: string // Slug opcional para identificar el perfil
+  slug?: string
 }
 
 // Tipo para el objeto de perfiles con índice de string
@@ -33,8 +52,8 @@ interface ProfilesData {
   [key: string]: Profile
 }
 
-// Datos de los perfiles
-const profiles: ProfilesData = {
+// Datos de los perfiles (fallback si no hay datos en Supabase)
+const profilesFallback: ProfilesData = {
   "prevencion-total": {
     title: "Perfil Prevención total",
     description:
@@ -217,20 +236,218 @@ const profiles: ProfilesData = {
 }
 
 export default function ServiciosPage() {
-  const [profilesData, setProfilesData] = useState<ProfilesData>(profiles)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [editingProfile, setEditingProfile] = useState<Profile | null>(null)
   const { user } = useAuth()
+  const [perfilesBienestar, setPerfilesBienestar] = useState<PerfilBienestar[]>([])
+  const [profiles, setProfiles] = useState<ProfilesData>(profilesFallback)
+  const [loading, setLoading] = useState(true)
+  
+  // Estados para administración
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false)
+  const [editingPerfil, setEditingPerfil] = useState<PerfilBienestar | null>(null)
+  const [modalMode, setModalMode] = useState<"edit">("edit")
 
+  // Estados para modal de edición de perfiles populares (código existente)
+  const [editingProfile, setEditingProfile] = useState<Profile | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [newProfile, setNewProfile] = useState<Profile>({
+    title: "",
+    description: "",
+    content: "",
+    price: 0,
+    image: "",
+    locations: ["Sede"],
+    sampleType: "General",
+    ageRequirement: "Cualquier edad",
+    tests: [],
+    conditions: [],
+  })
+
+  // Cargar perfiles de bienestar desde Supabase
+  useEffect(() => {
+    async function fetchPerfilesBienestar() {
+      console.log("🔄 Cargando perfiles de bienestar desde Supabase...")
+      const supabase = getSupabaseClient()
+      
+      try {
+        const { data, error } = await supabase
+          .from("perfiles_bienestar")
+          .select("*")
+          .eq("is_active", true)
+          .order("created_at", { ascending: true })
+
+        if (error) {
+          console.error("❌ Error al cargar perfiles de bienestar:", error)
+          // Convertir datos fallback al formato de Supabase
+          const fallbackData = Object.entries(profilesFallback).map((entry, index) => ({
+            id: index + 1,
+            slug: entry[0],
+            title: entry[1].title,
+            description: entry[1].description,
+            content: entry[1].content,
+            price: entry[1].price,
+            image: entry[1].image,
+            locations: Array.isArray(entry[1].locations) ? entry[1].locations : [entry[1].locations],
+            sample_type: Array.isArray(entry[1].sampleType) ? entry[1].sampleType.join(", ") : entry[1].sampleType,
+            age_requirement: entry[1].ageRequirement,
+            tests: entry[1].tests,
+            conditions: entry[1].conditions,
+            is_active: true
+          }))
+          setPerfilesBienestar(fallbackData)
+          return
+        }
+
+        if (data && Array.isArray(data)) {
+          console.log("✅ Perfiles de bienestar cargados desde Supabase:", data.length)
+          setPerfilesBienestar(data)
+          
+          // Convertir a formato de profiles para compatibilidad
+          const profilesData: ProfilesData = {}
+          data.forEach(perfil => {
+            profilesData[perfil.slug] = {
+              title: perfil.title,
+              description: perfil.description,
+              content: perfil.content,
+              price: perfil.price,
+              image: perfil.image,
+              locations: perfil.locations,
+              sampleType: perfil.sample_type,
+              ageRequirement: perfil.age_requirement,
+              tests: perfil.tests,
+              conditions: perfil.conditions,
+              slug: perfil.slug
+            }
+          })
+          setProfiles(profilesData)
+        } else {
+          console.log("⚠️ No hay datos en Supabase, usando datos fallback")
+          setProfiles(profilesFallback)
+        }
+      } catch (err) {
+        console.error("❌ Error inesperado:", err)
+        setProfiles(profilesFallback)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPerfilesBienestar()
+  }, [])
+
+  // Funciones para administración de perfiles de bienestar
+  const handleEditPerfilBienestar = (perfil: PerfilBienestar) => {
+    setEditingPerfil(perfil)
+    setModalMode("edit")
+    setIsAdminModalOpen(true)
+  }
+
+  const handleDeletePerfilBienestar = async (perfil: PerfilBienestar) => {
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar el perfil "${perfil.title}"?`)) {
+      return
+    }
+
+    const supabase = getSupabaseClient()
+    
+    try {
+      const { error } = await supabase
+        .from("perfiles_bienestar")
+        .delete()
+        .eq("id", perfil.id)
+
+      if (error) {
+        alert("Error al eliminar perfil: " + error.message)
+        return
+      }
+
+      // Actualizar estado local
+      setPerfilesBienestar(prev => prev.filter(p => p.id !== perfil.id))
+      
+      // Actualizar profiles para compatibilidad
+      setProfiles(prev => {
+        const newProfiles = { ...prev }
+        delete newProfiles[perfil.slug]
+        return newProfiles
+      })
+
+      console.log("✅ Perfil eliminado correctamente")
+    } catch (err) {
+      console.error("❌ Error al eliminar perfil:", err)
+      alert("Error inesperado al eliminar el perfil")
+    }
+  }
+
+  const handleSavePerfilBienestar = async (perfilData: PerfilBienestar) => {
+    const supabase = getSupabaseClient()
+    
+    try {
+      // Solo actualizar perfil existente (no crear nuevos)
+      const { data, error } = await supabase
+        .from("perfiles_bienestar")
+        .update({
+          slug: perfilData.slug,
+          title: perfilData.title,
+          description: perfilData.description,
+          content: perfilData.content,
+          price: perfilData.price,
+          image: perfilData.image,
+          locations: perfilData.locations,
+          sample_type: perfilData.sample_type,
+          age_requirement: perfilData.age_requirement,
+          tests: perfilData.tests,
+          conditions: perfilData.conditions
+        })
+        .eq("id", perfilData.id)
+        .select()
+        .single()
+
+      if (error) {
+        alert("Error al actualizar perfil: " + error.message)
+        return
+      }
+
+      // Actualizar estado local
+      setPerfilesBienestar(prev => 
+        prev.map(p => p.id === data.id ? data : p)
+      )
+      
+      // Actualizar profiles para compatibilidad
+      setProfiles(prev => ({
+        ...prev,
+        [data.slug]: {
+          title: data.title,
+          description: data.description,
+          content: data.content,
+          price: data.price,
+          image: data.image,
+          locations: data.locations,
+          sampleType: data.sample_type,
+          ageRequirement: data.age_requirement,
+          tests: data.tests,
+          conditions: data.conditions,
+          slug: data.slug
+        }
+      }))
+
+      console.log("✅ Perfil actualizado correctamente")
+      setIsAdminModalOpen(false)
+      setEditingPerfil(null)
+    } catch (err) {
+      console.error("❌ Error al guardar perfil:", err)
+      alert("Error inesperado al guardar el perfil")
+    }
+  }
+
+  // Funciones existentes para perfiles populares
   const handleEditProfile = (profile: Profile) => {
     setEditingProfile(profile)
     setIsEditModalOpen(true)
   }
 
   const handleDeleteProfile = (slug: string) => {
-    if (confirm('¿Estás seguro de que deseas eliminar este perfil?')) {
-      setProfilesData(prevProfiles => {
-        const newProfiles = { ...prevProfiles }
+    if (window.confirm("¿Estás seguro de que deseas eliminar este perfil?")) {
+      setProfiles(prev => {
+        const newProfiles = { ...prev }
         delete newProfiles[slug]
         return newProfiles
       })
@@ -238,33 +455,48 @@ export default function ServiciosPage() {
   }
 
   const handleAddProfile = () => {
-    setEditingProfile({
-      title: '',
-      description: '',
-      content: '',
+    setNewProfile({
+      title: "",
+      description: "",
+      content: "",
       price: 0,
-      image: '/placeholder.svg',
-      locations: [],
-      sampleType: '',
-      ageRequirement: '',
+      image: "",
+      locations: ["Sede"],
+      sampleType: "General",
+      ageRequirement: "Cualquier edad",
       tests: [],
-      conditions: []
+      conditions: [],
     })
-    setIsEditModalOpen(true)
+    setIsAddModalOpen(true)
   }
 
   const handleSaveProfile = (updatedProfile: Profile) => {
-    if (!updatedProfile.slug) {
-      console.error("Error: Slug is required to save profile");
-      return;
+    if (editingProfile) {
+      // Editar perfil existente
+      const profileKey = Object.keys(profiles).find(key => profiles[key] === editingProfile)
+      if (profileKey) {
+        setProfiles(prev => ({
+          ...prev,
+          [profileKey]: updatedProfile
+        }))
+      }
     }
-    
-    setProfilesData(prevProfiles => ({
-      ...prevProfiles,
-      [updatedProfile.slug!]: updatedProfile
-    }))
     setIsEditModalOpen(false)
     setEditingProfile(null)
+  }
+
+  // Resto del código existente...
+  const profileEntries = Object.entries(profiles)
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 pt-16 sm:pt-20 md:pt-24 pb-8 sm:pb-10 md:pb-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3DA64A] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando perfiles de bienestar...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -278,57 +510,177 @@ export default function ServiciosPage() {
         </p>
         
         {user?.user_type === "admin" && (
-          <Button 
-            onClick={handleAddProfile}
-            className="mt-4 bg-[#3DA64A] hover:bg-[#3DA64A]/90 text-white"
-          >
-            Agregar nuevo perfil
-          </Button>
+          <div className="mt-6 space-x-4">
+            <Button 
+              onClick={handleAddProfile}
+              variant="outline"
+              className="border-[#3DA64A] text-[#3DA64A] hover:bg-[#3DA64A]/10"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Agregar Perfil Popular
+            </Button>
+          </div>
         )}
       </div>
 
+      {/* Tabla de administración para admin */}
+      {user?.user_type === "admin" && (
+        <div className="mb-12 bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Administración de Perfiles</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Perfil
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Precio
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Exámenes
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {perfilesBienestar.map((perfil) => (
+                  <tr key={perfil.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <Image
+                            className="h-10 w-10 rounded-full object-cover"
+                            src={perfil.image}
+                            alt={perfil.title}
+                            width={40}
+                            height={40}
+                          />
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{perfil.title}</div>
+                          <div className="text-sm text-gray-500">{perfil.slug}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      S/. {perfil.price.toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {perfil.tests.length} exámenes
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                          onClick={() => handleEditPerfilBienestar(perfil)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Editar
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeletePerfilBienestar(perfil)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Eliminar
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Grid de perfiles para usuarios */}
       <div className="grid gap-6 sm:gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-        {Object.entries(profilesData).map(([slug, profile]) => (
+        {profileEntries.map(([slug, profile], index) => {
+          // Buscar el perfil completo en perfilesBienestar para tener el ID
+          const perfilCompleto = perfilesBienestar.find(p => p.slug === slug)
+          
+          return (
           <motion.div
             key={slug}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="w-full"
+              transition={{ duration: 0.5, delay: index * 0.1 }}
           >
-            <Card className="h-full flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-300">
-              <div className="relative aspect-video">
+              <Card className="group h-full overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 bg-gradient-to-br from-white to-gray-50">
+                <div className="relative h-48 sm:h-56 md:h-48 lg:h-56 overflow-hidden">
                 <Image
                   src={profile.image}
                   alt={profile.title}
                   fill
-                  className="object-cover"
-                />
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <h3 className="text-lg sm:text-xl font-bold text-white mb-1 drop-shadow-lg">
+                      {profile.title}
+                    </h3>
+                    {profile.price > 0 && (
+                      <p className="text-2xl sm:text-3xl font-bold text-[#3DA64A] drop-shadow-lg">
+                        S/. {profile.price.toFixed(2)}
+                      </p>
+                    )}
+                  </div>
+                  
                 {user?.user_type === "admin" && (
-                  <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex gap-1 sm:gap-2">
+                    <div className="absolute top-2 right-2 flex gap-1">
                     <Button
-                      onClick={() => handleEditProfile({ ...profile, slug })}
-                      className="bg-[#1E5FAD] hover:bg-[#1E5FAD]/90 text-white p-1.5 sm:p-2 rounded-full"
-                      size="icon"
-                    >
-                      <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
+                        onClick={() => {
+                          if (perfilCompleto) {
+                            // Es un perfil de bienestar con ID
+                            handleEditPerfilBienestar(perfilCompleto)
+                          } else {
+                            // Es un perfil popular sin ID
+                            handleEditProfile(profile)
+                          }
+                        }}
+                      >
+                        <Pencil className="h-3 w-3" />
                     </Button>
                     <Button
-                      onClick={() => handleDeleteProfile(slug)}
-                      className="bg-red-500 hover:bg-red-600 text-white p-1.5 sm:p-2 rounded-full"
-                      size="icon"
-                    >
-                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                        size="sm"
+                        variant="destructive"
+                        className="h-8 w-8 p-0 bg-red-500/90 hover:bg-red-600"
+                        onClick={() => {
+                          if (perfilCompleto) {
+                            // Es un perfil de bienestar con ID
+                            handleDeletePerfilBienestar(perfilCompleto)
+                          } else {
+                            // Es un perfil popular sin ID
+                            handleDeleteProfile(slug)
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
                 )}
               </div>
-              <CardContent className="flex-1 p-4 sm:p-6">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-2">{profile.title}</h2>
-                <p className="text-sm sm:text-base text-gray-600 mb-4 line-clamp-3">{profile.description}</p>
+                
+                <CardContent className="p-4 sm:p-6 flex-1 flex flex-col">
+                  <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 line-clamp-3 flex-1">
+                    {profile.description}
+                  </p>
+                  
                 <div className="mt-auto">
                   <Link href={`/servicios/${slug}`}>
-                    <Button className="w-full bg-[#1E5FAD] hover:bg-[#1E5FAD]/90 text-white h-10 sm:h-11">
+                      <Button className="w-full bg-gradient-to-r from-[#1E5FAD] to-[#3DA64A] hover:from-[#3DA64A] hover:to-[#1E5FAD] text-white font-semibold py-2 sm:py-3 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
                       Ver detalles
                     </Button>
                   </Link>
@@ -336,190 +688,20 @@ export default function ServiciosPage() {
               </CardContent>
             </Card>
           </motion.div>
-        ))}
+          )
+        })}
       </div>
 
-      {/* Modal de edición */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>{editingProfile?.slug ? 'Editar perfil' : 'Nuevo perfil'}</DialogTitle>
-          </DialogHeader>
-          
-          <form onSubmit={(e) => {
-            e.preventDefault()
-            const formData = new FormData(e.currentTarget)
-            
-            // Procesar locations y sampleType
-            const locationsStr = formData.get('locations') as string;
-            const locations = locationsStr ? locationsStr.split(',').map(loc => loc.trim()) : [];
-            
-            const sampleTypeStr = formData.get('sampleType') as string;
-            // Mantener sampleType como string si es un solo valor, o convertirlo en array si contiene comas
-            const sampleType = sampleTypeStr.includes(',') 
-              ? sampleTypeStr.split(',').map(st => st.trim()) 
-              : sampleTypeStr;
-            
-            const updatedProfile: Profile = {
-              title: formData.get('title') as string,
-              description: formData.get('description') as string,
-              content: formData.get('content') as string,
-              price: parseFloat(formData.get('price') as string) || 0,
-              image: formData.get('image') as string,
-              locations: locations,
-              sampleType: sampleType,
-              ageRequirement: formData.get('ageRequirement') as string,
-              tests: formData.get('tests')?.toString().split('\n').filter(test => test.trim()) || [],
-              conditions: formData.get('conditions')?.toString().split('\n').filter(condition => condition.trim()) || [],
-              slug: formData.get('slug') as string
-            }
-            handleSaveProfile(updatedProfile)
-          }}>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="title" className="text-right">Título</Label>
-                <Input
-                  id="title"
-                  name="title"
-                  defaultValue={editingProfile?.title}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="slug" className="text-right">Slug</Label>
-                <Input
-                  id="slug"
-                  name="slug"
-                  defaultValue={editingProfile?.slug}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="description" className="text-right">Descripción</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  defaultValue={editingProfile?.description}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="content" className="text-right">Contenido</Label>
-                <Textarea
-                  id="content"
-                  name="content"
-                  defaultValue={editingProfile?.content}
-                  className="col-span-3"
-                  rows={5}
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="price" className="text-right">Precio</Label>
-                <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  step="0.01"
-                  defaultValue={editingProfile?.price}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="image" className="text-right">URL de imagen</Label>
-                <Input
-                  id="image"
-                  name="image"
-                  defaultValue={editingProfile?.image}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="locations" className="text-right">Ubicaciones (separadas por coma)</Label>
-                <Input
-                  id="locations"
-                  name="locations"
-                  defaultValue={
-                    Array.isArray(editingProfile?.locations) 
-                      ? editingProfile?.locations.join(', ') 
-                      : editingProfile?.locations
-                  }
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="sampleType" className="text-right">Tipo de muestra</Label>
-                <Input
-                  id="sampleType"
-                  name="sampleType"
-                  defaultValue={
-                    Array.isArray(editingProfile?.sampleType) 
-                      ? editingProfile?.sampleType.join(', ') 
-                      : editingProfile?.sampleType
-                  }
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="ageRequirement" className="text-right">Requisito de edad</Label>
-                <Input
-                  id="ageRequirement"
-                  name="ageRequirement"
-                  defaultValue={editingProfile?.ageRequirement}
-                  className="col-span-3"
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="tests" className="text-right">Tests (uno por línea)</Label>
-                <Textarea
-                  id="tests"
-                  name="tests"
-                  defaultValue={editingProfile?.tests?.join('\n')}
-                  className="col-span-3"
-                  rows={4}
-                />
-              </div>
-              
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="conditions" className="text-right">Condiciones (una por línea)</Label>
-                <Textarea
-                  id="conditions"
-                  name="conditions"
-                  defaultValue={editingProfile?.conditions?.join('\n')}
-                  className="col-span-3"
-                  rows={4}
-                />
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" className="bg-[#3DA64A] hover:bg-[#3DA64A]/90 text-white">
-                Guardar
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* Modal de administración de perfiles de bienestar */}
+      <PerfilBienestarAdminModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        onSave={handleSavePerfilBienestar}
+        perfil={editingPerfil}
+        mode={modalMode}
+      />
+
+      {/* Resto de modales existentes... */}
     </div>
   )
 }

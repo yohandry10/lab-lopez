@@ -6,6 +6,27 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
+import { useAuth } from "@/contexts/auth-context"
+import { getSupabaseClient } from "@/lib/supabase"
+import { Pencil } from "lucide-react"
+import PerfilBienestarAdminModal from "@/components/perfil-bienestar-admin-modal"
+
+// Definición del tipo para un perfil de bienestar
+interface PerfilBienestar {
+  id?: number
+  slug: string
+  title: string
+  description: string
+  content: string
+  price: number
+  image: string
+  locations: string[]
+  sample_type: string
+  age_requirement: string
+  tests: string[]
+  conditions: string[]
+  is_active?: boolean
+}
 
 const services = [
   {
@@ -14,6 +35,7 @@ const services = [
     description: "Confianza, libertad y seguridad para elegir",
     image: "/diabetes.jpg",
     link: "/servicios/salud-sexual",
+    slug: "salud-sexual"
   },
   {
     id: 2,
@@ -21,6 +43,7 @@ const services = [
     description: "Experiencia, sabiduría y plenitud",
     image: "/viejitos.jpg",
     link: "/servicios/masculino-edad-oro",
+    slug: "masculino-edad-oro"
   },
   {
     id: 3,
@@ -28,6 +51,7 @@ const services = [
     description: "Estilo de vida, autocontrol, bienestar",
     image: "/perfil.jpg",
     link: "/servicios/diabetes-control",
+    slug: "diabetes-control"
   },
 ]
 
@@ -49,14 +73,119 @@ const item = {
 
 export default function MainServices() {
   const [mounted, setMounted] = useState(false)
+  const { user } = useAuth()
+  const [perfilesBienestar, setPerfilesBienestar] = useState<PerfilBienestar[]>([])
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false)
+  const [editingPerfil, setEditingPerfil] = useState<PerfilBienestar | null>(null)
 
   useEffect(() => {
     setMounted(true)
+    fetchPerfilesBienestar()
   }, [])
+
+  // Cargar perfiles de bienestar desde Supabase
+  const fetchPerfilesBienestar = async () => {
+    const supabase = getSupabaseClient()
+    
+    try {
+      const { data, error } = await supabase
+        .from("perfiles_bienestar")
+        .select("*")
+        .eq("is_active", true)
+        .in("slug", ["salud-sexual", "masculino-edad-oro", "diabetes-control"])
+
+      if (error) {
+        console.error("❌ Error al cargar perfiles de bienestar:", error)
+        return
+      }
+
+      if (data && Array.isArray(data)) {
+        setPerfilesBienestar(data)
+      }
+    } catch (err) {
+      console.error("❌ Error inesperado:", err)
+    }
+  }
+
+  const handleEditPerfil = (slug: string) => {
+    const perfil = perfilesBienestar.find(p => p.slug === slug)
+    if (perfil) {
+      setEditingPerfil(perfil)
+      setIsAdminModalOpen(true)
+    }
+  }
+
+  const handleSavePerfil = async (perfilData: PerfilBienestar) => {
+    const supabase = getSupabaseClient()
+    
+    try {
+      const { data, error } = await supabase
+        .from("perfiles_bienestar")
+        .update({
+          slug: perfilData.slug,
+          title: perfilData.title,
+          description: perfilData.description,
+          content: perfilData.content,
+          price: perfilData.price,
+          image: perfilData.image,
+          locations: perfilData.locations,
+          sample_type: perfilData.sample_type,
+          age_requirement: perfilData.age_requirement,
+          tests: perfilData.tests,
+          conditions: perfilData.conditions
+        })
+        .eq("id", perfilData.id)
+        .select()
+        .single()
+
+      if (error) {
+        alert("Error al actualizar perfil: " + error.message)
+        return
+      }
+
+      // Actualizar estado local
+      setPerfilesBienestar(prev => 
+        prev.map(p => p.id === data.id ? data : p)
+      )
+
+      console.log("✅ Perfil actualizado correctamente")
+      setIsAdminModalOpen(false)
+      setEditingPerfil(null)
+    } catch (err) {
+      console.error("❌ Error al guardar perfil:", err)
+      alert("Error inesperado al guardar el perfil")
+    }
+  }
+
+  // Función para obtener los datos de las tarjetas (dinámico desde BD o fallback)
+  const getDisplayServices = () => {
+    if (perfilesBienestar.length > 0) {
+      // Usar datos de la BD pero mantener imágenes originales
+      return perfilesBienestar.map(perfil => {
+        // Buscar la imagen original correspondiente
+        const originalService = services.find(s => s.slug === perfil.slug)
+        
+        return {
+          id: perfil.id || 0,
+          title: perfil.title,
+          description: perfil.description,
+          image: originalService?.image || perfil.image, // Usar imagen original si existe
+          link: `/servicios/${perfil.slug}`,
+          slug: perfil.slug,
+          price: perfil.price
+        }
+      })
+    } else {
+      // Fallback a datos hardcodeados
+      return services
+    }
+  }
 
   if (!mounted) {
     return null
   }
+
+  const displayServices = getDisplayServices()
 
   return (
     <AnimatePresence>
@@ -99,8 +228,8 @@ export default function MainServices() {
             initial="hidden"
             animate="show"
           >
-            {services.map((service) => (
-              <motion.div key={service.id} variants={item}>
+            {displayServices.map((service, index) => (
+              <motion.div key={service.slug || service.id} variants={item}>
                 <Card className="overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                   <div className="relative h-48">
                     <Image 
@@ -112,6 +241,20 @@ export default function MainServices() {
                       loading="eager"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    
+                    {/* Botón de editar para admin */}
+                    {user?.user_type === "admin" && (
+                      <div className="absolute top-2 right-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
+                          onClick={() => handleEditPerfil(service.slug)}
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   <CardHeader>
                     <CardTitle>{service.title}</CardTitle>
@@ -130,6 +273,15 @@ export default function MainServices() {
             ))}
           </motion.div>
         </div>
+
+        {/* Modal de administración */}
+        <PerfilBienestarAdminModal
+          isOpen={isAdminModalOpen}
+          onClose={() => setIsAdminModalOpen(false)}
+          onSave={handleSavePerfil}
+          perfil={editingPerfil}
+          mode="edit"
+        />
       </motion.section>
     </AnimatePresence>
   )

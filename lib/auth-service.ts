@@ -28,6 +28,111 @@ export type SignUpData = {
 }
 
 /* -------------------------------------------------------------------------- *
+ *  REGISTRO POR ADMIN (SIN AUTO-LOGIN)                                      *
+ * -------------------------------------------------------------------------- */
+export async function adminCreateUser(userData: SignUpData): Promise<AuthResponse> {
+  try {
+    console.log("🚀 Iniciando creación de usuario por admin:", userData.email, userData.user_type)
+    const supabase = getSupabaseClient()
+
+    if (
+      userData.user_type === "company" &&
+      (!userData.company_name || !userData.company_ruc)
+    ) {
+      return {
+        success: false,
+        error: "Para cuentas de empresa se requiere nombre y RUC."
+      }
+    }
+
+    // Guardar la sesión actual del admin
+    const { data: { session: currentSession } } = await supabase.auth.getSession()
+    console.log("💾 Sesión actual guardada:", currentSession?.user?.email)
+
+    // Crear el usuario usando Supabase Auth (pero esto cambiará la sesión)
+    console.log("👤 Creando usuario en Supabase Auth...")
+    const { data: authData, error: authErr } = await supabase.auth.signUp({
+      email: userData.email,
+      password: userData.password
+    })
+
+    if (authErr && authErr.message.includes("already registered")) {
+      console.log("❌ Usuario ya registrado")
+      return {
+        success: false,
+        error: "El correo electrónico ya está registrado."
+      }
+    }
+    if (authErr || !authData.user) {
+      console.log("❌ Error en Supabase Auth:", authErr)
+      return { success: false, error: authErr?.message ?? "Error al crear usuario" }
+    }
+
+    console.log("✅ Usuario creado en Auth:", authData.user.id)
+
+    // Crear el perfil en la tabla users
+    const now = new Date().toISOString()
+    const record: Record<string, unknown> = {
+      id: authData.user.id,
+      email: userData.email,
+      username: userData.username,
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      user_type: userData.user_type,
+      accepted_terms: userData.accepted_terms,
+      accepted_marketing: userData.accepted_marketing,
+      created_at: now,
+      updated_at: now
+    }
+
+    if (userData.user_type === "company") {
+      Object.assign(record, {
+        company_name: userData.company_name,
+        company_ruc: userData.company_ruc,
+        company_position: userData.company_position,
+        is_company_admin: userData.is_company_admin ?? false
+      })
+    }
+
+    Object.keys(record).forEach(k => record[k] === undefined && delete record[k])
+
+    console.log("📝 Insertando perfil en tabla users:", record)
+    const { data: insertedData, error: insErr } = await supabase.from("users").insert(record).select()
+
+    console.log("🔍 RESULTADO DE LA INSERCIÓN:", { insertedData, insErr })
+
+    if (insErr) {
+      console.log("❌ Error al insertar en tabla users:", insErr)
+      return { success: false, error: insErr.message }
+    }
+
+    console.log("✅ Perfil insertado correctamente")
+    
+    // Verificar inmediatamente que se insertó
+    const { data: verifyData, error: verifyErr } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", authData.user.id)
+      .single()
+    
+    console.log("🔍 VERIFICACIÓN INMEDIATA del usuario insertado:", { verifyData, verifyErr })
+
+    // CRUCIAL: Restaurar la sesión del admin inmediatamente
+    if (currentSession) {
+      console.log("🔄 Restaurando sesión del admin...")
+      await supabase.auth.setSession(currentSession)
+      console.log("✅ Sesión restaurada")
+    }
+
+    console.log("🎉 Usuario creado exitosamente por admin")
+    return { success: true }
+  } catch (err: any) {
+    console.log("💥 Error fatal en adminCreateUser:", err)
+    return { success: false, error: err?.message ?? String(err) }
+  }
+}
+
+/* -------------------------------------------------------------------------- *
  *  REGISTRO                                                                  *
  * -------------------------------------------------------------------------- */
 export async function signUp(userData: SignUpData): Promise<AuthResponse> {
@@ -189,3 +294,4 @@ export async function updateUser(
     ? { success: false, error: error?.message ?? "No se pudo actualizar" }
     : { success: true, user: data as User }
 }
+

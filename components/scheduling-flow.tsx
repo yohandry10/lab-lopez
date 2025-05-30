@@ -39,11 +39,11 @@ type SedesInfoType = {
 
 // Definir las coordenadas y detalles de las sedes
 const sedesInfo: SedesInfoType = {
-  "Sede San Juan de Miraflores": {
+  "Sede San Juan de Miraflores (dentro la Clínica Sagrada Familia del Sur)": {
     address: "Av. Miguel Iglesias 625, San Juan de Miraflores 15824",
     lat: -12.159346,
     lng: -76.972204,
-    name: "Sede San Juan de Miraflores",
+    name: "Sede San Juan de Miraflores (dentro la Clínica Sagrada Familia del Sur)",
   },
   "Sede Santa Anita": {
     address: "María Parado de Bellido 110G, Santa Anita 15008",
@@ -93,7 +93,7 @@ export function SchedulingFlow({
   }, [initialServiceType])
 
   const locations = [
-    "Sede San Juan de Miraflores",
+    "Sede San Juan de Miraflores (dentro la Clínica Sagrada Familia del Sur)",
     "Sede Santa Anita",
   ]
 

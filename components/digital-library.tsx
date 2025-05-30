@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ChevronRight, Microscope, TestTube, Beaker, Baby, Dna, Search, Pencil, Trash2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Microscope, TestTube, Beaker, Baby, Dna, Search, Pencil, Trash2, Edit } from "lucide-react"
 import { useState, useCallback, useEffect, useMemo } from "react"
 import { useInView } from "react-intersection-observer"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -13,8 +13,9 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/auth-context"
+import { getSupabaseClient } from "@/lib/supabase-client"
 
-export type Analysis = {
+export interface Analysis {
   id: number
   title: string
   description: string
@@ -23,12 +24,13 @@ export type Analysis = {
   slug: string
   content: string
   heroIcons?: string[]
-  sections?: {
+  sections: Array<{
     title: string
     content: React.ReactNode
-  }[]
+  }>
 }
 
+// Datos de fallback (se mantendrán como respaldo)
 export const analysisData: Analysis[] = [
   {
     id: 1,
@@ -392,66 +394,115 @@ Nuestros perfiles hormonales están diseñados para proporcionar una evaluación
 export default function DigitalLibrary() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const { user } = useAuth()
-  const [articles, setArticles] = useState(analysisData)
+  const [articles, setArticles] = useState(analysisData) // Fallback a datos locales
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editingArticle, setEditingArticle] = useState<Analysis | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  // Cargar artículos desde Supabase al iniciar
+  useEffect(() => {
+    async function fetchArticles() {
+      console.log("🔄 Cargando artículos desde Supabase...");
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase
+        .from("biblioteca_digital")
+        .select("*")
+        .eq("activo", true)
+        .order("orden", { ascending: true });
+        
+      if (error) {
+        console.error("❌ Error al cargar artículos desde Supabase:", error);
+        // Mantener datos locales como fallback
+        return;
+      }
+      
+      if (data && Array.isArray(data) && data.length > 0) {
+        console.log("✅ Artículos cargados desde Supabase:", data.length);
+        // Mapear datos de Supabase al formato esperado
+        const mappedArticles: Analysis[] = data.map((item: any) => {
+          // Usar las imágenes originales del proyecto
+          let originalImage = '/placeholder.svg';
+          const titulo = String(item.titulo || '').toLowerCase();
+          
+          if (titulo.includes('zuma')) {
+            originalImage = '/emba.webp';
+          } else if (titulo.includes('cofactor') || titulo.includes('willebrand')) {
+            originalImage = '/hemo.jpeg';
+          } else if (titulo.includes('antifosfolípidos') || titulo.includes('antifosfolipidos')) {
+            originalImage = '/anti.jpeg';
+          }
+          
+          return {
+            id: Number(item.id) || 0,
+            title: String(item.titulo || ''),
+            description: String(item.descripcion || ''),
+            image: originalImage, // Usar imagen original del proyecto
+            category: "Análisis clínicos",
+            slug: String(item.titulo || '').toLowerCase().replace(/\s+/g, '-'),
+            content: String(item.descripcion || ''),
+            heroIcons: [],
+            sections: []
+          };
+        });
+        setArticles(mappedArticles);
+      } else {
+        console.log("⚠️ No hay artículos en Supabase, usando datos locales");
+      }
+    }
+    fetchArticles();
+  }, []);
 
   const handleEditArticle = (article: Analysis) => {
     setEditingArticle(article)
     setIsEditModalOpen(true)
   }
 
-  const handleDeleteArticle = (articleId: number) => {
-    if (confirm('¿Estás seguro de que deseas eliminar este artículo?')) {
-      setArticles(prevArticles => prevArticles.filter(article => article.id !== articleId))
-    }
-  }
-
-  const handleAddArticle = () => {
-    const newArticle: Analysis = {
-      id: articles.length + 1,
-      title: '',
-      description: '',
-      content: '',
-      image: '/placeholder.svg',
-      category: '',
-      slug: '',
-      heroIcons: [],
-      sections: []
-    }
-    setEditingArticle(newArticle)
-    setIsEditModalOpen(true)
-  }
-
-  const handleSaveArticle = (e: React.FormEvent) => {
-    e.preventDefault()
-    const form = e.target as HTMLFormElement
-    const formData = new FormData(form)
-
-    const updatedArticle: Analysis = {
-      id: editingArticle?.id || articles.length + 1,
-      title: formData.get('title') as string,
-      description: formData.get('description') as string,
-      content: formData.get('content') as string,
-      image: formData.get('image') as string || editingArticle?.image || '/placeholder.svg',
-      category: formData.get('category') as string,
-      slug: formData.get('slug') as string,
-      heroIcons: editingArticle?.heroIcons || [],
-      sections: editingArticle?.sections || []
+  const handleUpdateArticle = async (updatedArticle: Analysis) => {
+    console.log("📝 Actualizando artículo:", updatedArticle);
+    
+    if (!updatedArticle.title.trim()) {
+      alert("El título es requerido");
+      return;
     }
 
-    setArticles(prevArticles => {
-      if (editingArticle?.id) {
-        return prevArticles.map(article => 
-          article.id === editingArticle.id ? updatedArticle : article
-        )
-      } else {
-        return [...prevArticles, updatedArticle]
+    setLoading(true);
+    try {
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase
+        .from("biblioteca_digital")
+        .update({
+          titulo: updatedArticle.title.trim(),
+          descripcion: updatedArticle.description.trim(),
+          imagen_url: updatedArticle.image.trim() || '/placeholder.svg'
+        })
+        .eq("id", updatedArticle.id)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error("❌ Error al actualizar artículo:", error);
+        alert("Error al actualizar artículo: " + error.message);
+        return;
       }
-    })
-
-    setIsEditModalOpen(false)
-    setEditingArticle(null)
+      
+      console.log("✅ Artículo actualizado en Supabase:", data);
+      
+      // Actualizar estado local
+      setArticles(prevArticles =>
+        prevArticles.map(article =>
+          article.id === updatedArticle.id ? updatedArticle : article
+        )
+      );
+      setIsEditModalOpen(false);
+      setEditingArticle(null);
+      alert("✅ Artículo actualizado correctamente");
+      
+    } catch (err) {
+      console.error("❌ Error inesperado:", err);
+      alert("Error inesperado: " + String(err));
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -460,151 +511,151 @@ export default function DigitalLibrary() {
         <div className="flex flex-col items-center mb-8">
           <h2 className="text-3xl sm:text-4xl font-light text-gray-900 mb-2 text-center">Biblioteca Digital</h2>
           <p className="text-gray-500 text-base sm:text-lg text-center">Servicios diseñados para mejorar tu calidad de vida</p>
-          
-          {user?.user_type === "admin" && (
-            <Button 
-              onClick={handleAddArticle}
-              className="mt-4 bg-[#3DA64A] hover:bg-[#3DA64A]/90 text-white"
-            >
-              Agregar nuevo artículo
-            </Button>
-          )}
         </div>
 
         <div className="relative">
           <div className="overflow-hidden">
             <AnimatePresence mode="wait">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {articles.slice(currentIndex, currentIndex + 3).map((article) => (
-                  <motion.div
-                    key={article.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="relative"
-                  >
-                    <div className="relative h-48 mb-4 rounded-lg overflow-hidden">
+              <motion.div
+                key={currentIndex}
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{ duration: 0.5 }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+              >
+                {articles.slice(currentIndex * 3, (currentIndex + 1) * 3).map((article) => (
+                  <Card key={article.id} className="group relative overflow-hidden border shadow-lg transition-all duration-300 hover:shadow-2xl">
+                    {/* Botón de editar solo para admin */}
+                    {user?.user_type === "admin" && (
+                      <div className="absolute top-2 right-2 z-10">
+                        <Button
+                          onClick={() => handleEditArticle(article)}
+                          className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full opacity-80 hover:opacity-100 transition-opacity"
+                          size="icon"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                    
+                    <div className="relative h-64 bg-gray-200">
                       <Image
                         src={article.image}
                         alt={article.title}
                         fill
-                        className="object-cover"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder.svg';
+                        }}
                       />
-                      
-                      {user?.user_type === "admin" && (
-                        <div className="absolute top-4 right-4 flex gap-2">
-                          <Button
-                            onClick={() => handleEditArticle(article)}
-                            className="bg-[#1E5FAD] hover:bg-[#1E5FAD]/90 text-white p-2 rounded-full"
-                            size="icon"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            onClick={() => handleDeleteArticle(article.id)}
-                            className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full"
-                            size="icon"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
                     </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-semibold mb-2">{article.title}</h3>
-                      <p className="text-gray-600 mb-4 line-clamp-2">{article.description}</p>
-                      <div className="flex justify-center">
-                        <Link 
-                          href={`/analisis/${article.slug}`}
-                          className="text-[#1E5FAD] hover:text-[#1E5FAD]/90 font-medium"
-                        >
-                          Leer más
-                        </Link>
+                    <CardHeader>
+                      <CardTitle className="text-lg sm:text-xl font-medium line-clamp-2">{article.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed">{article.description}</p>
+                      <div className="mt-4">
+                        <Button asChild variant="outline" className="w-full">
+                          <Link href={`/analisis/${article.slug}`}>
+                            Leer más
+                          </Link>
+                        </Button>
                       </div>
-                    </div>
-                  </motion.div>
+                    </CardContent>
+                  </Card>
                 ))}
-              </div>
+              </motion.div>
             </AnimatePresence>
           </div>
+
+          {/* Navigation buttons */}
+          {articles.length > 3 && (
+            <div className="flex justify-center mt-6 gap-4">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
+                disabled={currentIndex === 0}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentIndex(Math.min(Math.floor(articles.length / 3), currentIndex + 1))}
+                disabled={currentIndex >= Math.floor(articles.length / 3)}
+                className="flex items-center gap-2"
+              >
+                Siguiente
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>{editingArticle ? 'Editar artículo' : 'Nuevo artículo'}</DialogTitle>
+            <DialogTitle>Editar artículo</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSaveArticle}>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            
+            if (!editingArticle) return;
+            
+            const updatedArticle: Analysis = {
+              ...editingArticle,
+              title: formData.get('title') as string,
+              description: formData.get('description') as string,
+              image: formData.get('image') as string || editingArticle.image
+            };
+            
+            handleUpdateArticle(updatedArticle);
+          }}>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
-                <Label htmlFor="title" className="sm:text-right">Título</Label>
+              <div className="grid grid-cols-1 items-center gap-2">
+                <Label htmlFor="title">Título</Label>
                 <Input
                   id="title"
                   name="title"
-                  defaultValue={editingArticle?.title}
-                  className="sm:col-span-3"
+                  defaultValue={editingArticle?.title || ''}
+                  className="w-full"
                   required
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
-                <Label htmlFor="description" className="sm:text-right">Descripción</Label>
+              <div className="grid grid-cols-1 items-start gap-2">
+                <Label htmlFor="description">Descripción</Label>
                 <Textarea
                   id="description"
                   name="description"
-                  defaultValue={editingArticle?.description}
-                  className="sm:col-span-3"
+                  defaultValue={editingArticle?.description || ''}
+                  className="w-full min-h-[100px]"
                   required
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
-                <Label htmlFor="content" className="sm:text-right">Contenido</Label>
-                <Textarea
-                  id="content"
-                  name="content"
-                  defaultValue={editingArticle?.content}
-                  className="sm:col-span-3"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
-                <Label htmlFor="image" className="sm:text-right">URL Imagen</Label>
+              <div className="grid grid-cols-1 items-center gap-2">
+                <Label htmlFor="image">URL de la imagen</Label>
                 <Input
                   id="image"
                   name="image"
-                  defaultValue={editingArticle?.image}
-                  className="sm:col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
-                <Label htmlFor="category" className="sm:text-right">Categoría</Label>
-                <Input
-                  id="category"
-                  name="category"
-                  defaultValue={editingArticle?.category}
-                  className="sm:col-span-3"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
-                <Label htmlFor="slug" className="sm:text-right">Slug</Label>
-                <Input
-                  id="slug"
-                  name="slug"
-                  defaultValue={editingArticle?.slug}
-                  className="sm:col-span-3"
-                  required
+                  defaultValue={editingArticle?.image || ''}
+                  className="w-full"
+                  placeholder="https://ejemplo.com/imagen.jpg"
                 />
               </div>
             </div>
-            <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-0">
+            <div className="flex justify-end gap-4">
               <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" className="bg-[#3DA64A] hover:bg-[#3DA64A]/90 text-white">
-                Guardar
+              <Button type="submit" className="bg-[#3DA64A] hover:bg-[#3DA64A]/90 text-white" disabled={loading}>
+                {loading ? 'Actualizando...' : 'Guardar'}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </DialogContent>
       </Dialog>

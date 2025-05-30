@@ -64,3 +64,8 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "your-anon-key"
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
+// Función para obtener el cliente de Supabase (para compatibilidad)
+export function getSupabaseClient() {
+  return supabase
+}
+

@@ -10,6 +10,35 @@ import { useCart } from "@/contexts/cart-context"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/contexts/auth-context"
 
+// Función para obtener tiempo de entrega según categoría
+const getDeliveryTimeByCategory = (category: string, analysisName?: string): string => {
+  // Caso especial para ANDROSTENEDIONA
+  if (analysisName === "ANDROSTENEDIONA") {
+    return "19 días hábiles";
+  }
+  
+  switch (category) {
+    case "Bioquímica":
+    case "Perfil Lipídico":
+    case "Coagulación":
+      return "2-4 horas";
+    case "Hematología":
+    case "Hormonas":
+    case "Marcadores Tumorales":
+      return "24-48 horas";
+    case "Inmunología":
+      return "3-5 días hábiles";
+    case "Microbiología":
+      return "24-48 horas";
+    case "Genética":
+      return "10-15 días hábiles";
+    case "Nutrición":
+      return "24-48 horas";
+    default:
+      return "24-48 horas";
+  }
+};
+
 interface AnalysisDialogProps {
   isOpen: boolean
   onClose: () => void
@@ -22,6 +51,7 @@ interface AnalysisDialogProps {
     protocol: string
     suggestions?: string
     comments?: string
+    category: string
   } | null
   user: any
 }
@@ -55,7 +85,7 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
   ]
 
   const locations = [
-    "Sede San Juan de Miraflores (Av. Miguel Iglesias 625, San Juan de Miraflores 15824)",
+    "Sede San Juan de Miraflores (dentro la Clínica Sagrada Familia del Sur) (Av. Miguel Iglesias 625, San Juan de Miraflores 15824)",
     "Sede Santa Anita (María Parado de Bellido 1109, Santa Anita 15008)",
   ]
 
@@ -106,15 +136,10 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={user ? "max-w-2xl" : "max-w-lg"}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <div className="flex justify-between items-start">
-            <DialogTitle className="text-lg font-medium pr-8">{analysis.name}</DialogTitle>
-            <Button variant="ghost" size="icon" className="absolute right-4 top-4" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="text-lg font-medium">{analysis.name}</DialogTitle>
         </DialogHeader>
         
         <div className="bg-blue-50 -mx-6 px-6 py-2 text-right text-sm">
@@ -134,6 +159,12 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
             <h4 className="font-medium mb-1">Protocolo toma muestra</h4>
             <p className="text-gray-600 text-sm">{analysis.protocol}</p>
           </div>
+          {getDeliveryTimeByCategory(analysis.category, analysis.name) && (
+            <div>
+              <h4 className="font-medium mb-1">⏱️ Tiempo de entrega</h4>
+              <p className="text-green-600 text-sm font-medium">{getDeliveryTimeByCategory(analysis.category, analysis.name)}</p>
+            </div>
+          )}
           {analysis.suggestions && (
             <div>
               <h4 className="font-medium mb-1">Análisis sugeridos</h4>
@@ -146,151 +177,11 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
               <p className="text-gray-600 text-sm">{analysis.comments || "(ninguno)"}</p>
           </div>
           )}
-
-          {user && (
-          <div className="border-t pt-4 mt-4">
-            <h3 className="text-lg font-medium mb-4">Datos del Paciente</h3>
-            <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="documentType">Tipo de Documento</Label>
-                    <Select value={formData.documentType} onValueChange={(value) => handleSelectChange("documentType", value)}>
-                      <SelectTrigger id="documentType"><SelectValue placeholder="Tipo de documento" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="DNI">DNI</SelectItem>
-                      <SelectItem value="CE">Carné de Extranjería</SelectItem>
-                      <SelectItem value="Pasaporte">Pasaporte</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="documentNumber">Número de Documento</Label>
-                    <Input id="documentNumber" name="documentNumber" value={formData.documentNumber} onChange={handleInputChange} placeholder="Ingrese número" />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="patientName">Nombre Completo</Label>
-                  <Input id="patientName" name="patientName" value={formData.patientName} onChange={handleInputChange} placeholder="Ingrese nombre completo" />
-              </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="patientAge">Edad</Label>
-                    <Input id="patientAge" name="patientAge" value={formData.patientAge} onChange={handleInputChange} placeholder="Edad" type="number"/>
-                </div>
-                <div>
-                  <Label htmlFor="patientGender">Género</Label>
-                    <Select value={formData.patientGender} onValueChange={(value) => handleSelectChange("patientGender", value)}>
-                      <SelectTrigger id="patientGender"><SelectValue placeholder="Seleccione género" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="M">Masculino</SelectItem>
-                      <SelectItem value="F">Femenino</SelectItem>
-                         <SelectItem value="O">Otro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                    <Input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="correo@ejemplo.com" />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Teléfono</Label>
-                    <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Número de contacto" />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="serviceType">Tipo de Servicio</Label>
-                  <Select value={formData.serviceType} onValueChange={(value) => handleSelectChange("serviceType", value)}>
-                    <SelectTrigger id="serviceType"><SelectValue placeholder="Seleccione tipo de servicio" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sede">Atención en sede</SelectItem>
-                    <SelectItem value="domicilio">Atención a domicilio</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {formData.serviceType === "sede" ? (
-                <div>
-                  <Label htmlFor="location">Sede</Label>
-                    <Select value={formData.location} onValueChange={(value) => handleSelectChange("location", value)}>
-                      <SelectTrigger id="location"><SelectValue placeholder="Seleccione una sede" /></SelectTrigger>
-                    <SelectContent>
-                        {locations.map((loc) => (<SelectItem key={loc} value={loc}>{loc}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : (
-                <>
-                  <div>
-                      <Label htmlFor="address">Dirección completa</Label>
-                      <Input
-                        id="address"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        placeholder="Ingrese su dirección completa"
-                      />
-                  </div>
-                  <div>
-                    <Label htmlFor="district">Distrito</Label>
-                      <Select value={formData.district} onValueChange={(value) => handleSelectChange("district", value)}>
-                        <SelectTrigger id="district"><SelectValue placeholder="Seleccione distrito" /></SelectTrigger>
-                      <SelectContent>
-                          {districts.map((district) => (<SelectItem key={district} value={district}>{district}</SelectItem>))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="reference">Referencia</Label>
-                      <Input id="reference" name="reference" value={formData.reference} onChange={handleInputChange} placeholder="Referencias para ubicar la dirección (piso, departamento, etc.)" />
-                  </div>
-                </>
-              )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="date">Fecha</Label>
-                    <Input id="date" name="date" type="date" value={formData.date} onChange={handleInputChange} />
-                </div>
-                <div>
-                  <Label htmlFor="time">Hora</Label>
-                    <Select value={formData.time} onValueChange={(value) => handleSelectChange("time", value)}>
-                      <SelectTrigger id="time"><SelectValue placeholder="Seleccione hora" /></SelectTrigger>
-                    <SelectContent>
-                        {timeSlots.map((time) => (<SelectItem key={time} value={time}>{time}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="observations">Observaciones</Label>
-                  <Input id="observations" name="observations" value={formData.observations} onChange={handleInputChange} placeholder="Observaciones adicionales" />
-                </div>
-              </div>
-            </div>
-          )}
         </div>
         <DialogFooter className="mt-6">
-          {user ? (
-            <>
           <Button variant="outline" onClick={onClose}>
-            Cancelar
+            Cerrar
           </Button>
-          <Button onClick={handleSubmit} className="bg-[#3DA64A] hover:bg-[#1E5FAD]">
-            Agregar al Carrito
-          </Button>
-            </>
-          ) : (
-            <Button variant="outline" onClick={onClose}>
-              Cerrar
-            </Button>
-          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

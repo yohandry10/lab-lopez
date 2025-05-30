@@ -1,17 +1,19 @@
 "use client"
 
-import { useState, useMemo, Suspense, lazy } from "react"
+import { useState, useMemo, Suspense, lazy, useEffect } from "react"
 import Link from "next/link"
 import { ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { analysisData } from "@/components/digital-library"
+import { analysisData } from "../../page"
+import { analysisData as libraryData } from "@/components/digital-library"
 import { useCart } from "@/contexts/cart-context"
 import dynamic from 'next/dynamic'
 import { Baby, Dna, Search, TestTube, Microscope, Beaker } from "lucide-react"
 import { useRouter, useParams, useSearchParams } from "next/navigation"
 import type { Analysis } from "@/components/digital-library"
+import { getSupabaseClient } from "@/lib/supabase-client"
 
 // Cargar el formulario de manera dinámica
 const AnalysisForm = dynamic(() => import("@/components/analysis-form"), {
@@ -113,7 +115,60 @@ export default function AnalysisPage() {
   const searchParams = useSearchParams()
   const [expandedSection, setExpandedSection] = useState<number | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [articles, setArticles] = useState<Analysis[]>(libraryData) // Estado para los artículos
   const { addItem } = useCart()
+  
+  // Cargar artículos desde Supabase al iniciar
+  useEffect(() => {
+    async function fetchArticles() {
+      try {
+        const supabase = getSupabaseClient();
+        const { data, error } = await supabase
+          .from("biblioteca_digital")
+          .select("*")
+          .eq("activo", true)
+          .order("orden", { ascending: true });
+          
+        if (error) {
+          console.log("⚠️ Usando datos locales como fallback");
+          return;
+        }
+        
+        if (data && Array.isArray(data) && data.length > 0) {
+          // Mapear datos de Supabase al formato esperado
+          const mappedArticles: Analysis[] = data.map((item: any) => {
+            // Usar las imágenes originales del proyecto
+            let originalImage = '/placeholder.svg';
+            const titulo = String(item.titulo || '').toLowerCase();
+            
+            if (titulo.includes('zuma')) {
+              originalImage = '/emba.webp';
+            } else if (titulo.includes('cofactor') || titulo.includes('willebrand')) {
+              originalImage = '/hemo.jpeg';
+            } else if (titulo.includes('antifosfolípidos') || titulo.includes('antifosfolipidos')) {
+              originalImage = '/anti.jpeg';
+            }
+            
+            return {
+              id: Number(item.id) || 0,
+              title: String(item.titulo || ''),
+              description: String(item.descripcion || ''),
+              image: originalImage, // Usar imagen original del proyecto
+              category: "Análisis clínicos",
+              slug: String(item.titulo || '').toLowerCase().replace(/\s+/g, '-'),
+              content: String(item.descripcion || ''),
+              heroIcons: ["TestTube", "Microscope"],
+              sections: []
+            };
+          });
+          setArticles([...libraryData, ...mappedArticles]);
+        }
+      } catch (err) {
+        console.log("⚠️ Error cargando desde Supabase, usando datos locales");
+      }
+    }
+    fetchArticles();
+  }, []);
   
   const slug = params?.slug as string
   if (!slug) {
@@ -122,7 +177,7 @@ export default function AnalysisPage() {
   }
 
   try {
-    const foundArticle = useMemo(() => analysisData.find((a) => a.slug === slug), [slug])
+    const foundArticle = useMemo(() => articles.find((a) => a.slug === slug), [articles, slug])
 
     if (!foundArticle) {
       router.push('/analisis')
@@ -138,10 +193,23 @@ export default function AnalysisPage() {
     }, [foundArticle.heroIcons])
 
     const handleSubmit = (values: any) => {
+      // Buscar el precio real del análisis desde la base de datos o datos locales
+      let realPrice = 0;
+      
+      // Buscar en los datos de análisis de la página principal
+      const matchingAnalysis = analysisData.find(analysis => 
+        analysis.name.toLowerCase().includes(foundArticle.title.toLowerCase()) ||
+        foundArticle.title.toLowerCase().includes(analysis.name.toLowerCase())
+      );
+      
+      if (matchingAnalysis) {
+        realPrice = matchingAnalysis.price;
+      }
+      
       const item: CartItem = {
         id: foundArticle.id,
         name: foundArticle.title,
-        price: 0,
+        price: realPrice, // Usar precio real en lugar de 0
         patientInfo: values
       }
       addItem(item)
@@ -198,7 +266,7 @@ export default function AnalysisPage() {
           </div>
 
           <Suspense fallback={<div>Cargando artículos relacionados...</div>}>
-            <RelatedArticles articles={analysisData} category={foundArticle.category} />
+            <RelatedArticles articles={articles} category={foundArticle.category} />
           </Suspense>
         </div>
       </div>

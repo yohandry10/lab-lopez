@@ -33,7 +33,7 @@ type FormErrors = {
 
 export default function AdminRegisterPage() {
   const router = useRouter()
-  const { register, user, isLoading: authLoading } = useAuth()
+  const { register, adminRegister, user, isLoading: authLoading } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -150,20 +150,46 @@ export default function AdminRegisterPage() {
       const { confirmPassword, ...registerData } = formData
 
       console.log("Enviando datos de registro:", registerData)
+      console.log("🔍 USER_TYPE QUE SE ESTÁ ENVIANDO:", registerData.user_type)
 
-      const result = await register(registerData)
+      const result = await adminRegister(registerData)
 
       if (result.success) {
         setIsSuccess(true)
       } else if (result.error) {
         console.error("Error en el registro:", result.error)
-        setErrors((prev) => ({ ...prev, submit: result.error }))
+        
+        // Manejo específico de errores comunes
+        let errorMessage = result.error
+        
+        if (result.error.includes("users_username_key")) {
+          errorMessage = "El nombre de usuario ya está en uso. Por favor elige otro."
+        } else if (result.error.includes("users_email_key")) {
+          errorMessage = "El correo electrónico ya está registrado. Por favor usa otro."
+        } else if (result.error.includes("duplicate key")) {
+          errorMessage = "Ya existe un usuario con esos datos. Verifica los campos e intenta nuevamente."
+        }
+        
+        setErrors((prev) => ({ ...prev, submit: errorMessage }))
       }
     } catch (error: any) {
       console.error("Excepción al procesar el registro:", error)
+      
+      let errorMessage = "Error al procesar el registro"
+      
+      if (error?.message?.includes("users_username_key")) {
+        errorMessage = "El nombre de usuario ya está en uso. Por favor elige otro."
+      } else if (error?.message?.includes("users_email_key")) {
+        errorMessage = "El correo electrónico ya está registrado. Por favor usa otro."
+      } else if (error?.message?.includes("duplicate key")) {
+        errorMessage = "Ya existe un usuario con esos datos. Verifica los campos e intenta nuevamente."
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
       setErrors((prev) => ({ 
         ...prev, 
-        submit: error?.message || "Error al procesar el registro" 
+        submit: errorMessage
       }))
     } finally {
       setIsLoading(false)
@@ -188,6 +214,10 @@ export default function AdminRegisterPage() {
       accepted_marketing: false,
     })
     setIsSuccess(false)
+  }
+
+  const handleViewUsers = () => {
+    router.push("/perfil?tab=usuarios")
   }
 
   const togglePasswordVisibility = () => {
@@ -232,9 +262,9 @@ export default function AdminRegisterPage() {
               </Button>
               <Button 
                 variant="outline"
-                onClick={() => router.push("/")}
+                onClick={handleViewUsers}
               >
-                Volver al inicio
+                Ver usuarios
               </Button>
             </div>
           </div>

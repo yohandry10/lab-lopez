@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
-import { signIn, signOut, signUp, getCurrentUser, updateUser } from "@/lib/auth-service"
+import { signIn, signOut, signUp, adminCreateUser, getCurrentUser, updateUser } from "@/lib/auth-service"
 import type { User } from "@/lib/supabase-client"
 
 type RegisterData = {
@@ -26,6 +26,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   logout: () => Promise<{ success: boolean; error?: string }>
   register: (userData: RegisterData) => Promise<{ success: boolean; error?: string }>
+  adminRegister: (userData: RegisterData) => Promise<{ success: boolean; error?: string }>
   updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>
 }
 
@@ -95,6 +96,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const adminRegister = async (userData: RegisterData) => {
+    try {
+      const result = await adminCreateUser(userData)
+      if (result.success) {
+        return { success: true }
+      }
+      return { success: false, error: result.error }
+    } catch (error) {
+      console.error("Error en registro por admin:", error)
+      return { success: false, error: "Error al registrar usuario" }
+    }
+  }
+
   const updateProfile = async (updates: Partial<User>) => {
     try {
       const result = await updateUser(user?.id || "", updates)
@@ -110,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, register, updateProfile }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, register, adminRegister, updateProfile }}>
       {children}
     </AuthContext.Provider>
   )

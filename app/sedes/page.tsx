@@ -16,8 +16,8 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 // Datos de ejemplo (puedes modificarlos)
 const sedesData = [
   {
-    name: "Sede San Juan de Miraflores",
-    address: "Av. Miguel Iglesias 625, San Juan de Mirafl ores 15824",
+    name: "Sede San Juan de Miraflores (dentro la Clínica Sagrada Familia del Sur)",
+    address: "Av. Miguel Iglesias 625, San Juan de Miraflores 15824",
     mapUrl: "https://www.google.com/maps?cid=7289839656241431265",
     services: [
       { label: "Atención a domicilio", icon: Home },
@@ -184,7 +184,7 @@ export default function SedesPage() {
         <div className="container mx-auto px-4 max-w-[1200px]">
           <h3 className="text-lg font-semibold mb-2 text-[#2F71B8]">Horario de atención</h3>
           <ul className="text-gray-700 text-base space-y-1">
-            <li><strong>San Juan de Miraflores:</strong> Lunes - Sábado 8:00 - 19:00 horas</li>
+            <li><strong>San Juan de Miraflores:</strong> Lunes - Sábado 8:00 - 17:00 horas</li>
             <li><strong>Santa Anita:</strong> Lunes - Sábado 7:00 - 19:00 horas</li>
           </ul>
         </div>

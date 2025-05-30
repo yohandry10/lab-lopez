@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -12,15 +12,23 @@ import {
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import { SchedulingFlow } from "./scheduling-flow"
 import { useCart } from "@/contexts/cart-context"
 import { SuccessDialog } from "./success-dialog"
-import { Home } from "lucide-react"
+import { Home, Search } from "lucide-react"
+import { getSupabaseClient } from "@/lib/supabase-client"
 
 interface HeroSchedulingDialogProps {
   isOpen: boolean
   onClose: () => void
+}
+
+interface Analysis {
+  id: number
+  name: string
+  price: number
+  category?: string
 }
 
 interface PatientFormData {
@@ -48,23 +56,93 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
   const [step, setStep] = useState(1)
   const [serviceType, setServiceType] = useState("sede")
   const [selectedTest, setSelectedTest] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [allAnalyses, setAllAnalyses] = useState<Analysis[]>([])
+  const [filteredAnalyses, setFilteredAnalyses] = useState<Analysis[]>([])
+  const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null)
   const [isSchedulingOpen, setIsSchedulingOpen] = useState(false)
   const [isSuccessOpen, setIsSuccessOpen] = useState(false)
   const [patientName, setPatientName] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const { addItem } = useCart()
 
-  // Lista de análisis populares
-  const popularTests = [
-    { id: 1, name: "Hemograma completo", price: 80 },
-    { id: 2, name: "Glucosa", price: 50 },
-    { id: 3, name: "Perfil lipídico", price: 120 },
-    { id: 4, name: "Perfil tiroideo", price: 180 },
-    { id: 5, name: "Prueba COVID-19 Antígeno", price: 100 },
-    { id: 6, name: "Prueba COVID-19 PCR", price: 250 },
-  ]
+  // Cargar análisis desde Supabase al abrir el modal
+  useEffect(() => {
+    if (isOpen) {
+      fetchAnalyses()
+    }
+  }, [isOpen])
+
+  // Filtrar análisis basado en la búsqueda
+  useEffect(() => {
+    console.log("🔍 Filtrado:", { searchTerm, allAnalysesCount: allAnalyses.length })
+    
+    if (searchTerm.trim() === "") {
+      setFilteredAnalyses([])
+      console.log("❌ Búsqueda vacía, limpiando resultados")
+    } else {
+      const filtered = allAnalyses.filter(analysis => {
+        const nameMatch = analysis.name.toLowerCase().includes(searchTerm.toLowerCase())
+        const categoryMatch = analysis.category && analysis.category.toLowerCase().includes(searchTerm.toLowerCase())
+        return nameMatch || categoryMatch
+      })
+      
+      console.log("📋 Resultados filtrados:", {
+        searchTerm,
+        totalAnalyses: allAnalyses.length,
+        filtered: filtered.length,
+        firstResults: filtered.slice(0, 3).map(a => a.name)
+      })
+      
+      setFilteredAnalyses(filtered.slice(0, 10)) // Limitar a 10 resultados
+    }
+  }, [searchTerm, allAnalyses])
+
+  const fetchAnalyses = async () => {
+    console.log("🔄 Cargando análisis desde base de datos...")
+    setIsLoading(true)
+    
+    try {
+      const supabase = getSupabaseClient()
+      console.log("🔌 Conectando con Supabase...")
+      
+      const { data, error } = await supabase
+        .from("analyses")
+        .select("id, name, price, category")
+        .order("name", { ascending: true })
+
+      console.log("📊 Respuesta de Supabase:", { data: data?.length, error })
+
+      if (error) {
+        console.error("❌ Error cargando análisis desde Supabase:", error)
+        setAllAnalyses([])
+        return
+      }
+
+      if (data && Array.isArray(data) && data.length > 0) {
+        console.log("✅ Datos cargados desde BD:", data.length, "análisis")
+        const mappedAnalyses: Analysis[] = data.map(item => ({
+          id: Number(item.id),
+          name: String(item.name || '').trim(),
+          price: Number(item.price || 0),
+          category: String(item.category || '').trim()
+        }))
+        setAllAnalyses(mappedAnalyses)
+        console.log("📋 Primeros 3 análisis:", mappedAnalyses.slice(0, 3))
+      } else {
+        console.log("⚠️ No hay datos en la base de datos")
+        setAllAnalyses([])
+      }
+    } catch (err) {
+      console.error("💥 Error conectando con Supabase:", err)
+      setAllAnalyses([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleNext = () => {
-    if (selectedTest) {
+    if (selectedAnalysis) {
       onClose()
       setIsSchedulingOpen(true)
     }
@@ -78,12 +156,11 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
     setPatientName(fullName)
 
     // Add item to cart
-    const test = popularTests.find((test) => test.id === parseInt(selectedTest))
-    if (test) {
+    if (selectedAnalysis) {
       addItem({
-        id: test.id,
-        name: test.name,
-        price: test.price,
+        id: selectedAnalysis.id,
+        name: selectedAnalysis.name,
+        price: selectedAnalysis.price,
         patientDetails: data,
       })
     }
@@ -94,9 +171,16 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
 
   const handleSuccessClose = () => {
     setIsSuccessOpen(false)
-    setSelectedTest("")
+    setSelectedAnalysis(null)
+    setSearchTerm("")
     setServiceType("sede")
-    setStep(1)
+  }
+
+  const handleSelectAnalysis = (analysis: Analysis) => {
+    console.log("✅ Análisis seleccionado:", analysis)
+    setSelectedAnalysis(analysis)
+    setSearchTerm("")
+    setFilteredAnalyses([])
   }
 
   return (
@@ -105,24 +189,77 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Agenda tu análisis</DialogTitle>
-            <DialogDescription>Selecciona el tipo de análisis y modalidad de atención</DialogDescription>
+            <DialogDescription>Busca y selecciona el análisis que necesitas</DialogDescription>
           </DialogHeader>
 
           <div className="py-4 space-y-6">
             <div>
-              <Label className="font-medium">Selecciona un análisis</Label>
-              <Select value={selectedTest} onValueChange={setSelectedTest}>
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder="Elige un análisis" />
-                </SelectTrigger>
-                <SelectContent>
-                  {popularTests.map((test) => (
-                    <SelectItem key={test.id} value={test.id.toString()}>
-                      {test.name} - S/. {test.price.toFixed(2)}
-                    </SelectItem>
+              <Label className="font-medium">Buscar análisis</Label>
+              <div className="relative mt-2">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input 
+                  placeholder="Escribe el nombre del análisis..." 
+                  value={searchTerm} 
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              {/* Información de estado */}
+              {isLoading && (
+                <div className="mt-1 text-xs text-blue-600">
+                  🔄 Cargando análisis desde base de datos...
+                </div>
+              )}
+              
+              {!isLoading && allAnalyses.length === 0 && (
+                <div className="mt-1 text-xs text-red-600">
+                  ❌ No se pudieron cargar análisis desde la base de datos
+                </div>
+              )}
+              
+              {!isLoading && allAnalyses.length > 0 && searchTerm && filteredAnalyses.length > 0 && (
+                <div className="mt-1 text-xs text-green-600">
+                  ✅ Encontrados {filteredAnalyses.length} análisis
+                </div>
+              )}
+              
+              {/* Resultados de búsqueda */}
+              {filteredAnalyses.length > 0 && (
+                <div className="mt-2 max-h-48 overflow-y-auto border rounded-md bg-white shadow-lg">
+                  {filteredAnalyses.map((analysis) => (
+                    <button
+                      key={analysis.id}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-100 border-b last:border-b-0 focus:outline-none focus:bg-gray-100"
+                      onClick={() => handleSelectAnalysis(analysis)}
+                    >
+                      <div className="font-medium text-gray-900">{analysis.name}</div>
+                      <div className="text-sm text-gray-600 flex justify-between">
+                        <span>{analysis.category}</span>
+                        <span className="font-medium">S/. {analysis.price.toFixed(2)}</span>
+                      </div>
+                    </button>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
+              
+              {/* Mensaje cuando no hay resultados pero sí hay búsqueda */}
+              {searchTerm && filteredAnalyses.length === 0 && allAnalyses.length > 0 && !selectedAnalysis && (
+                <div className="mt-2 p-3 text-center text-gray-500 text-sm border rounded-md">
+                  No se encontraron análisis que coincidan con "{searchTerm}"
+                </div>
+              )}
+              
+              {/* Análisis seleccionado */}
+              {selectedAnalysis && (
+                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="font-medium text-blue-900">{selectedAnalysis.name}</div>
+                  <div className="text-sm text-blue-700 flex justify-between">
+                    <span>{selectedAnalysis.category}</span>
+                    <span className="font-medium">S/. {selectedAnalysis.price.toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -148,19 +285,19 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
             <Button variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button onClick={handleNext} disabled={!selectedTest} className="bg-[#1E5FAD] hover:bg-[#3DA64A]">
+            <Button onClick={handleNext} disabled={!selectedAnalysis} className="bg-[#1E5FAD] hover:bg-[#3DA64A]">
               Continuar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {selectedTest && (
+      {selectedAnalysis && (
         <SchedulingFlow
           isOpen={isSchedulingOpen}
           onClose={() => setIsSchedulingOpen(false)}
           onComplete={handleScheduleComplete}
-          testName={popularTests.find((test) => test.id.toString() === selectedTest)?.name || ""}
+          testName={selectedAnalysis.name}
           initialServiceType={serviceType}
         />
       )}
@@ -168,7 +305,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
       <SuccessDialog
         isOpen={isSuccessOpen}
         onClose={handleSuccessClose}
-        testName={popularTests.find((test) => test.id.toString() === selectedTest)?.name || ""}
+        testName={selectedAnalysis?.name || ""}
         patientName={patientName}
         onContinueShopping={handleSuccessClose}
         onNewPatient={handleSuccessClose}

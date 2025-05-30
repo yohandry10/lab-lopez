@@ -14,7 +14,7 @@ export function LocationsSection() {
       link: "/sedes/santa-anita",
     },
     {
-      name: "Sede San Juan de Miraflores",
+      name: "Sede San Juan de Miraflores (dentro la Clínica Sagrada Familia del Sur)",
       address: "Av. Miguel Iglesias 625, San Juan de Miraflores 15824",
       hours: "Lun-Sáb: 7:00 - 19:00",
       link: "/sedes/san-juan-miraflores",

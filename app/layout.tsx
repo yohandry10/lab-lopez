@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer"
 import { ClientProvider } from "@/components/client-provider"
 import { Preloader } from "@/components/preloader"
 import WhatsAppFloat from "@/components/whatsapp-float"
+import { Toaster } from "sonner"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -30,6 +31,7 @@ export default function RootLayout({
             <Footer />
             <WhatsAppFloat />
           </div>
+          <Toaster position="top-right" />
         </ClientProvider>
       </body>
     </html>

@@ -31,6 +31,7 @@ export default function LoginPage() {
   const [errors, setErrors] = useState({
     identifier: "",
     password: "",
+    general: "",
   })
 
   // Cargar credenciales guardadas
@@ -57,7 +58,7 @@ export default function LoginPage() {
   // Validaciones
   const validateForm = () => {
     let isValid = true
-    const newErrors = { identifier: "", password: "" }
+    const newErrors = { identifier: "", password: "", general: "" }
 
     if (!formData.identifier) {
       newErrors.identifier = "Por favor, ingresa tu usuario o correo electrónico"
@@ -78,6 +79,9 @@ export default function LoginPage() {
     if (!validateForm()) return
 
     setIsLoading(true)
+    // Limpiar errores previos
+    setErrors(prev => ({ ...prev, general: "" }))
+    
     try {
       // Guardar identificador si "recordar" está activo
       if (formData.remember) {
@@ -91,7 +95,18 @@ export default function LoginPage() {
       if (result.success) {
         // Siempre redirigir a la página de inicio
         router.push("/")
+      } else {
+        // Mostrar error de autenticación
+        setErrors(prev => ({ 
+          ...prev, 
+          general: result.error || "Usuario o contraseña incorrectos. Por favor, verifica tus credenciales." 
+        }))
       }
+    } catch (error) {
+      setErrors(prev => ({ 
+        ...prev, 
+        general: "Error al conectar con el servidor. Inténtalo de nuevo." 
+      }))
     } finally {
       setIsLoading(false)
     }
@@ -139,6 +154,24 @@ export default function LoginPage() {
           </div>
 
           <div className="bg-white rounded-lg shadow-lg p-6">
+            {/* Mensaje de error general */}
+            {errors.general && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-red-700 font-medium">
+                      {errors.general}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit}>
               <div className="grid gap-4">
                 <div className="grid gap-2">

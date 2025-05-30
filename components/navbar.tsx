@@ -294,7 +294,7 @@ export function Navbar() {
                           </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {user.user_type === "admin" ? (
+                        {user.user_type === "admin" && (
                           <>
                             <DropdownMenuItem asChild>
                               <Link href="/admin/registrar-usuario">
@@ -309,13 +309,6 @@ export function Navbar() {
                               </Link>
                             </DropdownMenuItem>
                           </>
-                        ) : (
-                          <DropdownMenuItem asChild>
-                            <Link href="/perfil">
-                              <User className="mr-2 h-4 w-4" />
-                              <span>Mi Perfil</span>
-                            </Link>
-                          </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -447,23 +440,25 @@ export function Navbar() {
                               </DropdownMenuLabel>
                               <DropdownMenuSeparator />
                               {user.user_type === "admin" && (
-                                <DropdownMenuItem asChild>
-                                  <SheetClose asChild>
-                                    <Link href="/admin/registrar-usuario" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
-                                      <User className="mr-2 h-4 w-4" />
-                                      <span>Registrar Usuario</span>
-                                    </Link>
-                                  </SheetClose>
-                                </DropdownMenuItem>
+                                <>
+                                  <DropdownMenuItem asChild>
+                                    <SheetClose asChild>
+                                      <Link href="/admin/registrar-usuario" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
+                                        <User className="mr-2 h-4 w-4" />
+                                        <span>Registrar Usuario</span>
+                                      </Link>
+                                    </SheetClose>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem asChild>
+                                    <SheetClose asChild>
+                                      <Link href="/perfil" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
+                                        <User className="mr-2 h-4 w-4" />
+                                        <span>Mi Perfil</span>
+                                      </Link>
+                                    </SheetClose>
+                                  </DropdownMenuItem>
+                                </>
                               )}
-                              <DropdownMenuItem asChild>
-                                <SheetClose asChild>
-                                  <Link href="/perfil" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
-                                    <User className="mr-2 h-4 w-4" />
-                                    <span>Mi Perfil</span>
-                                  </Link>
-                                </SheetClose>
-                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="flex items-center gap-3 p-3 text-base text-red-600 hover:bg-red-50 rounded-md focus:text-red-600 focus:bg-red-50"

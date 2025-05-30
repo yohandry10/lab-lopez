@@ -4,66 +4,110 @@ import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { getSupabaseClient } from "@/lib/supabase-client"
+import { useState, useEffect } from "react"
 
-const milestones = [
-  {
-    year: "2023",
-    content:
-      "Inicia operaciones la sede La Molina, Breña y San Juan de Miraflores; ampliando a 30, nuestros puntos de toma de muestra a nivel nacional.",
-  },
-  {
-    year: "2022",
-    content:
-      "Inicia operaciones la sede San Juan de Lurigancho, ampliando a 27 nuestra red de puntos de toma de muestra, distribuidos a nivel nacional. Obtuvimos la acreditación ISO 15189, la máxima norma de calidad en laboratorio clínico, siendo el primer laboratorio clínico en Perú con el mayor número de pruebas acreditadas.",
-  },
-  {
-    year: "2021",
-    content:
-      "Inicia operaciones las sedes Cañete, Chinchón, San Martín y Bellavista; sumando un total de 26 puntos de toma de muestra a nivel nacional.",
-  },
-  {
-    year: "2020",
-    content:
-      "Inauguramos una renovada y rediseñada área de Microbiología, contando con el analizador MALDI-TOF MS™ para la identificación microbiana para un diagnóstico precoz de bacteriemias. Así nos convertimos en el primer laboratorio privado del país en contar con esta tecnología de vanguardia. Implementamos el servicio de procesamiento de la prueba molecular para SARS-CoV2 por PCR, con 18 puntos de toma de muestra a nivel nacional, ofreciendo el servicio mediante un agendamiento digital de citas para un flujo ordenado y diferenciado de nuestros pacientes. Implementamos la plataforma digital Syxmex 9100™ para la especialidad de hematología, permitiendo obtener la morfología digital de imágenes celulares junto con los reportes de resultados.",
-  },
-  {
-    year: "2019",
-    content:
-      "Inicia operaciones las sedes Lince y San Antonio, en los distritos de Lince y Miraflores respectivamente, sumando 22 puntos de toma de muestra a nivel nacional. Concluimos exitosamente la implementación de un sistema de procesamiento de pruebas de laboratorio totalmente automatizado con la mayor tecnología de vanguardia del mercado peruano, incorporando un sistema de analizadores preanalíticos de bandas transportadoras de muestras integradas a plataformas Cobas 8000™ 100% automatizadas a nuestros procesos analíticos.",
-  },
-]
+interface AboutContent {
+  id: number
+  titulo_principal: string
+  subtitulo: string
+  texto_conocenos: string
+  descripcion_principal: string
+  areas_texto: string
+  areas_lista: string[]
+  texto_proceso: string
+  texto_experiencia: string
+  mision_titulo: string
+  mision_texto: string
+  vision_titulo: string
+  vision_texto: string
+  valores_titulo: string
+  valores_lista: string[]
+  is_active: boolean
+}
 
-export default function AboutPage() {
+export default function NosotrosPage() {
+  const [aboutContent, setAboutContent] = useState<AboutContent | null>(null)
+
+  // Datos fallback
+  const fallbackData = {
+    titulo_principal: "Nosotros",
+    subtitulo: "Tus exámenes son nuestra prioridad.",
+    texto_conocenos: "Conócenos",
+    descripcion_principal: "En Laboratorios López, nos dedicamos a brindar servicios de análisis clínicos de alta calidad con más de 20 años de experiencia en el sector salud. Nuestro compromiso es proporcionar resultados precisos y confiables que contribuyan al diagnóstico y tratamiento médico.",
+    areas_texto: "Atendemos diversas áreas del laboratorio clínico, incluyendo:",
+    areas_lista: ["Bioquímica", "Hematología", "Inmunología", "Microbiología", "Parasitología", "Uroanálisis", "Pruebas especiales y más"],
+    texto_proceso: "Nuestro proceso se caracteriza por mantener los más altos estándares de calidad, desde la toma de muestra hasta la entrega de resultados, garantizando la trazabilidad y confidencialidad en cada etapa.",
+    texto_experiencia: "Con más de dos décadas de experiencia, hemos logrado posicionarnos como un laboratorio de referencia en la región, atendiendo tanto a pacientes particulares como a instituciones de salud.",
+    mision_titulo: "MISIÓN",
+    mision_texto: "Brindar servicios de laboratorio clínico con excelencia científica y tecnológica, contribuyendo al diagnóstico médico oportuno y confiable, con un equipo humano comprometido con la calidad y el servicio al paciente.",
+    vision_titulo: "VISIÓN", 
+    vision_texto: "Ser reconocidos como el laboratorio clínico líder en la región, destacando por nuestra innovación tecnológica, calidad en el servicio y compromiso con la salud de nuestros pacientes.",
+    valores_titulo: "VALORES",
+    valores_lista: ["Calidad y precisión en todos nuestros procesos", "Compromiso con la salud de nuestros pacientes", "Innovación y actualización tecnológica constante", "Profesionalismo y ética en el servicio", "Confidencialidad y respeto por la privacidad"]
+  }
+
+  useEffect(() => {
+    fetchAboutContent()
+  }, [])
+
+  const fetchAboutContent = async () => {
+    const supabase = getSupabaseClient()
+    
+    try {
+      const { data, error } = await supabase
+        .from("about_content")
+        .select("*")
+        .eq("is_active", true)
+        .single()
+
+      if (error) {
+        // Si la tabla no existe o no hay datos, usar fallback silenciosamente
+        if (error.code === 'PGRST116' || error.message.includes('relation') || error.message.includes('does not exist')) {
+          console.log("ℹ️ Tabla about_content no existe, usando datos fallback")
+        } else {
+          console.log("ℹ️ No hay contenido personalizado, usando datos fallback")
+        }
+        return
+      }
+
+      if (data) {
+        setAboutContent(data)
+      }
+    } catch (err) {
+      console.log("ℹ️ Error al cargar contenido, usando datos fallback")
+    }
+  }
+
+  // Usar datos de BD si están disponibles, sino fallback
+  const displayData = aboutContent || fallbackData
+
   return (
     <div className="min-h-screen">
       <section className="pt-24 pb-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-6">Nosotros</h2>
-          <p className="text-xl font-light mb-4">Tus exámenes son nuestra prioridad.</p>
-          <h3 className="text-sm text-blue-600 uppercase tracking-wider mb-4">Conócenos</h3>
+          <h2 className="text-3xl font-bold mb-6">{displayData.titulo_principal}</h2>
+          <p className="text-xl font-light mb-4">{displayData.subtitulo}</p>
+          <h3 className="text-sm text-blue-600 uppercase tracking-wider mb-4">{displayData.texto_conocenos}</h3>
           <div className="prose max-w-none space-y-4">
-            <p>En Laboratorio Clínico López contamos con más de 5 años de experiencia brindando servicios de análisis clínicos con altos estándares de calidad. Somos un laboratorio automatizado que integra tecnología de última generación con un equipo humano capacitado, comprometido con el bienestar de nuestros pacientes.</p>
-            <p>Atendemos diversas áreas del laboratorio clínico, incluyendo:</p>
+            <p>{displayData.descripcion_principal}</p>
+            <p>{displayData.areas_texto}</p>
             <ul className="list-disc pl-6 space-y-1">
-              <li>✔ Bioquímica</li>
-              <li>✔ Hematología</li>
-              <li>✔ Inmunología</li>
-              <li>✔ Microbiología</li>
-              <li>✔ Parasitología</li>
-              <li>✔ Uroanálisis</li>
-              <li>✔ Pruebas especiales y más</li>
+              {displayData.areas_lista.map((area, index) => (
+                <li key={index}>✔ {area}</li>
+              ))}
             </ul>
-            <p>Cada resultado que entregamos es producto de un proceso riguroso, confiable y oportuno, porque entendemos que detrás de cada muestra hay una persona que merece respuestas claras y un trato digno.</p>
-            <p>Nos enfocamos en brindar una experiencia de atención eficiente, ética y personalizada, tanto para pacientes particulares como para empresas que buscan mejorar la salud ocupacional de su equipo.</p>
+            <p>{displayData.texto_proceso}</p>
+            <p>{displayData.texto_experiencia}</p>
             <p>En Laboratorio Clínico López, trabajamos todos los días con una sola misión: <strong>Cuidar tu salud con precisión, responsabilidad y compromiso.</strong></p>
           </div>
-          <h4 className="text-2xl font-semibold mt-8 mb-4">MISIÓN</h4>
+          <h4 className="text-2xl font-semibold mt-8 mb-4">{displayData.mision_titulo}</h4>
           <div className="prose max-w-none mb-6">
-            <p>Brindar servicios de análisis clínicos confiables, precisos y oportunos mediante procesos automatizados y personal altamente calificado, comprometidos con el bienestar de nuestros pacientes y el fortalecimiento de la salud preventiva en la comunidad.</p>
+            <p>{displayData.mision_texto}</p>
           </div>
-          <h4 className="text-2xl font-semibold mb-4">VISIÓN</h4>
+          <h4 className="text-2xl font-semibold mb-4">{displayData.vision_titulo}</h4>
           <div className="prose max-w-none">
-            <p>Ser un laboratorio clínico de referencia en la región, reconocido por su calidad, innovación tecnológica y excelencia en el diagnóstico, contribuyendo activamente a una atención médica más efectiva y humana.</p>
+            <p>{displayData.vision_texto}</p>
           </div>
         </div>
       </section>
