@@ -110,7 +110,26 @@ export default function PerfilPage() {
       }
 
       if (error) throw error
-      setUsers(data || [])
+      
+      // Mapear los datos de Supabase de manera segura
+      const mappedUsers: UserType[] = (data || []).map((userData: any) => ({
+        id: String(userData.id || ''),
+        email: String(userData.email || ''),
+        username: String(userData.username || ''),
+        first_name: String(userData.first_name || ''),
+        last_name: String(userData.last_name || ''),
+        user_type: (userData.user_type === 'doctor' || userData.user_type === 'company' || userData.user_type === 'admin' || userData.user_type === 'patient') 
+          ? userData.user_type 
+          : 'patient' as "patient" | "doctor" | "company" | "admin",
+        company_name: String(userData.company_name || ''),
+        company_ruc: String(userData.company_ruc || ''),
+        company_position: String(userData.company_position || ''),
+        created_at: userData.created_at || new Date().toISOString(),
+        accepted_terms: Boolean(userData.accepted_terms || false),
+        accepted_marketing: Boolean(userData.accepted_marketing || false)
+      }))
+      
+      setUsers(mappedUsers)
     } catch (error) {
       console.error("❌ Error al cargar usuarios:", error)
       toast.error("Error al cargar la lista de usuarios")

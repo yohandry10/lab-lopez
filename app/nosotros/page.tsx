@@ -72,7 +72,26 @@ export default function NosotrosPage() {
       }
 
       if (data) {
-        setAboutContent(data)
+        // Convertir de manera segura los datos de Supabase
+        const aboutData: AboutContent = {
+          id: Number(data.id) || 0,
+          titulo_principal: String(data.titulo_principal || fallbackData.titulo_principal),
+          subtitulo: String(data.subtitulo || fallbackData.subtitulo),
+          texto_conocenos: String(data.texto_conocenos || fallbackData.texto_conocenos),
+          descripcion_principal: String(data.descripcion_principal || fallbackData.descripcion_principal),
+          areas_texto: String(data.areas_texto || fallbackData.areas_texto),
+          areas_lista: Array.isArray(data.areas_lista) ? data.areas_lista : fallbackData.areas_lista,
+          texto_proceso: String(data.texto_proceso || fallbackData.texto_proceso),
+          texto_experiencia: String(data.texto_experiencia || fallbackData.texto_experiencia),
+          mision_titulo: String(data.mision_titulo || fallbackData.mision_titulo),
+          mision_texto: String(data.mision_texto || fallbackData.mision_texto),
+          vision_titulo: String(data.vision_titulo || fallbackData.vision_titulo),
+          vision_texto: String(data.vision_texto || fallbackData.vision_texto),
+          valores_titulo: String(data.valores_titulo || fallbackData.valores_titulo),
+          valores_lista: Array.isArray(data.valores_lista) ? data.valores_lista : fallbackData.valores_lista,
+          is_active: Boolean(data.is_active)
+        }
+        setAboutContent(aboutData)
       }
     } catch (err) {
       console.log("ℹ️ Error al cargar contenido, usando datos fallback")

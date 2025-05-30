@@ -6,7 +6,7 @@ import { ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { analysisData } from "../../page"
+import { analysisData } from "@/lib/analysis-data"
 import { analysisData as libraryData } from "@/components/digital-library"
 import { useCart } from "@/contexts/cart-context"
 import dynamic from 'next/dynamic'
