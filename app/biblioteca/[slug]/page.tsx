@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { analysisData } from "@/components/digital-library"
 import { motion } from "framer-motion"
-import { useCart } from "@/contexts/cart-context"
 import type { Analysis } from "@/components/digital-library"
 import { getSupabaseClient } from "@/lib/supabase-client"
 
@@ -35,7 +34,6 @@ interface CartItem {
 export default function ArticlePage() {
   const router = useRouter()
   const params = useParams()
-  const { addItem } = useCart()
   const [isLoading, setIsLoading] = useState(true)
   const [article, setArticle] = useState<Analysis | null>(null)
   const [relatedArticles, setRelatedArticles] = useState<Analysis[]>([])
@@ -136,7 +134,7 @@ export default function ArticlePage() {
 
   if (isLoading) {
     return (
-      <div className="container px-4 py-12 flex justify-center">
+      <div className="container px-4 pt-24 pb-12 flex justify-center">
         <div className="animate-pulse w-full max-w-4xl">
           <div className="h-8 bg-gray-200 rounded w-3/4 mb-6"></div>
           <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
@@ -151,31 +149,11 @@ export default function ArticlePage() {
     )
   }
 
-  const handleAddToCart = () => {
-    if (!article) return
-
-    const item: CartItem = {
-      id: article.id,
-      name: article.title,
-      price: 0, // Asumiendo que el precio es 0 o ajustando según necesites
-      category: article.category
-    }
-    addItem(item)
-  }
-
   if (!article) return null
 
   return (
-    <div className="container px-4 py-12">
+    <div className="container px-4 pt-24 pb-12">
       <div className="max-w-4xl mx-auto">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <Button asChild variant="ghost" className="mb-6">
-            <Link href="/biblioteca" className="flex items-center gap-2">
-              <ChevronLeft className="h-4 w-4" />
-              Volver a la biblioteca
-            </Link>
-          </Button>
-        </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -265,12 +243,6 @@ export default function ArticlePage() {
             </div>
           </motion.div>
         )}
-
-        <div className="flex justify-center">
-          <Button onClick={handleAddToCart} className="bg-[#1E5FAD] hover:bg-[#3DA64A] text-white">
-            Agregar al carrito
-          </Button>
-        </div>
       </div>
     </div>
   )

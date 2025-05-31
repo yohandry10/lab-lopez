@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Trash2, Edit, Plus, Save, X } from "lucide-react"
+import { Trash2, Edit, Plus, Save, X, Download } from "lucide-react"
 import { getSupabaseClient } from "@/lib/supabase"
 
 interface Categoria {
@@ -30,6 +30,8 @@ export default function CategoriasAdminModal({ isOpen, onClose }: CategoriasAdmi
   const [loading, setLoading] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [isAdding, setIsAdding] = useState(false)
+  const [categoriasExistentes, setCategoriasExistentes] = useState<string[]>([])
+  const [loadingExistentes, setLoadingExistentes] = useState(false)
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
@@ -42,6 +44,7 @@ export default function CategoriasAdminModal({ isOpen, onClose }: CategoriasAdmi
   useEffect(() => {
     if (isOpen) {
       cargarCategorias()
+      cargarCategoriasExistentes()
     }
   }, [isOpen])
 
@@ -61,6 +64,82 @@ export default function CategoriasAdminModal({ isOpen, onClose }: CategoriasAdmi
       alert('Error al cargar categorías')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Nueva función para cargar categorías existentes desde la tabla analyses
+  const cargarCategoriasExistentes = async () => {
+    setLoadingExistentes(true)
+    try {
+      const supabase = getSupabaseClient()
+      const { data, error } = await supabase
+        .from('analyses')
+        .select('category')
+
+      if (error) throw error
+      
+      // Extraer categorías únicas
+      const categoriasUnicas = Array.from(new Set(
+        data?.map(item => item.category).filter(cat => cat && cat.trim() !== '') || []
+      )).sort()
+      
+      // Filtrar las que ya existen en categorias_analisis
+      const categoriasYaExistentes = categorias.map(cat => cat.nombre.toLowerCase())
+      const categoriasSinAgregar = categoriasUnicas.filter(cat => 
+        !categoriasYaExistentes.includes(cat.toLowerCase())
+      )
+      
+      setCategoriasExistentes(categoriasSinAgregar)
+    } catch (error) {
+      console.error('Error cargando categorías existentes:', error)
+    } finally {
+      setLoadingExistentes(false)
+    }
+  }
+
+  // Nueva función para agregar categoría existente
+  const agregarCategoriaExistente = async (nombreCategoria: string) => {
+    try {
+      const supabase = getSupabaseClient()
+      
+      // Definir colores automáticos por tipo de categoría
+      const coloresPorCategoria: { [key: string]: string } = {
+        'inmunología': '#8B5CF6',
+        'bioquímica': '#10B981',
+        'hematología': '#EF4444',
+        'microbiología': '#F59E0B',
+        'hormonas': '#EC4899',
+        'coagulación': '#6366F1',
+        'análisis clínicos': '#3B82F6',
+        'perfil lipídico': '#84CC16',
+        'marcadores tumorales': '#F97316',
+        'orina': '#06B6D4',
+        'genética': '#8B5CF6',
+        'endocrinología': '#EC4899',
+        'cardiología': '#DC2626'
+      }
+      
+      const colorCategoria = coloresPorCategoria[nombreCategoria.toLowerCase()] || '#1E5FAD'
+      
+      const { error } = await supabase
+        .from('categorias_analisis')
+        .insert([{
+          nombre: nombreCategoria,
+          descripcion: `Categoría para análisis de ${nombreCategoria.toLowerCase()}`,
+          color: colorCategoria,
+          icono: 'beaker',
+          orden: categorias.length + 1,
+          activo: true
+        }])
+
+      if (error) throw error
+      
+      await cargarCategorias()
+      await cargarCategoriasExistentes() // Recargar para actualizar la lista
+      alert(`✅ Categoría "${nombreCategoria}" agregada correctamente`)
+    } catch (error) {
+      console.error('Error agregando categoría existente:', error)
+      alert('Error al agregar categoría')
     }
   }
 
@@ -193,6 +272,49 @@ export default function CategoriasAdminModal({ isOpen, onClose }: CategoriasAdmi
               Agregar Categoría
             </Button>
           </div>
+
+          {/* Sección de categorías existentes en la BD */}
+          {categoriasExistentes.length > 0 && (
+            <div className="border rounded-lg p-4 bg-blue-50">
+              <div className="flex items-center gap-2 mb-3">
+                <Download className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold text-blue-800">
+                  Categorías encontradas en análisis existentes
+                </h3>
+                {loadingExistentes && (
+                  <span className="text-sm text-blue-600">(Cargando...)</span>
+                )}
+              </div>
+              <p className="text-sm text-blue-700 mb-3">
+                Estas categorías están siendo usadas en tus análisis pero aún no las has agregado oficialmente:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {categoriasExistentes.map((categoria, index) => (
+                  <div key={index} className="flex items-center gap-2 bg-white rounded-md p-2 border border-blue-200">
+                    <span className="text-sm font-medium">{categoria}</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 px-2 text-xs border-green-300 text-green-700 hover:bg-green-50"
+                      onClick={() => agregarCategoriaExistente(categoria)}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Agregar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3 text-blue-600 border-blue-300 hover:bg-blue-100"
+                onClick={cargarCategoriasExistentes}
+                disabled={loadingExistentes}
+              >
+                🔄 Actualizar lista
+              </Button>
+            </div>
+          )}
 
           {/* Formulario de edición/creación */}
           {(editingId || isAdding) && (

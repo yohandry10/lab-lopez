@@ -1385,7 +1385,7 @@ export default function AnalisisPage() {
                     </div>
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-4 sm:mt-6 gap-3 sm:gap-4">
                       <div className="font-bold text-xl sm:text-2xl text-center sm:text-left">
-                        {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") ? `S/. ${profile.price.toFixed(2)}` : ''}
+                        S/. {profile.price.toFixed(2)}
                       </div>
                       <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                         <Button
@@ -1696,7 +1696,30 @@ export default function AnalisisPage() {
               <Input placeholder="Protocolo" value={newAnalysis.protocol} onChange={e => setNewAnalysis(a => ({ ...a, protocol: e.target.value }))} />
               <Input placeholder="Sugerencias" value={newAnalysis.suggestions} onChange={e => setNewAnalysis(a => ({ ...a, suggestions: e.target.value }))} />
               <Input placeholder="Comentarios" value={newAnalysis.comments} onChange={e => setNewAnalysis(a => ({ ...a, comments: e.target.value }))} />
-              <Input placeholder="Categoría" value={newAnalysis.category} onChange={e => setNewAnalysis(a => ({ ...a, category: e.target.value }))} />
+              
+              {/* Reemplazar Input por Select para categorías */}
+              <Select value={newAnalysis.category} onValueChange={(value) => setNewAnalysis(a => ({ ...a, category: value }))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccionar categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="Nueva categoría">+ Agregar nueva categoría</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Campo manual si selecciona "Nueva categoría" */}
+              {newAnalysis.category === "Nueva categoría" && (
+                <Input 
+                  placeholder="Escribir nueva categoría" 
+                  onChange={e => setNewAnalysis(a => ({ ...a, category: e.target.value }))} 
+                />
+              )}
+              
               <Input placeholder="Tiempo de entrega (ej: 2-4 horas)" value={newAnalysis.deliveryTime} onChange={e => setNewAnalysis(a => ({ ...a, deliveryTime: e.target.value }))} />
               <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={handleAddAnalysis}>Guardar</Button>
             </div>
