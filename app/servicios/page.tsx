@@ -579,10 +579,14 @@ export default function ServiciosPage() {
           Servicios diseñados para mejorar tu calidad de vida
         </p>
         
-        {user?.user_type === "admin" && (
+        {(user?.user_type === "admin" || user?.email === "admin@laboratoriolopez.com") && (
           <div className="mt-6 space-x-4">
             <Button 
-              onClick={handleAddPerfilBienestar}
+              onClick={() => {
+                console.log("🔧 CLICK AGREGAR - Usuario:", user)
+                console.log("🔧 CLICK AGREGAR - Función existe:", typeof handleAddPerfilBienestar)
+                handleAddPerfilBienestar()
+              }}
               variant="outline"
               className="border-[#3DA64A] text-[#3DA64A] hover:bg-[#3DA64A]/10"
             >
@@ -591,13 +595,31 @@ export default function ServiciosPage() {
             </Button>
           </div>
         )}
+        
+        {/* DEBUG: Mostrar info del usuario - SOLO EN DESARROLLO */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-4 bg-gray-100 rounded text-sm">
+            <p>Usuario: {user ? JSON.stringify(user) : 'No autenticado'}</p>
+            <p>Tipo: {user?.user_type || 'undefined'}</p>
+            <p>Email: {user?.email || 'undefined'}</p>
+            <p>Es admin: {(user?.user_type === "admin" || user?.email === "admin@laboratoriolopez.com") ? 'SI' : 'NO'}</p>
+          </div>
+        )}
+
+        {/* DEBUG: MOSTRAR TAMBIÉN EN PRODUCCIÓN TEMPORALMENTE */}
+        <div className="mt-4 p-2 bg-blue-100 rounded text-xs">
+          <p>🔧 DEBUG PROD - Usuario: {user?.email || 'No auth'} | Tipo: {user?.user_type || 'No type'}</p>
+        </div>
       </div>
 
       {/* Tabla de administración para admin */}
-      {user?.user_type === "admin" && (
+      {(user?.user_type === "admin" || user?.email === "admin@laboratoriolopez.com") && (
         <div className="mb-12 bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Administración de Perfiles</h2>
+            <p className="text-sm text-gray-500">
+              Usuario: {user?.email || 'sin email'} | Tipo: {user?.user_type || 'sin tipo'}
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -705,13 +727,15 @@ export default function ServiciosPage() {
                     )}
                   </div>
                   
-                {user?.user_type === "admin" && (
+                {(user?.user_type === "admin" || user?.email === "admin@laboratoriolopez.com") && (
                     <div className="absolute top-2 right-2 flex gap-1">
                     <Button
                         size="sm"
                         variant="secondary"
-                        className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
+                        className="h-8 w-8 p-0 bg-white/90 hover:bg-white text-blue-600"
                         onClick={() => {
+                          console.log("🔧 CLICK EDITAR - Usuario:", user)
+                          console.log("🔧 CLICK EDITAR - Perfil completo:", perfilCompleto)
                           if (perfilCompleto) {
                             // Es un perfil de bienestar con ID
                             handleEditPerfilBienestar(perfilCompleto)
@@ -721,13 +745,16 @@ export default function ServiciosPage() {
                           }
                         }}
                       >
-                        <Pencil className="h-3 w-3" />
+                        {/* Icono alternativo más visible */}
+                        ✏️
                     </Button>
                     <Button
                         size="sm"
                         variant="destructive"
-                        className="h-8 w-8 p-0 bg-red-500/90 hover:bg-red-600"
+                        className="h-8 w-8 p-0 bg-red-500/90 hover:bg-red-600 text-white"
                         onClick={() => {
+                          console.log("🔧 CLICK ELIMINAR - Usuario:", user)
+                          console.log("🔧 CLICK ELIMINAR - Perfil completo:", perfilCompleto)
                           if (perfilCompleto) {
                             // Es un perfil de bienestar con ID
                             handleDeletePerfilBienestar(perfilCompleto)
@@ -737,7 +764,8 @@ export default function ServiciosPage() {
                           }
                         }}
                       >
-                        <Trash2 className="h-3 w-3" />
+                        {/* Icono alternativo más visible */}
+                        🗑️
                     </Button>
                   </div>
                 )}

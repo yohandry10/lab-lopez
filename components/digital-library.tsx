@@ -181,11 +181,11 @@ export default function DigitalLibrary() {
           // Solo usar imágenes originales si NO hay imagen en la base de datos
           if (!item.imagen_url || item.imagen_url.trim() === '') {
             const titulo = String(item.titulo || '').toLowerCase();
-            if (titulo.includes('zuma')) {
+          if (titulo.includes('zuma')) {
               imageToUse = '/emba.webp';
-            } else if (titulo.includes('cofactor') || titulo.includes('willebrand')) {
+          } else if (titulo.includes('cofactor') || titulo.includes('willebrand')) {
               imageToUse = '/hemo.jpeg';
-            } else if (titulo.includes('antifosfolípidos') || titulo.includes('antifosfolipidos')) {
+          } else if (titulo.includes('antifosfolípidos') || titulo.includes('antifosfolipidos')) {
               imageToUse = '/anti.jpeg';
             }
           }
@@ -205,7 +205,7 @@ export default function DigitalLibrary() {
             sections: [],
             date: item.created_at || new Date().toISOString(),
             author: 'Dr. López',
-            readTime: '5 min'
+            readTime: String(item.tiempo_entrega || '5 min')
           };
         });
         setArticles(mappedArticles);
@@ -240,7 +240,8 @@ export default function DigitalLibrary() {
           descripcion: updatedArticle.description.trim(),
           contenido: updatedArticle.content.trim(),
           imagen_url: updatedArticle.image.trim() || '/placeholder.svg',
-          categoria: updatedArticle.category
+          categoria: updatedArticle.category,
+          tiempo_entrega: updatedArticle.readTime || '5 min'
         })
         .eq("id", updatedArticle.id)
         .select()
@@ -263,7 +264,8 @@ export default function DigitalLibrary() {
             description: data.descripcion,
             content: data.contenido,
             image: data.imagen_url,
-            category: data.categoria
+            category: data.categoria,
+            readTime: data.tiempo_entrega
           } : article
         )
       );
@@ -397,7 +399,8 @@ export default function DigitalLibrary() {
               description: formData.get('description') as string,
               content: formData.get('content') as string,
               image: formData.get('image') as string || editingArticle.image,
-              category: formData.get('category') as string
+              category: formData.get('category') as string,
+              readTime: formData.get('readTime') as string || editingArticle.readTime
             };
             
             handleUpdateArticle(updatedArticle);
@@ -446,6 +449,16 @@ export default function DigitalLibrary() {
                   <option value="Laboratorio">Laboratorio</option>
                   <option value="Salud general">Salud general</option>
                 </select>
+              </div>
+              <div className="grid grid-cols-1 items-center gap-2">
+                <Label htmlFor="readTime">Tiempo de entrega</Label>
+                <Input
+                  id="readTime"
+                  name="readTime"
+                  defaultValue={editingArticle?.readTime || '5 min'}
+                  className="w-full"
+                  placeholder="Ej: 24 horas, 3-5 días hábiles, 1 semana"
+                />
               </div>
               <div className="grid grid-cols-1 items-center gap-2">
                 <Label htmlFor="image">URL de la imagen</Label>

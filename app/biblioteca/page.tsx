@@ -41,7 +41,8 @@ export default function BibliotecaPage() {
     descripcion: "",
     contenido: "",
     imagen_url: "",
-    categoria: "Análisis clínicos"
+    categoria: "Análisis clínicos",
+    tiempo_entrega: "5 min"
   })
 
   // Cargar artículos desde Supabase al iniciar
@@ -98,7 +99,7 @@ export default function BibliotecaPage() {
           sections: [],
           date: item.created_at || new Date().toISOString(),
           author: 'Dr. López',
-          readTime: '5 min'
+          readTime: String(item.tiempo_entrega || '5 min')
         };
       });
       setAllArticles(mappedArticles);
@@ -144,6 +145,7 @@ export default function BibliotecaPage() {
           contenido: newArticle.contenido.trim(),
           imagen_url: newArticle.imagen_url.trim() || '/placeholder.svg',
           categoria: newArticle.categoria,
+          tiempo_entrega: newArticle.tiempo_entrega.trim() || '5 min',
           activo: true,
           orden: allArticles.length + 1
         })
@@ -163,7 +165,7 @@ export default function BibliotecaPage() {
       fetchArticles()
       
       // Limpiar formulario y cerrar modal
-      setNewArticle({ titulo: "", descripcion: "", contenido: "", imagen_url: "", categoria: "Análisis clínicos" })
+      setNewArticle({ titulo: "", descripcion: "", contenido: "", imagen_url: "", categoria: "Análisis clínicos", tiempo_entrega: "5 min" })
       setShowAddModal(false)
       
       alert("✅ Artículo agregado correctamente")
@@ -402,6 +404,19 @@ export default function BibliotecaPage() {
                 <option value="Genética">Genética</option>
                 <option value="Endocrinología">Endocrinología</option>
               </select>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="tiempo_entrega" className="text-right">
+                Tiempo de entrega
+              </Label>
+              <Input
+                id="tiempo_entrega"
+                value={newArticle.tiempo_entrega}
+                onChange={(e) => setNewArticle({ ...newArticle, tiempo_entrega: e.target.value })}
+                className="col-span-3"
+                placeholder="Ej: 24 horas, 3-5 días hábiles, 1 semana"
+              />
             </div>
           </div>
           <DialogFooter>

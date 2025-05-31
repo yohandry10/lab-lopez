@@ -52,6 +52,7 @@ interface AnalysisDialogProps {
     suggestions?: string
     comments?: string
     category: string
+    deliveryTime?: string
   } | null
   user: any
 }
@@ -159,10 +160,10 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
             <h4 className="font-medium mb-1">Protocolo toma muestra</h4>
             <p className="text-gray-600 text-sm">{analysis.protocol}</p>
           </div>
-          {getDeliveryTimeByCategory(analysis.category, analysis.name) && (
+          {analysis.deliveryTime && (
             <div>
               <h4 className="font-medium mb-1">⏱️ Tiempo de entrega</h4>
-              <p className="text-green-600 text-sm font-medium">{getDeliveryTimeByCategory(analysis.category, analysis.name)}</p>
+              <p className="text-green-600 text-sm font-medium">{analysis.deliveryTime}</p>
             </div>
           )}
           {analysis.suggestions && (

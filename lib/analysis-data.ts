@@ -11,6 +11,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hematología",
+    deliveryTime: "24-48 horas",
   },
   {
     id: 2,
@@ -22,6 +23,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 3,
@@ -33,6 +35,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 4,
@@ -44,6 +47,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 5,
@@ -55,6 +59,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 6,
@@ -66,6 +71,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Inmunología",
+    deliveryTime: "3-5 días hábiles",
   },
   {
     id: 7,
@@ -77,6 +83,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Marcadores Tumorales",
+    deliveryTime: "24-48 horas",
   },
   {
     id: 8,
@@ -88,6 +95,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 9,
@@ -99,6 +107,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hormonas",
+    deliveryTime: "19 días hábiles",
   },
 
   // B
@@ -112,6 +121,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 11,
@@ -123,6 +133,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 12,
@@ -134,6 +145,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hormonas",
+    deliveryTime: "2-4 horas",
   },
 
   // C
@@ -147,6 +159,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 14,
@@ -158,6 +171,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Perfil Lipídico",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 15,
@@ -169,6 +183,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Perfil Lipídico",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 16,
@@ -180,6 +195,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Perfil Lipídico",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 17,
@@ -191,6 +207,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hormonas",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 18,
@@ -202,6 +219,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
 
   // D
@@ -215,6 +233,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Inmunología",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 20,
@@ -226,6 +245,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Coagulación",
+    deliveryTime: "2-4 horas",
   },
 
   // E
@@ -239,6 +259,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hormonas",
+    deliveryTime: "2-4 horas",
   },
 
   // F
@@ -252,6 +273,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hematología",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 23,
@@ -263,6 +285,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Coagulación",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 24,
@@ -274,6 +297,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
 
   // G  
@@ -287,6 +311,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 26,
@@ -298,6 +323,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
 
   // H
@@ -311,6 +337,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 28,
@@ -322,6 +349,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Inmunología",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 29,
@@ -333,6 +361,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Inmunología",
+    deliveryTime: "2-4 horas",
   },
 
   // I
@@ -346,6 +375,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hormonas",
+    deliveryTime: "2-4 horas",
   },
 
   // L
@@ -359,6 +389,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
 
   // M
@@ -372,6 +403,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
 
   // P
@@ -385,6 +417,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Perfil Bioquímico",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 34,
@@ -396,6 +429,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Perfil Lipídico",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 35,
@@ -407,6 +441,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Marcadores Tumorales",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 36,
@@ -418,6 +453,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Marcadores Tumorales",
+    deliveryTime: "2-4 horas",
   },
 
   // T
@@ -431,6 +467,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hormonas",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 38,
@@ -442,6 +479,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hormonas",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 39,
@@ -453,6 +491,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hormonas",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 40,
@@ -464,6 +503,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hormonas",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 41,
@@ -475,6 +515,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Perfil Lipídico",
+    deliveryTime: "2-4 horas",
   },
 
   // U
@@ -488,6 +529,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Bioquímica",
+    deliveryTime: "2-4 horas",
   },
 
   // V
@@ -501,6 +543,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hematología",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 44,
@@ -512,6 +555,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hormonas",
+    deliveryTime: "2-4 horas",
   },
 
   // Análisis de Microbiología
@@ -525,6 +569,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Microbiología",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 46,
@@ -536,6 +581,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Microbiología",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 47,
@@ -547,6 +593,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Microbiología",
+    deliveryTime: "2-4 horas",
   },
 
   // Análisis de Hematología
@@ -560,6 +607,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hematología",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 49,
@@ -571,6 +619,7 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hematología",
+    deliveryTime: "2-4 horas",
   },
   {
     id: 50,
@@ -582,5 +631,6 @@ export const analysisData = [
     suggestions: "",
     comments: "",
     category: "Hematología",
+    deliveryTime: "2-4 horas",
   }
 ] 

@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "@/contexts/auth-context"
 import { getSupabaseClient } from "@/lib/supabase"
-import { Pencil, Edit } from "lucide-react"
-import PerfilBienestarAdminModal from "@/components/perfil-bienestar-admin-modal"
+import { Plus, ChevronLeft, ChevronRight } from "lucide-react"
 
 // Definición del tipo para un perfil de bienestar
 interface PerfilBienestar {
@@ -75,10 +74,10 @@ export default function MainServices() {
   const [mounted, setMounted] = useState(false)
   const { user } = useAuth()
   const [perfilesBienestar, setPerfilesBienestar] = useState<PerfilBienestar[]>([])
-  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false)
-  const [editingPerfil, setEditingPerfil] = useState<PerfilBienestar | null>(null)
   const [sectionTitle, setSectionTitle] = useState("Perfiles de bienestar")
   const [editingTitle, setEditingTitle] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0) // Para el carrusel
+  const itemsPerPage = 3 // Siempre mostrar 3
 
   useEffect(() => {
     setMounted(true)
@@ -95,7 +94,7 @@ export default function MainServices() {
         .from("perfiles_bienestar")
         .select("*")
         .eq("is_active", true)
-        .in("slug", ["salud-sexual", "masculino-edad-oro", "diabetes-control"])
+        .order("id", { ascending: true })
 
       if (error) {
         console.error("❌ Error al cargar perfiles de bienestar:", error)
@@ -103,6 +102,7 @@ export default function MainServices() {
       }
 
       if (data && Array.isArray(data)) {
+        console.log("✅ Perfiles cargados desde BD:", data.length)
         setPerfilesBienestar(data)
       }
     } catch (err) {
@@ -215,78 +215,47 @@ export default function MainServices() {
     fetchSectionTitle() // Recargar título original
   }
 
-  const handleEditPerfil = (slug: string) => {
-    const perfil = perfilesBienestar.find(p => p.slug === slug)
-    if (perfil) {
-      setEditingPerfil(perfil)
-      setIsAdminModalOpen(true)
-    }
+  // Funciones para el carrusel
+  const nextPage = () => {
+    const allServices = getAllServices()
+    const totalPages = Math.ceil(allServices.length / itemsPerPage)
+    setCurrentPage((prev) => (prev + 1) % totalPages)
   }
 
-  const handleSavePerfil = async (perfilData: PerfilBienestar) => {
-    const supabase = getSupabaseClient()
-    
-    try {
-      const { data, error } = await supabase
-        .from("perfiles_bienestar")
-        .update({
-          slug: perfilData.slug,
-          title: perfilData.title,
-          description: perfilData.description,
-          content: perfilData.content,
-          price: perfilData.price,
-          image: perfilData.image,
-          locations: perfilData.locations,
-          sample_type: perfilData.sample_type,
-          age_requirement: perfilData.age_requirement,
-          tests: perfilData.tests,
-          conditions: perfilData.conditions
-        })
-        .eq("id", perfilData.id)
-        .select()
-        .single()
-
-      if (error) {
-        alert("Error al actualizar perfil: " + error.message)
-        return
-      }
-
-      // Actualizar estado local
-      setPerfilesBienestar(prev => 
-        prev.map(p => p.id === data.id ? data : p)
-      )
-
-      console.log("✅ Perfil actualizado correctamente")
-      setIsAdminModalOpen(false)
-      setEditingPerfil(null)
-    } catch (err) {
-      console.error("❌ Error al guardar perfil:", err)
-      alert("Error inesperado al guardar el perfil")
-    }
+  const prevPage = () => {
+    const allServices = getAllServices()
+    const totalPages = Math.ceil(allServices.length / itemsPerPage)
+    setCurrentPage((prev) => (prev - 1 + totalPages) % totalPages)
   }
 
-  // Función para obtener los datos de las tarjetas (dinámico desde BD o fallback)
-  const getDisplayServices = () => {
+  // Obtener todos los servicios disponibles
+  const getAllServices = () => {
     if (perfilesBienestar.length > 0) {
-      // Usar datos de la BD pero mantener imágenes originales
+      console.log("📊 Usando perfiles de BD:", perfilesBienestar.length)
       return perfilesBienestar.map(perfil => {
-        // Buscar la imagen original correspondiente
         const originalService = services.find(s => s.slug === perfil.slug)
-        
         return {
           id: perfil.id || 0,
           title: perfil.title,
           description: perfil.description,
-          image: originalService?.image || perfil.image, // Usar imagen original si existe
+          image: originalService?.image || perfil.image,
           link: `/servicios/${perfil.slug}`,
           slug: perfil.slug,
           price: perfil.price
         }
       })
     } else {
-      // Fallback a datos hardcodeados
+      console.log("📊 Usando fallback services:", services.length)
       return services
     }
+  }
+
+  // Función para obtener los servicios de la página actual
+  const getDisplayServices = () => {
+    const allServices = getAllServices()
+    const startIndex = currentPage * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return allServices.slice(startIndex, endIndex)
   }
 
   if (!mounted) {
@@ -361,18 +330,19 @@ export default function MainServices() {
                     </h2>
                     
                     {/* Botón de editar título solo para admin */}
-                    {user?.user_type === "admin" && (
+                    {(user?.user_type === "admin" || user?.email === "admin@laboratoriolopez.com") && (
                       <Button
                         size="sm"
-                        variant="ghost"
+                        variant="outline"
                         onClick={(e) => {
                           e.preventDefault()
                           e.stopPropagation()
                           handleTitleEdit()
                         }}
-                        className="ml-2 h-8 w-8 p-0"
+                        className="ml-2 h-8 w-8 p-0 border-blue-500 text-blue-600 hover:bg-blue-100 bg-white/90"
+                        title="Editar título"
                       >
-                        <Edit className="h-4 w-4" />
+                        ✏️
                       </Button>
                     )}
                   </>
@@ -411,20 +381,6 @@ export default function MainServices() {
                       loading="eager"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                    
-                    {/* Botón de editar para admin */}
-                    {user?.user_type === "admin" && (
-                      <div className="absolute top-2 right-2">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
-                          onClick={() => handleEditPerfil(service.slug)}
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    )}
                   </div>
                   <CardHeader>
                     <CardTitle>{service.title}</CardTitle>
@@ -442,16 +398,51 @@ export default function MainServices() {
               </motion.div>
             ))}
           </motion.div>
-        </div>
 
-        {/* Modal de administración */}
-        <PerfilBienestarAdminModal
-          isOpen={isAdminModalOpen}
-          onClose={() => setIsAdminModalOpen(false)}
-          onSave={handleSavePerfil}
-          perfil={editingPerfil}
-          mode="edit"
-        />
+          {/* Navegación del carrusel */}
+          {getAllServices().length > itemsPerPage && (
+            <motion.div 
+              className="flex justify-center items-center mt-8 gap-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.5 }}
+            >
+              <Button
+                onClick={prevPage}
+                variant="outline"
+                size="sm"
+                className="h-10 w-10 p-0 border-[#3DA64A] text-[#3DA64A] hover:bg-[#3DA64A] hover:text-white"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex items-center gap-2">
+                {Array.from({ length: Math.ceil(getAllServices().length / itemsPerPage) }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentPage(index)}
+                    className={`h-2 w-2 rounded-full transition-colors ${
+                      currentPage === index ? 'bg-[#3DA64A]' : 'bg-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              <Button
+                onClick={nextPage}
+                variant="outline"
+                size="sm"
+                className="h-10 w-10 p-0 border-[#3DA64A] text-[#3DA64A] hover:bg-[#3DA64A] hover:text-white"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              
+              <span className="text-sm text-gray-500 ml-4">
+                {currentPage + 1} de {Math.ceil(getAllServices().length / itemsPerPage)}
+              </span>
+            </motion.div>
+          )}
+        </div>
       </motion.section>
     </AnimatePresence>
   )

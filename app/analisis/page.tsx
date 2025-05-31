@@ -30,33 +30,6 @@ import { SchedulingFlow } from "@/components/scheduling-flow"
 import { SuccessDialog } from "@/components/success-dialog"
 import { HeroSchedulingDialog } from "@/components/hero-scheduling-dialog"
 
-// Función para obtener tiempo de entrega según categoría
-const getDeliveryTimeByCategory = (category: string, analysisName?: string): string => {
-  // Caso especial para ANDROSTENEDIONA
-  if (analysisName === "ANDROSTENEDIONA") {
-    return "19 días hábiles";
-  }
-  
-  switch (category) {
-    case "Bioquímica":
-    case "Perfil Lipídico":
-    case "Coagulación":
-      return "2-4 horas";
-    case "Hematología":
-    case "Hormonas":
-    case "Marcadores Tumorales":
-      return "24-48 horas";
-    case "Inmunología":
-      return "3-5 días hábiles";
-    case "Microbiología":
-      return "24-48 horas";
-    case "Genética":
-      return "10-15 días hábiles";
-    default:
-      return "24-48 horas";
-  }
-};
-
 // Obtener categorías únicas para el filtro
 const categories = [...new Set(analysisData.map((item) => item.category))].sort()
 
@@ -451,6 +424,7 @@ export default function AnalisisPage() {
            protocol: updatedAnalysis.protocol,
            suggestions: updatedAnalysis.suggestions,
            comments: updatedAnalysis.comments,
+           deliveryTime: updatedAnalysis.deliveryTime,
          })
          .eq("id", updatedAnalysis.id)
          .select()
@@ -611,6 +585,7 @@ export default function AnalisisPage() {
     suggestions: '',
     comments: '',
     category: '',
+    deliveryTime: '2-4 horas',
   });
   
   const [newProfile, setNewProfile] = useState({
@@ -651,11 +626,12 @@ export default function AnalisisPage() {
       suggestions: String(data?.suggestions || newAnalysis.suggestions),
       comments: String(data?.comments || newAnalysis.comments),
       category: String(data?.category || newAnalysis.category),
+      deliveryTime: String(data?.deliveryTime || newAnalysis.deliveryTime),
     };
     setLocalAnalysisData(prev => [...prev, newAnalysisData]);
     setIsAddModalOpen(false);
     setNewAnalysis({
-      name: '', price: '', conditions: '', sample: '', protocol: '', suggestions: '', comments: '', category: '',
+      name: '', price: '', conditions: '', sample: '', protocol: '', suggestions: '', comments: '', category: '', deliveryTime: '2-4 horas',
     });
   };
 
@@ -724,6 +700,7 @@ export default function AnalisisPage() {
             suggestions: item.suggestions?.toString() || '',
             comments: item.comments?.toString() || '',
             category: item.category?.toString() || '',
+            deliveryTime: item.deliveryTime?.toString() || '2-4 horas',
           };
         });
         setLocalAnalysisData(mappedData);
@@ -1451,6 +1428,7 @@ export default function AnalisisPage() {
                 protocol: formData.get('protocol') as string,
                 suggestions: formData.get('suggestions') as string,
                 comments: formData.get('comments') as string,
+                deliveryTime: formData.get('deliveryTime') as string,
               }
               console.log("📊 Datos a actualizar:", updatedAnalysis);
               await handleUpdateAnalysis(updatedAnalysis)
@@ -1527,6 +1505,16 @@ export default function AnalisisPage() {
                     id="comments"
                     name="comments"
                     defaultValue={editingAnalysis.comments}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="deliveryTime" className="text-right">Tiempo de entrega</Label>
+                  <Input
+                    id="deliveryTime"
+                    name="deliveryTime"
+                    type="text"
+                    defaultValue={editingAnalysis.deliveryTime}
                     className="col-span-3"
                   />
                 </div>
@@ -1653,6 +1641,7 @@ export default function AnalisisPage() {
               <Input placeholder="Sugerencias" value={newAnalysis.suggestions} onChange={e => setNewAnalysis(a => ({ ...a, suggestions: e.target.value }))} />
               <Input placeholder="Comentarios" value={newAnalysis.comments} onChange={e => setNewAnalysis(a => ({ ...a, comments: e.target.value }))} />
               <Input placeholder="Categoría" value={newAnalysis.category} onChange={e => setNewAnalysis(a => ({ ...a, category: e.target.value }))} />
+              <Input placeholder="Tiempo de entrega (ej: 2-4 horas)" value={newAnalysis.deliveryTime} onChange={e => setNewAnalysis(a => ({ ...a, deliveryTime: e.target.value }))} />
               <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={handleAddAnalysis}>Guardar</Button>
             </div>
           </DialogContent>

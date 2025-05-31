@@ -124,6 +124,50 @@ INSERT INTO public.perfiles_bienestar (slug, title, description, content, price,
     ARRAY['Los análisis en sangre requieren ayuno mínimo de 8 horas y máximo de 12 horas.', 'Si tomas medicamentos o sigues un tratamiento, infórmalo al momento de la toma de muestra.']
 );
 
+-- Insertar los perfiles básicos de la página principal
+INSERT INTO perfiles_bienestar (
+    slug, title, description, content, price, image, locations, sample_type, age_requirement, tests, conditions
+) VALUES
+(
+    'salud-sexual',
+    'Salud Sexual',
+    'Confianza, libertad y seguridad para elegir',
+    'Servicios especializados en salud sexual para brindar confianza, libertad y seguridad en tus decisiones de salud íntima.',
+    0.00,
+    '/diabetes.jpg',
+    ARRAY['Sede', 'Domicilio'],
+    'General',
+    'Cualquier edad',
+    ARRAY['Consulta especializada', 'Exámenes de rutina', 'Orientación preventiva'],
+    ARRAY['Consulta médica previa recomendada']
+),
+(
+    'masculino-edad-oro',
+    'Masculino Edad de Oro',
+    'Experiencia, sabiduría y plenitud',
+    'Programa especializado para hombres en la etapa dorada de la vida, enfocado en mantener la salud y vitalidad.',
+    0.00,
+    '/viejitos.jpg',
+    ARRAY['Sede', 'Domicilio'],
+    'General',
+    'Mayores de 50 años',
+    ARRAY['Chequeo geriátrico', 'Evaluación prostática', 'Control cardiovascular'],
+    ARRAY['Ayuno de 8 horas para algunos exámenes']
+),
+(
+    'diabetes-control',
+    'Diabetes bajo control',
+    'Estilo de vida, autocontrol, bienestar',
+    'Programa integral para el control y manejo de la diabetes, promoviendo un estilo de vida saludable y el autocontrol.',
+    0.00,
+    '/perfil.jpg',
+    ARRAY['Sede', 'Domicilio'],
+    'Sangre',
+    'Cualquier edad',
+    ARRAY['Glucosa en ayunas', 'Hemoglobina glicosilada', 'Control lipídico', 'Función renal'],
+    ARRAY['Ayuno de 8 horas', 'Tomar medicamentos según indicación médica']
+);
+
 -- Habilitar RLS (Row Level Security)
 ALTER TABLE public.perfiles_bienestar ENABLE ROW LEVEL SECURITY;
 
