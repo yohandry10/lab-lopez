@@ -15,6 +15,18 @@ import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/auth-context"
 import { getSupabaseClient } from "@/lib/supabase-client"
 
+// Función para normalizar slugs (remover acentos y caracteres especiales)
+function normalizeSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD') // Normaliza caracteres Unicode
+    .replace(/[\u0300-\u036f]/g, '') // Remueve acentos
+    .replace(/[^a-z0-9\s-]/g, '') // Remueve caracteres especiales excepto espacios y guiones
+    .replace(/\s+/g, '-') // Reemplaza espacios con guiones
+    .replace(/-+/g, '-') // Reemplaza múltiples guiones con uno solo
+    .trim(); // Remueve espacios al inicio y final
+}
+
 export interface Analysis {
   id: number
   title: string
@@ -28,270 +40,13 @@ export interface Analysis {
     title: string
     content: React.ReactNode
   }>
+  date?: string
+  author?: string
+  readTime?: string
 }
 
-// Datos de fallback (se mantendrán como respaldo)
-export const analysisData: Analysis[] = [
-  {
-    id: 1,
-    title: "ZUMA test no invasivo prenatal (NIPT)",
-    description: "Las pruebas prenatales convencionales que permiten detectar anomalías cromosómicas fetales requieren una muestra de vellosidades coriónicas (biopsia corial) o bien una amniocentesis.",
-    image: "/emba.webp",
-    category: "Análisis clínicos",
-    slug: "zuma-test-prenatal",
-    content: "Las pruebas prenatales convencionales que permiten detectar anomalías cromosómicas fetales requieren una muestra de vellosidades coriónicas (biopsia corial) o bien una amniocentesis. Estos procedimientos son altamente invasivos y conllevan un elevado riesgo de aborto espontáneo. A pesar de ello, constituyen pruebas confirmatorias debido a sus altos niveles de precisión y variedad de anomalías que pueden detectar. ZUMA TEST NO INVASIVO PRENATAL es una prueba prenatal no invasiva que se realiza a partir de la muestra de sangre materna y que evalúa de forma rápida y precisa la mayoría de alteraciones cromosómicas más frecuentes en el feto.",
-    heroIcons: ["Baby", "Dna", "Search"],
-    sections: [
-      {
-        title: "¿Qué detecta este análisis?",
-        content: (
-          <div className="space-y-4">
-            <p>Esta prueba analiza el material genético (ADN) fetal libre que circula en la sangre materna y determina la presencia de alteraciones en:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Cromosoma 21 (Síndrome de Down)</li>
-              <li>Cromosoma 18 (Síndrome de Edwards)</li>
-              <li>Cromosoma 13 (Síndrome de Patau)</li>
-              <li>Cromosomas sexuales (X e Y)</li>
-              <li>Identificación del sexo fetal</li>
-            </ul>
-            <div className="mt-4">
-              <h4 className="font-semibold mb-2">Sensibilidad y Especificidad:</h4>
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="border p-2 text-left">Trisomía</th>
-                    <th className="border p-2 text-left">Sensibilidad</th>
-                    <th className="border p-2 text-left">Especificidad</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className="border p-2">Trisomía 21 (Síndrome de Down)</td>
-                    <td className="border p-2">99.9%</td>
-                    <td className="border p-2">99.9%</td>
-                  </tr>
-                  <tr>
-                    <td className="border p-2">Trisomía 18 (Síndrome de Edwards)</td>
-                    <td className="border p-2">99.0%</td>
-                    <td className="border p-2">99.9%</td>
-                  </tr>
-                  <tr>
-                    <td className="border p-2">Trisomía 13 (Síndrome de Patau)</td>
-                    <td className="border p-2">99.9%</td>
-                    <td className="border p-2">99.9%</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )
-      },
-      {
-        title: "Prueba disponible",
-        content: (
-          <div className="space-y-4">
-            <p>El procedimiento consiste en:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Extracción de sangre materna a partir de la semana 10 de gestación</li>
-              <li>Análisis del ADN fetal libre circulante</li>
-              <li>Detección de anomalías cromosómicas mediante tecnología de última generación</li>
-              <li>Resultados con alta precisión y sin riesgos para el embarazo</li>
-            </ul>
-            <p>Tiempo de entrega: 5-7 días hábiles</p>
-          </div>
-        )
-      },
-      {
-        title: "Indicaciones",
-        content: (
-          <div className="space-y-4">
-            <p>Este análisis está especialmente indicado en:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Edad materna avanzada (≥35 años)</li>
-              <li>Screening bioquímico de alto riesgo</li>
-              <li>Hallazgos ecográficos sugestivos de cromosomopatía</li>
-              <li>Antecedentes de gestación previa con cromosomopatía</li>
-              <li>Ansiedad materna</li>
-              <li>Como alternativa a pruebas invasivas (amniocentesis o biopsia corial)</li>
-            </ul>
-          </div>
-        )
-      },
-      {
-        title: "Interpretación de resultados",
-        content: (
-          <div className="space-y-4">
-            <p>La interpretación de los resultados incluye:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Evaluación del riesgo individual para cada alteración cromosómica</li>
-              <li>Determinación del sexo fetal (si se solicita)</li>
-              <li>Recomendaciones sobre la necesidad de pruebas confirmatorias</li>
-              <li>Asesoramiento genético personalizado</li>
-            </ul>
-            <p className="mt-4 text-gray-700">En caso de resultado positivo, se recomienda confirmar mediante prueba invasiva (amniocentesis o biopsia corial) antes de tomar decisiones clínicas importantes.</p>
-          </div>
-        )
-      }
-    ]
-  },
-  {
-    id: 2,
-    title: "Cofactor ristocetina Von Willebrand",
-    description: "La enfermedad de Von Willebrand (EVW) es el trastorno hemorrágico hereditario (autosómico) más frecuente.",
-    image: "/hemo.jpeg",
-    category: "Análisis clínicos",
-    slug: "cofactor-ristocetina",
-    content: "La enfermedad de Von Willebrand (EVW) es el trastorno hemorrágico hereditario (autosómico) más frecuente. El Factor Von Willebrand (FVW) es una glicoproteína multimérica de alto peso molecular que interviene en la hemostasia primaria, favoreciendo la adhesión y agregación plaquetaria al unirse al receptor de la glicoproteína Ib (GPIb) de las plaquetas por las fuerzas de cizallamiento en el lugar de la lesión.",
-    heroIcons: ["TestTube", "Microscope"],
-    sections: [
-      {
-        title: "Clasificación",
-        content: (
-          <div className="space-y-4">
-            <p>En función de los hallazgos fenotípicos, la EVW se puede clasificar de acuerdo a la Sociedad Internacional de Trombosis y Hemostasia y su Comité Científico y de Estandarización como:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Tipo 1: Déficit cuantitativo parcial del FVW</li>
-              <li>Tipo 2: Defectos cualitativos del FVW</li>
-              <li>Tipo 3: Déficit casi total del FVW</li>
-            </ul>
-          </div>
-        )
-      },
-      {
-        title: "Mecanismo de acción",
-        content: (
-          <div className="space-y-4">
-            <p>El INNOVANCE® VWF Ac es un ensayo reforzado con partículas para la determinación automática de la actividad del factor de Von Willebrand.</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Las partículas de poliestireno están recubiertas de anticuerpos contra la GPIb</li>
-              <li>Se añade GPIb recombinante con dos mutaciones de ganancia de función</li>
-              <li>El FVW se une a la GPIb sin requerir ristocetina</li>
-              <li>La unión provoca una aglutinación de partículas medible por turbidimetría</li>
-            </ul>
-          </div>
-        )
-      },
-      {
-        title: "Aplicaciones clínicas",
-        content: (
-          <div className="space-y-4">
-            <p>Este análisis es útil para:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Diagnóstico de la enfermedad de Von Willebrand</li>
-              <li>Clasificación del tipo de EVW</li>
-              <li>Monitorización del tratamiento</li>
-              <li>Evaluación del riesgo hemorrágico</li>
-            </ul>
-          </div>
-        )
-      }
-    ]
-  },
-  {
-    id: 3,
-    title: "Antifosfolípidos panel completo",
-    description: "Los anticuerpos antifosfolípidos conforman uno de los pilares diagnósticos del síndrome antifosfolipídico (SAF).",
-    image: "/anti.jpeg",
-    category: "Análisis clínicos",
-    slug: "antifosfolipidos-panel",
-    content: "Los anticuerpos antifosfolípidos conforman uno de los pilares diagnósticos del síndrome antifosfolipídico (SAF) junto con la predisposición a la trombosis (venosa/arterial), morbilidad en la gestación y alteraciones hematológicas (trombocitopenia/anemia hemolítica).",
-    heroIcons: ["TestTube", "Microscope"],
-    sections: [
-      {
-        title: "Criterios de clasificación",
-        content: (
-          <div className="space-y-4">
-            <p>Los anticuerpos incluidos en los criterios de clasificación son:</p>
-            <h4 className="font-semibold mt-4 mb-2">Criterios mayores:</h4>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Anticoagulante lúpico (AL)</li>
-              <li>Anticuerpos anticardiolipina (aCL) IgG e IgM</li>
-              <li>Anti-β2 glicoproteína I (aβ2GPI) IgG e IgM</li>
-            </ul>
-            <h4 className="font-semibold mt-4 mb-2">Criterios menores:</h4>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Cardiolipina IgA</li>
-              <li>Anti-β2 glicoproteína IgA</li>
-              <li>Anticuerpos anti Fosfatidilserina/Protrombina (aPS/PT) IgG e IgM</li>
-            </ul>
-          </div>
-        )
-      },
-      {
-        title: "Metodología",
-        content: (
-          <div className="space-y-4">
-            <p>La determinación en el laboratorio se realiza mediante:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Enzimo inmuno ensayo (ELISA) automatizado</li>
-              <li>Determinación cuantitativa y específica de cada anticuerpo</li>
-              <li>Verificación de positividad a las 12 semanas según recomendaciones internacionales</li>
-              <li>Resultados cuantitativos superiores a los ensayos de coagulación</li>
-            </ul>
-          </div>
-        )
-      },
-      {
-        title: "Importancia clínica",
-        content: (
-          <div className="space-y-4">
-            <p>La determinación de este panel completo es importante porque:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Los anticuerpos pueden variar y ser indetectables en diferentes momentos</li>
-              <li>Permite detectar el Síndrome Antifosfolipídico Seronegativo (SAF-SN)</li>
-              <li>Incrementa la posibilidad de detección y diagnóstico</li>
-              <li>Solo la persistencia de los anticuerpos tiene importancia clínica</li>
-            </ul>
-          </div>
-        )
-      }
-    ]
-  },
-  {
-    id: 4,
-    title: "Despistaje de Alergias",
-    description: "El diagnóstico de pacientes alérgicos hoy en día se ha visto revolucionado por los paneles de alérgenos preespecificados.",
-    image: "/alergia.jpg",
-    category: "Análisis clínicos",
-    slug: "despistaje-alergias",
-    content: "La determinación de la IgE específica a través de la metodología ImmunoCAP es una medida objetiva de la IgE circulante y de la sensibilización del paciente a un alérgeno específico.",
-    heroIcons: ["TestTube", "Microscope"],
-    sections: []
-  },
-  {
-    id: 5,
-    title: "Toxoplasma Gondii, prueba de avidez IgG",
-    description: "A pesar de la existencia de marcadores de infección aguda como IgM e IgA, la persistencia de ellos hasta por dos años luego de ocurrida la infección, hace que la interpretación y evaluación del riesgo de transmisión durante el embarazo sea incierta.",
-    image: "/toxo.png",
-    category: "Análisis clínicos",
-    slug: "toxoplasma-gondii",
-    content: "La prueba de avidez de la IgG para toxoplasmosis se realiza en un sistema totalmente automatizado, basado en la técnica ELISA y aporta una variable adicional que permite ayudar a diferenciar una infección aguda o primaria de una crónica.",
-    heroIcons: ["TestTube", "Microscope"],
-    sections: []
-  },
-  {
-    id: 6,
-    title: "Cadenas ligeras libres séricas",
-    description: "Existe una pequeña fracción de cadenas ligeras (κ y λ ) que circulan libres en condiciones fisiológicas.",
-    image: "/cade.jpeg",
-    category: "Análisis clínicos",
-    slug: "cadenas-ligeras",
-    content: "Las alteraciones de su concentración y, sobre todo, del cociente κ/λ, son características de las enfermedades causadas por la proliferación incontrolada de un clon de célula plasmática, como el mieloma múltiple.",
-    heroIcons: ["TestTube", "Microscope"],
-    sections: []
-  },
-  {
-    id: 7,
-    title: "Panel de anticuerpos para encefalitis autoinmune",
-    description: "La encefalitis aguda es una enfermedad neurológica debilitante que se desarrolla como una encefalopatía rápidamente progresiva.",
-    image: "/ence.jpeg",
-    category: "Análisis clínicos",
-    slug: "encefalitis-autoinmune",
-    content: "Las encefalitis autoinmunes están asociadas a anticuerpos (Acs) anti células de superficie neuronales o proteínas sinápticas, desarrollándose una serie de síntomas que se asemejan a la encefalitis de origen infeccioso.",
-    heroIcons: ["TestTube", "Microscope"],
-    sections: []
-  }
-]
+// Solo mantener datos mínimos como ejemplo - la mayoría vendrá de Supabase
+export const analysisData: Analysis[] = []
 
 // Definir el tipo para los artículos
 type Article = {
@@ -394,7 +149,7 @@ Nuestros perfiles hormonales están diseñados para proporcionar una evaluación
 export default function DigitalLibrary() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const { user } = useAuth()
-  const [articles, setArticles] = useState(analysisData) // Fallback a datos locales
+  const [articles, setArticles] = useState<Analysis[]>([]) // Iniciar vacío, solo datos de Supabase
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editingArticle, setEditingArticle] = useState<Analysis | null>(null)
   const [loading, setLoading] = useState(false)
@@ -420,31 +175,41 @@ export default function DigitalLibrary() {
         console.log("✅ Artículos cargados desde Supabase:", data.length);
         // Mapear datos de Supabase al formato esperado
         const mappedArticles: Analysis[] = data.map((item: any) => {
-          // Usar las imágenes originales del proyecto
-          let originalImage = '/placeholder.svg';
-          const titulo = String(item.titulo || '').toLowerCase();
+          // Usar la imagen de la base de datos, con fallback a imágenes originales solo si no hay imagen_url
+          let imageToUse = item.imagen_url && item.imagen_url.trim() !== '' ? item.imagen_url : '/placeholder.svg';
           
-          if (titulo.includes('zuma')) {
-            originalImage = '/emba.webp';
-          } else if (titulo.includes('cofactor') || titulo.includes('willebrand')) {
-            originalImage = '/hemo.jpeg';
-          } else if (titulo.includes('antifosfolípidos') || titulo.includes('antifosfolipidos')) {
-            originalImage = '/anti.jpeg';
+          // Solo usar imágenes originales si NO hay imagen en la base de datos
+          if (!item.imagen_url || item.imagen_url.trim() === '') {
+            const titulo = String(item.titulo || '').toLowerCase();
+            if (titulo.includes('zuma')) {
+              imageToUse = '/emba.webp';
+            } else if (titulo.includes('cofactor') || titulo.includes('willebrand')) {
+              imageToUse = '/hemo.jpeg';
+            } else if (titulo.includes('antifosfolípidos') || titulo.includes('antifosfolipidos')) {
+              imageToUse = '/anti.jpeg';
+            }
           }
+          
+          const generatedSlug = normalizeSlug(String(item.titulo || ''));
+          console.log("📝 Generando slug:", { titulo: item.titulo, slug: generatedSlug });
           
           return {
             id: Number(item.id) || 0,
             title: String(item.titulo || ''),
             description: String(item.descripcion || ''),
-            image: originalImage, // Usar imagen original del proyecto
-            category: "Análisis clínicos",
-            slug: String(item.titulo || '').toLowerCase().replace(/\s+/g, '-'),
-            content: String(item.descripcion || ''),
+            image: imageToUse, // USAR LA IMAGEN DE LA BASE DE DATOS
+            category: String(item.categoria || "Análisis clínicos"),
+            slug: generatedSlug,
+            content: String(item.contenido || item.descripcion || ''), // USAR EL CONTENIDO DE LA BASE DE DATOS
             heroIcons: [],
-            sections: []
+            sections: [],
+            date: item.created_at || new Date().toISOString(),
+            author: 'Dr. López',
+            readTime: '5 min'
           };
         });
         setArticles(mappedArticles);
+        console.log("🎨 DigitalLibrary - Artículos que se van a renderizar:", mappedArticles.map(a => ({ title: a.title, slug: a.slug })));
       } else {
         console.log("⚠️ No hay artículos en Supabase, usando datos locales");
       }
@@ -473,7 +238,9 @@ export default function DigitalLibrary() {
         .update({
           titulo: updatedArticle.title.trim(),
           descripcion: updatedArticle.description.trim(),
-          imagen_url: updatedArticle.image.trim() || '/placeholder.svg'
+          contenido: updatedArticle.content.trim(),
+          imagen_url: updatedArticle.image.trim() || '/placeholder.svg',
+          categoria: updatedArticle.category
         })
         .eq("id", updatedArticle.id)
         .select()
@@ -487,12 +254,20 @@ export default function DigitalLibrary() {
       
       console.log("✅ Artículo actualizado en Supabase:", data);
       
-      // Actualizar estado local
+      // Actualizar estado local inmediatamente
       setArticles(prevArticles =>
         prevArticles.map(article =>
-          article.id === updatedArticle.id ? updatedArticle : article
+          article.id === updatedArticle.id ? {
+            ...updatedArticle,
+            title: data.titulo,
+            description: data.descripcion,
+            content: data.contenido,
+            image: data.imagen_url,
+            category: data.categoria
+          } : article
         )
       );
+      
       setIsEditModalOpen(false);
       setEditingArticle(null);
       alert("✅ Artículo actualizado correctamente");
@@ -509,8 +284,17 @@ export default function DigitalLibrary() {
     <section className="py-16">
       <div className="container mx-auto px-4">
         <div className="flex flex-col items-center mb-8">
-          <h2 className="text-3xl sm:text-4xl font-light text-gray-900 mb-2 text-center">Biblioteca Digital</h2>
-          <p className="text-gray-500 text-base sm:text-lg text-center">Servicios diseñados para mejorar tu calidad de vida</p>
+          <div className="relative w-full flex flex-col items-center md:flex-row md:justify-center md:items-center">
+            <h2 className="text-3xl sm:text-4xl font-light text-gray-900 mb-2 text-center md:text-left md:mr-8 md:mb-0">Biblioteca Digital</h2>
+            <div className="mt-4 md:mt-0 md:relative">
+              <Link href="/biblioteca" passHref>
+                <Button className="bg-[#3da64a] hover:bg-[#3da64a]/90 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg transition-transform hover:scale-105">
+                  VER MAS
+                </Button>
+              </Link>
+            </div>
+          </div>
+          <p className="text-gray-500 text-base sm:text-lg text-center mt-4">Servicios diseñados para mejorar tu calidad de vida</p>
         </div>
 
         <div className="relative">
@@ -558,7 +342,7 @@ export default function DigitalLibrary() {
                       <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed">{article.description}</p>
                       <div className="mt-4">
                         <Button asChild variant="outline" className="w-full">
-                          <Link href={`/analisis/${article.slug}`}>
+                          <Link href={`/biblioteca/${article.slug}`}>
                             Leer más
                           </Link>
                         </Button>
@@ -597,7 +381,7 @@ export default function DigitalLibrary() {
       </div>
 
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar artículo</DialogTitle>
           </DialogHeader>
@@ -611,14 +395,16 @@ export default function DigitalLibrary() {
               ...editingArticle,
               title: formData.get('title') as string,
               description: formData.get('description') as string,
-              image: formData.get('image') as string || editingArticle.image
+              content: formData.get('content') as string,
+              image: formData.get('image') as string || editingArticle.image,
+              category: formData.get('category') as string
             };
             
             handleUpdateArticle(updatedArticle);
           }}>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-1 items-center gap-2">
-                <Label htmlFor="title">Título</Label>
+                <Label htmlFor="title">Título *</Label>
                 <Input
                   id="title"
                   name="title"
@@ -628,14 +414,38 @@ export default function DigitalLibrary() {
                 />
               </div>
               <div className="grid grid-cols-1 items-start gap-2">
-                <Label htmlFor="description">Descripción</Label>
+                <Label htmlFor="description">Descripción *</Label>
                 <Textarea
                   id="description"
                   name="description"
                   defaultValue={editingArticle?.description || ''}
-                  className="w-full min-h-[100px]"
+                  className="w-full min-h-[80px]"
                   required
                 />
+              </div>
+              <div className="grid grid-cols-1 items-start gap-2">
+                <Label htmlFor="content">Contenido completo *</Label>
+                <Textarea
+                  id="content"
+                  name="content"
+                  defaultValue={editingArticle?.content || ''}
+                  className="w-full min-h-[120px]"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-1 items-center gap-2">
+                <Label htmlFor="category">Categoría</Label>
+                <select
+                  id="category"
+                  name="category"
+                  defaultValue={editingArticle?.category || 'Análisis clínicos'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3DA64A]"
+                >
+                  <option value="Análisis clínicos">Análisis clínicos</option>
+                  <option value="Medicina preventiva">Medicina preventiva</option>
+                  <option value="Laboratorio">Laboratorio</option>
+                  <option value="Salud general">Salud general</option>
+                </select>
               </div>
               <div className="grid grid-cols-1 items-center gap-2">
                 <Label htmlFor="image">URL de la imagen</Label>
@@ -653,7 +463,7 @@ export default function DigitalLibrary() {
                 Cancelar
               </Button>
               <Button type="submit" className="bg-[#3DA64A] hover:bg-[#3DA64A]/90 text-white" disabled={loading}>
-                {loading ? 'Actualizando...' : 'Guardar'}
+                {loading ? 'Actualizando...' : 'Guardar Cambios'}
               </Button>
             </div>
           </form>

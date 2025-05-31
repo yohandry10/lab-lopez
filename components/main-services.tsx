@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "@/contexts/auth-context"
 import { getSupabaseClient } from "@/lib/supabase"
-import { Pencil } from "lucide-react"
+import { Pencil, Edit } from "lucide-react"
 import PerfilBienestarAdminModal from "@/components/perfil-bienestar-admin-modal"
 
 // Definición del tipo para un perfil de bienestar
@@ -77,10 +77,13 @@ export default function MainServices() {
   const [perfilesBienestar, setPerfilesBienestar] = useState<PerfilBienestar[]>([])
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false)
   const [editingPerfil, setEditingPerfil] = useState<PerfilBienestar | null>(null)
+  const [sectionTitle, setSectionTitle] = useState("Perfiles de bienestar")
+  const [editingTitle, setEditingTitle] = useState(false)
 
   useEffect(() => {
     setMounted(true)
     fetchPerfilesBienestar()
+    fetchSectionTitle()
   }, [])
 
   // Cargar perfiles de bienestar desde Supabase
@@ -105,6 +108,111 @@ export default function MainServices() {
     } catch (err) {
       console.error("❌ Error inesperado:", err)
     }
+  }
+
+  // Cargar título de la sección desde Supabase
+  const fetchSectionTitle = async () => {
+    const supabase = getSupabaseClient()
+    
+    try {
+      console.log("🔄 Cargando título de sección...")
+      
+      const { data, error } = await supabase
+        .from("configuracion_secciones")
+        .select("titulo")
+        .eq("seccion", "perfiles_bienestar")
+        .single()
+
+      if (error) {
+        console.log("⚠️ No se encontró configuración del título, usando por defecto:", error.message)
+        setSectionTitle("Perfiles de bienestar")
+        return
+      }
+
+      if (data?.titulo) {
+        console.log("✅ Título cargado:", data.titulo)
+        setSectionTitle(data.titulo)
+      } else {
+        console.log("⚠️ No hay título en la respuesta, usando por defecto")
+        setSectionTitle("Perfiles de bienestar")
+      }
+    } catch (err) {
+      console.log("⚠️ Error al cargar título, usando por defecto:", err)
+      setSectionTitle("Perfiles de bienestar")
+    }
+  }
+
+  // Guardar título de la sección en Supabase
+  const saveSectionTitle = async (newTitle: string) => {
+    if (!newTitle.trim()) {
+      alert("El título no puede estar vacío")
+      return
+    }
+
+    console.log("🔄 Iniciando guardado de título:", newTitle.trim())
+    
+    const supabase = getSupabaseClient()
+    
+    try {
+      // Primero verificar si la tabla existe
+      console.log("🔍 Verificando conexión a Supabase...")
+      
+      const { data: testData, error: testError } = await supabase
+        .from("configuracion_secciones")
+        .select("count", { count: "exact" })
+      
+      if (testError) {
+        console.error("❌ Error de conexión/tabla:", testError)
+        alert(`Error de tabla: ${testError.message}`)
+        handleTitleCancel()
+        return
+      }
+      
+      console.log("✅ Tabla accesible, procediendo con upsert...")
+      
+      // Hacer el upsert
+      const { data, error } = await supabase
+        .from("configuracion_secciones")
+        .upsert({
+          seccion: "perfiles_bienestar",
+          titulo: newTitle.trim()
+        }, {
+          onConflict: "seccion"
+        })
+        .select()
+
+      if (error) {
+        console.error("❌ Error en upsert:", error)
+        alert(`Error al guardar: ${error.message}\nDetalles: ${JSON.stringify(error)}`)
+        handleTitleCancel()
+        return
+      }
+
+      console.log("✅ Título guardado exitosamente:", data)
+      setSectionTitle(newTitle.trim())
+      setEditingTitle(false)
+      alert("✅ Título guardado correctamente")
+      
+    } catch (err) {
+      console.error("❌ Error inesperado completo:", err)
+      alert(`Error inesperado: ${String(err)}`)
+      handleTitleCancel()
+    }
+  }
+
+  const handleTitleEdit = () => {
+    if (editingTitle) {
+      // Guardar cambios
+      saveSectionTitle(sectionTitle)
+    } else {
+      // Activar edición
+      setEditingTitle(true)
+    }
+  }
+
+  const handleTitleCancel = () => {
+    setEditingTitle(false)
+    fetchSectionTitle() // Recargar título original
   }
 
   const handleEditPerfil = (slug: string) => {
@@ -203,18 +311,80 @@ export default function MainServices() {
             transition={{ duration: 0.3 }}
           >
             <div className="relative w-full flex flex-col items-center md:flex-row md:justify-center md:items-center">
-              <h2 className="text-3xl font-light tracking-tighter sm:text-4xl md:text-5xl text-center text-black font-sans md:text-left md:mr-8">
-                Perfiles de bienestar
-              </h2>
-              <div className="mt-4 md:mt-0 md:relative">
-                  <Link href="/servicios" passHref>
+              <div className="flex items-center gap-2">
+                {editingTitle ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={sectionTitle}
+                      onChange={(e) => setSectionTitle(e.target.value)}
+                      className="text-3xl font-light tracking-tighter sm:text-4xl md:text-5xl text-center text-black font-sans bg-transparent border-b-2 border-blue-500 outline-none"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleTitleEdit()
+                        }
+                        if (e.key === 'Escape') {
+                          handleTitleCancel()
+                        }
+                      }}
+                      autoFocus
+                    />
                     <Button
-                      asChild
-                    className="bg-[#3da64a] hover:bg-[#3da64a]/90 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg transition-transform hover:scale-105"
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleTitleEdit()
+                      }}
+                      className="h-8 w-8 p-0 text-green-600 hover:bg-green-100"
                     >
-                      <span>VER MAS</span>
+                      ✓
                     </Button>
-                  </Link>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleTitleCancel()
+                      }}
+                      className="h-8 w-8 p-0 text-red-600 hover:bg-red-100"
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <h2 className="text-3xl font-light tracking-tighter sm:text-4xl md:text-5xl text-center text-black font-sans md:text-left md:mr-8">
+                      {sectionTitle}
+                    </h2>
+                    
+                    {/* Botón de editar título solo para admin */}
+                    {user?.user_type === "admin" && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleTitleEdit()
+                        }}
+                        className="ml-2 h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
+              
+              <div className="mt-4 md:mt-0 md:relative">
+                <Link href="/servicios">
+                  <Button className="bg-[#3da64a] hover:bg-[#3da64a]/90 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg transition-transform hover:scale-105">
+                    VER MAS
+                  </Button>
+                </Link>
               </div>
             </div>
             <p className="mt-4 max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">

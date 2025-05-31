@@ -11,6 +11,19 @@ import { analysisData } from "@/components/digital-library"
 import { motion } from "framer-motion"
 import { useCart } from "@/contexts/cart-context"
 import type { Analysis } from "@/components/digital-library"
+import { getSupabaseClient } from "@/lib/supabase-client"
+
+// Función para normalizar slugs (remover acentos y caracteres especiales)
+function normalizeSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD') // Normaliza caracteres Unicode
+    .replace(/[\u0300-\u036f]/g, '') // Remueve acentos
+    .replace(/[^a-z0-9\s-]/g, '') // Remueve caracteres especiales excepto espacios y guiones
+    .replace(/\s+/g, '-') // Reemplaza espacios con guiones
+    .replace(/-+/g, '-') // Reemplaza múltiples guiones con uno solo
+    .trim(); // Remueve espacios al inicio y final
+}
 
 interface CartItem {
   id: number
@@ -26,25 +39,99 @@ export default function ArticlePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [article, setArticle] = useState<Analysis | null>(null)
   const [relatedArticles, setRelatedArticles] = useState<Analysis[]>([])
+  const [allArticles, setAllArticles] = useState<Analysis[]>([]) // Iniciar vacío
 
   useEffect(() => {
-    const slug = params?.slug as string
-    const foundArticle = analysisData.find((a) => a.slug === slug)
-
-    if (!foundArticle) {
-      router.push('/biblioteca')
-      return
+    async function fetchArticles() {
+      console.log("🔄 Cargando artículos desde Supabase...");
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase
+        .from("biblioteca_digital")
+        .select("*")
+        .eq("activo", true)
+        .order("orden", { ascending: true });
+        
+      if (error) {
+        console.error("❌ Error al cargar artículos desde Supabase:", error);
+        // Mantener datos locales como fallback
+        return [];
+      }
+      
+      if (data && Array.isArray(data) && data.length > 0) {
+        console.log("✅ Artículos cargados desde Supabase:", data.length);
+        // Mapear datos de Supabase al formato esperado
+        const mappedArticles: Analysis[] = data.map((item: any) => {
+          // Usar las imágenes originales del proyecto
+          let originalImage = '/placeholder.svg';
+          const titulo = String(item.titulo || '').toLowerCase();
+          
+          if (titulo.includes('zuma')) {
+            originalImage = '/emba.webp';
+          } else if (titulo.includes('cofactor') || titulo.includes('willebrand')) {
+            originalImage = '/hemo.jpeg';
+          } else if (titulo.includes('antifosfolípidos') || titulo.includes('antifosfolipidos')) {
+            originalImage = '/anti.jpeg';
+          } else if (item.imagen_url && item.imagen_url.trim() !== '') {
+            originalImage = item.imagen_url;
+          }
+          
+          const generatedSlug = normalizeSlug(String(item.titulo || ''));
+          console.log("📝 Página individual - Generando slug:", { titulo: item.titulo, slug: generatedSlug });
+          
+          return {
+            id: Number(item.id) || 0,
+            title: String(item.titulo || ''),
+            description: String(item.descripcion || ''),
+            image: originalImage, // Usar imagen original del proyecto
+            category: String(item.categoria || "Análisis clínicos"),
+            slug: generatedSlug,
+            content: String(item.contenido || item.descripcion || ''),
+            heroIcons: [],
+            sections: [],
+            date: item.created_at || new Date().toISOString(),
+            author: 'Dr. López',
+            readTime: '5 min'
+          };
+        });
+        return mappedArticles;
+      } else {
+        console.log("⚠️ No hay artículos en Supabase, usando datos locales");
+        return [];
+      }
     }
 
-    setArticle(foundArticle)
+    async function loadArticleData() {
+      const articles = await fetchArticles();
+      setAllArticles(articles);
+      
+      const slug = params?.slug as string
+      console.log("🔍 Slug buscado:", slug);
+      console.log("🔍 Slug normalizado:", normalizeSlug(decodeURIComponent(slug)));
+      console.log("📚 Artículos disponibles:", articles.map(a => ({ id: a.id, title: a.title, slug: a.slug })));
+      
+      // Normalizar el slug de búsqueda para comparar
+      const normalizedSearchSlug = normalizeSlug(decodeURIComponent(slug));
+      const foundArticle = articles.find((a) => a.slug === normalizedSearchSlug)
+      console.log("🎯 Artículo encontrado:", foundArticle ? foundArticle.title : "No encontrado");
 
-    // Find related articles (same category, excluding current)
-    const related = analysisData
-      .filter((a) => a.category === foundArticle.category && a.id !== foundArticle.id)
-      .slice(0, 2)
-    setRelatedArticles(related)
+      if (!foundArticle) {
+        console.log("❌ Artículo no encontrado, redirigiendo a biblioteca");
+        router.push('/biblioteca')
+        return
+      }
 
-    setIsLoading(false)
+      setArticle(foundArticle)
+
+      // Find related articles (same category, excluding current)
+      const related = articles
+        .filter((a) => a.category === foundArticle.category && a.id !== foundArticle.id)
+        .slice(0, 2)
+      setRelatedArticles(related)
+
+      setIsLoading(false)
+    }
+
+    loadArticleData();
   }, [params, router])
 
   if (isLoading) {

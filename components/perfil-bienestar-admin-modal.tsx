@@ -217,8 +217,13 @@ export default function PerfilBienestarAdminModal({
                 type="number"
                 step="0.01"
                 min="0"
-                value={formData.price}
-                onChange={(e) => handleInputChange("price", parseFloat(e.target.value) || 0)}
+                value={formData.price || ""}
+                onChange={(e) => {
+                  const value = e.target.value
+                  if (value === "" || value === "0" || !isNaN(parseFloat(value))) {
+                    handleInputChange("price", value === "" ? 0 : parseFloat(value))
+                  }
+                }}
                 placeholder="0.00"
               />
             </div>

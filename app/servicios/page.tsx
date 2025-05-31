@@ -244,7 +244,7 @@ export default function ServiciosPage() {
   // Estados para administración
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false)
   const [editingPerfil, setEditingPerfil] = useState<PerfilBienestar | null>(null)
-  const [modalMode, setModalMode] = useState<"edit">("edit")
+  const [modalMode, setModalMode] = useState<"edit" | "add">("edit")
 
   // Estados para modal de edición de perfiles populares (código existente)
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null)
@@ -342,6 +342,25 @@ export default function ServiciosPage() {
     setIsAdminModalOpen(true)
   }
 
+  const handleAddPerfilBienestar = () => {
+    setEditingPerfil({
+      slug: "",
+      title: "",
+      description: "",
+      content: "",
+      price: 0,
+      image: "",
+      locations: ["Sede"],
+      sample_type: "General",
+      age_requirement: "Cualquier edad",
+      tests: [],
+      conditions: [],
+      is_active: true
+    })
+    setModalMode("add" as any)
+    setIsAdminModalOpen(true)
+  }
+
   const handleDeletePerfilBienestar = async (perfil: PerfilBienestar) => {
     if (!window.confirm(`¿Estás seguro de que deseas eliminar el perfil "${perfil.title}"?`)) {
       return
@@ -381,55 +400,106 @@ export default function ServiciosPage() {
     const supabase = getSupabaseClient()
     
     try {
-      // Solo actualizar perfil existente (no crear nuevos)
-      const { data, error } = await supabase
-        .from("perfiles_bienestar")
-        .update({
-          slug: perfilData.slug,
-          title: perfilData.title,
-          description: perfilData.description,
-          content: perfilData.content,
-          price: perfilData.price,
-          image: perfilData.image,
-          locations: perfilData.locations,
-          sample_type: perfilData.sample_type,
-          age_requirement: perfilData.age_requirement,
-          tests: perfilData.tests,
-          conditions: perfilData.conditions
-        })
-        .eq("id", perfilData.id)
-        .select()
-        .single()
+      if (modalMode === "add") {
+        // Crear nuevo perfil
+        const { data, error } = await supabase
+          .from("perfiles_bienestar")
+          .insert({
+            slug: perfilData.slug,
+            title: perfilData.title,
+            description: perfilData.description,
+            content: perfilData.content,
+            price: perfilData.price,
+            image: perfilData.image,
+            locations: perfilData.locations,
+            sample_type: perfilData.sample_type,
+            age_requirement: perfilData.age_requirement,
+            tests: perfilData.tests,
+            conditions: perfilData.conditions,
+            is_active: true
+          })
+          .select()
+          .single()
 
-      if (error) {
-        alert("Error al actualizar perfil: " + error.message)
-        return
+        if (error) {
+          alert("Error al crear perfil: " + error.message)
+          return
+        }
+
+        // Actualizar estado local
+        setPerfilesBienestar(prev => [...prev, data])
+        
+        // Actualizar profiles para compatibilidad
+        setProfiles(prev => ({
+          ...prev,
+          [data.slug]: {
+            title: data.title,
+            description: data.description,
+            content: data.content,
+            price: data.price,
+            image: data.image,
+            locations: data.locations,
+            sampleType: data.sample_type,
+            ageRequirement: data.age_requirement,
+            tests: data.tests,
+            conditions: data.conditions,
+            slug: data.slug
+          }
+        }))
+
+        console.log("✅ Perfil creado correctamente")
+      } else {
+        // Actualizar perfil existente
+        const { data, error } = await supabase
+          .from("perfiles_bienestar")
+          .update({
+            slug: perfilData.slug,
+            title: perfilData.title,
+            description: perfilData.description,
+            content: perfilData.content,
+            price: perfilData.price,
+            image: perfilData.image,
+            locations: perfilData.locations,
+            sample_type: perfilData.sample_type,
+            age_requirement: perfilData.age_requirement,
+            tests: perfilData.tests,
+            conditions: perfilData.conditions
+          })
+          .eq("id", perfilData.id)
+          .select()
+          .single()
+
+        if (error) {
+          alert("Error al actualizar perfil: " + error.message)
+          return
+        }
+
+        // Actualizar estado local
+        setPerfilesBienestar(prev => 
+          prev.map(p => p.id === data.id ? data : p)
+        )
+        
+        // Actualizar profiles para compatibilidad
+        setProfiles(prev => ({
+          ...prev,
+          [data.slug]: {
+            title: data.title,
+            description: data.description,
+            content: data.content,
+            price: data.price,
+            image: data.image,
+            locations: data.locations,
+            sampleType: data.sample_type,
+            ageRequirement: data.age_requirement,
+            tests: data.tests,
+            conditions: data.conditions,
+            slug: data.slug
+          }
+        }))
+
+        console.log("✅ Perfil actualizado correctamente")
       }
 
-      // Actualizar estado local
-      setPerfilesBienestar(prev => 
-        prev.map(p => p.id === data.id ? data : p)
-      )
-      
-      // Actualizar profiles para compatibilidad
-      setProfiles(prev => ({
-        ...prev,
-        [data.slug]: {
-          title: data.title,
-          description: data.description,
-          content: data.content,
-          price: data.price,
-          image: data.image,
-          locations: data.locations,
-          sampleType: data.sample_type,
-          ageRequirement: data.age_requirement,
-          tests: data.tests,
-          conditions: data.conditions,
-          slug: data.slug
-        }
-      }))
-
-      console.log("✅ Perfil actualizado correctamente")
       setIsAdminModalOpen(false)
       setEditingPerfil(null)
     } catch (err) {
@@ -512,7 +582,7 @@ export default function ServiciosPage() {
         {user?.user_type === "admin" && (
           <div className="mt-6 space-x-4">
             <Button 
-              onClick={handleAddProfile}
+              onClick={handleAddPerfilBienestar}
               variant="outline"
               className="border-[#3DA64A] text-[#3DA64A] hover:bg-[#3DA64A]/10"
             >

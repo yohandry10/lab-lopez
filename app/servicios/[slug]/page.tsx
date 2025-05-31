@@ -7,180 +7,100 @@ import { Building2, Syringe, TestTube, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { motion } from "framer-motion"
+import { getSupabaseClient } from "@/lib/supabase"
 
-// Datos de los perfiles
-const profiles = {
-  "prevencion-total": {
-    title: "Perfil Prevención total",
-    description:
-      "Una visión clara de lo que importa para poner tu salud en perspectiva. Este perfil te permitirá conocer de manera general cómo está tu organismo, para prevenir y/o tratar alguna enfermedad de forma oportuna. La salud es una relación entre tú y tu cuerpo, cuidarla depende de ti; pero permítenos acompañarte.",
-    content:
-      "Este perfil está diseñado para brindarte un panorama general de tu salud. Con exámenes clave, podrás identificar áreas de riesgo y tomar medidas preventivas a tiempo.",
-    price: 0,
-    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    locations: ["Sede", "Domicilio"],
-    sampleType: "General",
-    ageRequirement: "Cualquier edad",
-    tests: [],
-    conditions: [],
-  },
-  "hombre-saludable": {
-    title: "Perfil Hombre saludable",
-    description:
-      "Este perfil proporciona una mirada a tu salud en general, abordando las dudas más comunes en hombres entre 18 y 45 años. Compuesto por 16 pruebas, te ayudará a cuidar tu bienestar.",
-    content:
-      "Pensado para hombres que desean un chequeo integral, este perfil evalúa indicadores clave para que tomes decisiones informadas sobre tu salud.",
-    price: 0,
-    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    locations: ["Sede", "Domicilio"],
-    sampleType: "General",
-    ageRequirement: "18-45 años",
-    tests: [],
-    conditions: [],
-  },
-  "mujer-saludable": {
-    title: "Perfil Mujer saludable",
-    description:
-      "Este perfil es esencial para examinar tu salud, controlar tus niveles hormonales y conocer tu riesgo a desarrollar enfermedades crónicas antes de los 45 años.",
-    content:
-      "Diseñado especialmente para mujeres, este perfil te ayudará a mantener un control integral de tu salud, anticipando posibles complicaciones.",
-    price: 0,
-    image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    locations: ["Sede", "Domicilio"],
-    sampleType: "General",
-    ageRequirement: "Hasta 45 años",
-    tests: [],
-    conditions: [],
-  },
-  preoperatorio: {
-    title: "Perfil Preoperatorio",
-    description:
-      "Si tu médico te ha solicitado exámenes preoperatorios, conoce las pruebas que integran nuestro perfil preoperatorio.",
-    content:
-      "Este perfil reúne las pruebas necesarias para garantizar que estés en óptimas condiciones antes de una cirugía.",
-    price: 0,
-    image: "https://images.unsplash.com/photo-1551190822-a9333d879b1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    locations: ["Sede"],
-    sampleType: "General",
-    ageRequirement: "Mayor de 18",
-    tests: [],
-    conditions: [],
-  },
-  "salud-sexual": {
-    title: "Perfil Salud sexual",
-    description:
-      "La salud sexual requiere un enfoque positivo y respetuoso, con experiencias seguras y libres de temores. Con información oportuna, adquiere hábitos saludables.",
-    content:
-      "Este perfil te permite evaluar tu salud sexual mediante exámenes específicos, garantizando una atención integral y preventiva. Incluye pruebas especializadas que te ofrecen recomendaciones personalizadas.",
-    price: 0,
-    image: "https://images.unsplash.com/photo-1576086213369-97a306d36557?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    locations: ["Sede", "Domicilio"],
-    sampleType: "Sangre",
-    ageRequirement: "18 años en adelante",
-    tests: [
-      "HIV 1/2 anticuerpo antígeno",
-      "Hepatitis B, antígeno australiano (HBsAg)",
-      "Hepatitis B, anticore total (anti-HBcAg)",
-      "Hepatitis C anticuerpos",
-      "VDRL",
-    ],
-    conditions: [
-      "Los análisis en sangre NO requieren ayuno.",
-      "Informa sobre medicamentos o tratamientos durante la toma de muestra.",
-    ],
-  },
-  "salud-metabolica": {
-    title: "Perfil Salud metabólica",
-    description:
-      "Evalúa cómo trabaja tu metabolismo para transformar lo que comes en energía y detectar desbalances que puedan afectar tu bienestar.",
-    content:
-      "Este perfil analiza los procesos metabólicos para brindarte una imagen clara de cómo funciona tu organismo y detectar posibles alteraciones.",
-    price: 0,
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    locations: ["Sede", "Domicilio"],
-    sampleType: "General",
-    ageRequirement: "Cualquier edad",
-    tests: [],
-    conditions: [],
-  },
-  "masculino-edad-oro": {
-    title: "Perfil masculino Edad de oro",
-    description:
-      "Conoce los cambios normales y aquellos que pueden ser señal de un problema de salud. Este perfil te ayuda a entender y monitorear tu organismo con el paso de los años.",
-    content:
-      "Especialmente diseñado para hombres mayores de 45, este perfil integra diversas pruebas para evaluar tu salud integral y anticipar posibles complicaciones.",
-    price: 0,
-    image: "https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    locations: ["Sede", "Domicilio"],
-    sampleType: ["Sangre", "Orina"],
-    ageRequirement: "45 años en adelante",
-    tests: [
-      "Hemograma",
-      "Ácido fólico",
-      "Glucosa",
-      "Colesterol total",
-      "Colesterol HDL",
-      "Colesterol LDL",
-      "Colesterol VLDL",
-      "Triglicéridos",
-      "Creatinina",
-      "Urea",
-      "Ácido úrico",
-      "Transaminasa oxalacética TGO",
-      "Transaminasa pirúvica TGP",
-      "Vitamina B12",
-      "Vitamina D",
-      "TSH",
-      "PRO - BNP",
-      "PSA",
-      "Examen completo de orina",
-    ],
-    conditions: [
-      "Los análisis en sangre requieren ayuno mínimo de 8 horas y máximo de 12 horas.",
-      "Si tomas medicamentos o sigues un tratamiento, infórmalo al momento de la toma de muestra.",
-    ],
-  },
-  "diabetes-control": {
-    title: "Perfil Diabetes bajo control",
-    description: "Monitorea tus niveles de azúcar para detectar indicios de prediabetes o diabetes a tiempo.",
-    content:
-      "A través de exámenes específicos, este perfil evalúa tus niveles de glucosa y otros indicadores críticos, permitiéndote tomar medidas preventivas.",
-    price: 0,
-    image: "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-    locations: ["Sede", "Domicilio"],
-    sampleType: "Sangre",
-    ageRequirement: "18 años en adelante",
-    tests: ["Glucosa", "Insulina basal", "Hemoglobina glicosilada"],
-    conditions: [
-      "Los análisis en sangre requieren ayuno mínimo de 8 horas y máximo de 12 horas.",
-      "Si tomas medicamentos o sigues un tratamiento, infórmalo al momento de la toma de muestra.",
-    ],
-  },
+// Función para normalizar slugs (remover acentos y caracteres especiales)
+function normalizeSlug(slug: string): string {
+  return slug
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim()
 }
 
-type ProfileType = typeof profiles[keyof typeof profiles]
+// Definición del tipo para un perfil de bienestar
+interface PerfilBienestar {
+  id?: number
+  slug: string
+  title: string
+  description: string
+  content: string
+  price: number
+  image: string
+  locations: string[]
+  sample_type: string
+  age_requirement: string
+  tests: string[]
+  conditions: string[]
+  is_active?: boolean
+}
 
 export default function ServicePage() {
   const params = useParams()
-  const [profile, setProfile] = useState<ProfileType | null>(null)
+  const [profile, setProfile] = useState<PerfilBienestar | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const slug = params.slug
-    if (typeof slug !== "string") {
-      notFound()
-      return
+    async function fetchProfile() {
+      const slug = params.slug
+      if (typeof slug !== "string") {
+        notFound()
+        return
+      }
+
+      console.log("🔍 Buscando perfil con slug:", slug)
+      const supabase = getSupabaseClient()
+      
+      try {
+        // Normalizar el slug de la URL
+        const normalizedSlug = normalizeSlug(decodeURIComponent(slug))
+        console.log("🔄 Slug normalizado:", normalizedSlug)
+
+        // Buscar por slug exacto primero
+        let { data, error } = await supabase
+          .from("perfiles_bienestar")
+          .select("*")
+          .eq("slug", slug)
+          .eq("is_active", true)
+          .single()
+
+        // Si no se encuentra, buscar con slug normalizado
+        if (error || !data) {
+          console.log("❌ No encontrado con slug original, buscando normalizado...")
+          const { data: normalizedData, error: normalizedError } = await supabase
+            .from("perfiles_bienestar")
+            .select("*")
+            .eq("slug", normalizedSlug)
+            .eq("is_active", true)
+            .single()
+
+          data = normalizedData
+          error = normalizedError
+        }
+
+        if (error || !data) {
+          console.error("❌ Error al cargar perfil:", error)
+          notFound()
+          return
+        }
+
+        console.log("✅ Perfil encontrado:", data.title)
+        setProfile(data)
+      } catch (err) {
+        console.error("❌ Error inesperado:", err)
+        notFound()
+      } finally {
+        setLoading(false)
+      }
     }
 
-    const foundProfile = profiles[slug as keyof typeof profiles]
-    if (!foundProfile) {
-      notFound()
-      return
-    }
-
-    setProfile(foundProfile)
+    fetchProfile()
   }, [params])
 
-  if (!profile) {
+  if (loading) {
     return (
       <div className="container px-4 py-12 flex justify-center">
         <div className="animate-pulse w-full max-w-4xl">
@@ -191,6 +111,11 @@ export default function ServicePage() {
         </div>
       </div>
     )
+  }
+
+  if (!profile) {
+    notFound()
+    return null
   }
 
   return (
@@ -258,7 +183,7 @@ export default function ServicePage() {
                     <div className="flex items-center gap-2">
                       <TestTube className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                       <span className="text-sm sm:text-base">
-                        {Array.isArray(profile.sampleType) ? profile.sampleType.join(", ") : profile.sampleType}
+                        {Array.isArray(profile.sample_type) ? profile.sample_type.join(", ") : profile.sample_type}
                       </span>
                     </div>
                   </CardContent>
@@ -269,7 +194,7 @@ export default function ServicePage() {
                     <h4 className="font-medium mb-3 sm:mb-4 text-sm sm:text-base">Edad</h4>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                      <span className="text-sm sm:text-base">{profile.ageRequirement}</span>
+                      <span className="text-sm sm:text-base">{profile.age_requirement}</span>
                     </div>
                   </CardContent>
                 </Card>
