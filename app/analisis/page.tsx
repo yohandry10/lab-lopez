@@ -578,7 +578,7 @@ export default function AnalisisPage() {
   const [isCategoriasModalOpen, setIsCategoriasModalOpen] = useState(false)
   const [newAnalysis, setNewAnalysis] = useState({
     name: '',
-    price: '', // Cambiar de 0 a string vacío
+    price: '',
     conditions: '',
     sample: '',
     protocol: '',
@@ -598,41 +598,81 @@ export default function AnalisisPage() {
 
   // 2. Función para agregar análisis
   const handleAddAnalysis = async () => {
-    const supabase = getSupabaseClient();
+    console.log("🔄 Iniciando inserción de análisis...");
     
-    // Preparar datos para envío (convertir price a number)
-    const dataToInsert = {
-      ...newAnalysis,
-      price: parseFloat(newAnalysis.price) || 0
-    };
-    
-    const { data, error } = await supabase
-      .from("analyses")
-      .insert([dataToInsert])
-      .select()
-      .single();
-    if (error) {
-      alert("Error al agregar análisis: " + error.message);
+    // Validar campos requeridos
+    if (!newAnalysis.name.trim()) {
+      alert("❌ El nombre del análisis es requerido");
       return;
     }
-    // Casting más explícito y seguro
-    const newAnalysisData = {
-      id: Number(data?.id) || Date.now(),
-      name: String(data?.name || newAnalysis.name),
-      price: Number(data?.price || dataToInsert.price),
-      conditions: String(data?.conditions || newAnalysis.conditions),
-      sample: String(data?.sample || newAnalysis.sample),
-      protocol: String(data?.protocol || newAnalysis.protocol),
-      suggestions: String(data?.suggestions || newAnalysis.suggestions),
-      comments: String(data?.comments || newAnalysis.comments),
-      category: String(data?.category || newAnalysis.category),
-      deliveryTime: String(data?.deliveryTime || newAnalysis.deliveryTime),
+    
+    if (!newAnalysis.category.trim()) {
+      alert("❌ La categoría es requerida");
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+    
+    // Preparar datos para envío (SIN deliveryTime por ahora)
+    const dataToInsert = {
+      name: newAnalysis.name.trim(),
+      price: parseFloat(newAnalysis.price) || 0,
+      conditions: newAnalysis.conditions.trim(),
+      sample: newAnalysis.sample.trim(),
+      protocol: newAnalysis.protocol.trim(),
+      suggestions: newAnalysis.suggestions.trim(),
+      comments: newAnalysis.comments.trim(),
+      category: newAnalysis.category.trim()
     };
-    setLocalAnalysisData(prev => [...prev, newAnalysisData]);
-    setIsAddModalOpen(false);
-    setNewAnalysis({
-      name: '', price: '', conditions: '', sample: '', protocol: '', suggestions: '', comments: '', category: '', deliveryTime: '2-4 horas',
-    });
+    
+    console.log("📝 Datos a insertar:", dataToInsert);
+    
+    try {
+      const { data, error } = await supabase
+        .from("analyses")
+        .insert([dataToInsert])
+        .select();
+
+      if (error) {
+        console.error("❌ Error en inserción:", error);
+        alert("❌ Error al agregar análisis: " + error.message);
+        return;
+      }
+
+      console.log("✅ Análisis insertado exitosamente:", data);
+      
+      // Usar los datos devueltos por Supabase
+      if (data && data.length > 0) {
+        const insertedItem = data[0];
+        const newAnalysisData = {
+          id: Number(insertedItem.id) || Date.now(),
+          name: String(insertedItem.name || dataToInsert.name),
+          price: Number(insertedItem.price || dataToInsert.price),
+          conditions: String(insertedItem.conditions || dataToInsert.conditions),
+          sample: String(insertedItem.sample || dataToInsert.sample),
+          protocol: String(insertedItem.protocol || dataToInsert.protocol),
+          suggestions: String(insertedItem.suggestions || dataToInsert.suggestions),
+          comments: String(insertedItem.comments || dataToInsert.comments),
+          category: String(insertedItem.category || dataToInsert.category),
+          deliveryTime: '2-4 horas' // Valor por defecto
+        };
+        
+        // Actualizar estado local
+        setLocalAnalysisData(prev => [...prev, newAnalysisData]);
+        console.log("✅ Estado local actualizado");
+        
+        // Limpiar formulario y cerrar modal
+        setIsAddModalOpen(false);
+        setNewAnalysis({
+          name: '', price: '', conditions: '', sample: '', protocol: '', suggestions: '', comments: '', category: '', deliveryTime: '2-4 horas',
+        });
+        
+        alert("🎉 ¡Análisis agregado exitosamente!");
+      }
+    } catch (err) {
+      console.error("❌ Error inesperado:", err);
+      alert("❌ Error inesperado: " + String(err));
+    }
   };
 
   // Función para agregar perfil
