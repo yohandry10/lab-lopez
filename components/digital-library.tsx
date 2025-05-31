@@ -260,12 +260,17 @@ export default function DigitalLibrary() {
         prevArticles.map(article =>
           article.id === updatedArticle.id ? {
             ...updatedArticle,
-            title: data.titulo,
-            description: data.descripcion,
-            content: data.contenido,
-            image: data.imagen_url,
-            category: data.categoria,
-            readTime: data.tiempo_entrega
+            title: String(updatedArticle.title || article.title),
+            description: String(updatedArticle.description || article.description),
+            content: String(updatedArticle.content || article.content),
+            image: String(updatedArticle.image || article.image),
+            category: String(updatedArticle.category || article.category),
+            readTime: String(updatedArticle.readTime || article.readTime),
+            date: updatedArticle.date || article.date,
+            author: updatedArticle.author || article.author,
+            slug: article.slug,
+            heroIcons: article.heroIcons,
+            sections: article.sections
           } : article
         )
       );

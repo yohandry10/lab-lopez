@@ -596,6 +596,21 @@ export default function AnalisisPage() {
     tests: [] as string[],
   });
 
+  // Función para limpiar el formulario
+  const clearAnalysisForm = () => {
+    setNewAnalysis({
+      name: '',
+      price: '',
+      conditions: '',
+      sample: '',
+      protocol: '',
+      suggestions: '',
+      comments: '',
+      category: '',
+      deliveryTime: '2-4 horas',
+    });
+  };
+
   // 2. Función para agregar análisis
   const handleAddAnalysis = async () => {
     console.log("🔄 Iniciando inserción de análisis...");
@@ -1402,7 +1417,8 @@ export default function AnalisisPage() {
                                 sample: "No especificado",
                                 protocol: "No especificado",
                                 suggestions: "",
-                                comments: ""
+                                comments: "",
+                                deliveryTime: "24-48 horas"
                               })
                             }
                           >
