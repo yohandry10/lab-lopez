@@ -1,0 +1,4 @@
+.analysisLayout ~ :global(nav),
+.analysisLayout ~ :global(footer) {
+  display: none !important;
+} 
