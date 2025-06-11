@@ -68,188 +68,8 @@ export default function AnalisisPage() {
   console.log("Usuario logueado:", user)
   console.log("Tipo de usuario:", user?.user_type)
   console.log("¿Es admin?", user && user.user_type === "admin")
-  const [popularProfiles, setPopularProfiles] = useState([
-    {
-      id: 1,
-      title: "Perfil Básico",
-      description: "Evaluación general de tu salud",
-      price: 180.00,
-      image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      tests: [
-        "Hemograma completo",
-        "Glucosa",
-        "Colesterol total",
-        "Triglicéridos",
-        "Creatinina",
-        "Urea"
-      ]
-    },
-    {
-      id: 2,
-      title: "Perfil Lipídico",
-      description: "Evaluación completa de grasas en sangre",
-      price: 220.00,
-      image: "https://images.unsplash.com/photo-1576086213369-97a306d36557?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      tests: [
-        "Colesterol total",
-        "Colesterol HDL",
-        "Colesterol LDL",
-        "Triglicéridos",
-        "Índice aterogénico"
-      ]
-    },
-    {
-      id: 3,
-      title: "Perfil Hepático",
-      description: "Evaluación de la función del hígado",
-      price: 250.00,
-      image: "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      tests: [
-        "TGO",
-        "TGP",
-        "GGT",
-        "Fosfatasa alcalina",
-        "Bilirrubina total",
-        "Bilirrubina directa",
-        "Proteínas totales"
-      ]
-    },
-    {
-      id: 4,
-      title: "Perfil Renal",
-      description: "Evaluación completa de la función renal",
-      price: 200.00,
-      image: "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      tests: [
-        "Creatinina",
-        "Urea",
-        "Ácido úrico",
-        "Examen completo de orina",
-        "Microalbuminuria",
-        "Depuración de creatinina"
-      ]
-    },
-    {
-      id: 5,
-      title: "Perfil Tiroideo",
-      description: "Evaluación completa de la función tiroidea",
-      price: 280.00,
-      image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      tests: [
-        "TSH",
-        "T3 libre",
-        "T4 libre",
-        "Anticuerpos anti-TPO",
-        "Anticuerpos anti-tiroglobulina"
-      ]
-    },
-    {
-      id: 6,
-      title: "Perfil Diabético",
-      description: "Control y seguimiento de diabetes",
-      price: 190.00,
-      image: "https://images.unsplash.com/photo-1576671081837-49000212a370?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      tests: [
-        "Glucosa en ayunas",
-        "Hemoglobina glicosilada",
-        "Insulina",
-        "Péptido C",
-        "Microalbuminuria"
-      ]
-    },
-    {
-      id: 7,
-      title: "Perfil Cardiaco",
-      description: "Evaluación de riesgo cardiovascular",
-      price: 320.00,
-      image: "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      tests: [
-        "Troponina I",
-        "CK-MB",
-        "LDH",
-        "Perfil lipídico completo",
-        "Proteína C reactiva",
-        "Homocisteína"
-      ]
-    },
-    {
-      id: 8,
-      title: "Perfil Hormonal Femenino",
-      description: "Evaluación hormonal completa para mujeres",
-      price: 350.00,
-      image: "https://images.unsplash.com/photo-1576086213369-97a306d36557?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      tests: [
-        "FSH",
-        "LH",
-        "Estradiol",
-        "Progesterona",
-        "Prolactina",
-        "Testosterona"
-      ]
-    },
-    {
-      id: 9,
-      title: "Perfil Hormonal Masculino",
-      description: "Evaluación hormonal completa para hombres",
-      price: 300.00,
-      image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      tests: [
-        "Testosterona total",
-        "Testosterona libre",
-        "PSA total",
-        "PSA libre",
-        "LH",
-        "FSH"
-      ]
-    },
-    {
-      id: 10,
-      title: "Perfil Pediátrico",
-      description: "Análisis especiales para niños y adolescentes",
-      price: 180.00,
-      image: "https://images.unsplash.com/photo-1581594693702-fbdc51b2763b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      tests: [
-        "Hemograma completo",
-        "Glucosa",
-        "Hierro sérico",
-        "Vitamina D",
-        "Zinc",
-        "Parasitológico"
-      ]
-    },
-    {
-      id: 11,
-      title: "Perfil Geriátrico",
-      description: "Evaluación integral para adultos mayores",
-      price: 350.00,
-      image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      tests: [
-        "Hemograma completo",
-        "Perfil lipídico",
-        "Función renal",
-        "Función hepática",
-        "Vitamina B12",
-        "Ácido fólico",
-        "TSH"
-      ]
-    },
-    {
-      id: 12,
-      title: "Perfil Deportivo",
-      description: "Análisis para deportistas y personas activas",
-      price: 280.00,
-      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80",
-      tests: [
-        "Hemograma completo",
-        "Ferritina",
-        "Vitamina D",
-        "Testosterona",
-        "Cortisol",
-        "CK total",
-        "Lactato"
-      ]
-    }
-  ])
+  // Estado para perfiles populares - Inicializar VACÍO para cargar desde BD
+  const [popularProfiles, setPopularProfiles] = useState<Profile[]>([])
 
 
   const [isSchedulingOpen, setIsSchedulingOpen] = useState(false)
@@ -492,8 +312,8 @@ export default function AnalisisPage() {
     
     console.log("✅ Perfil eliminado de Supabase");
     
-    // Eliminar del estado local
-    setPopularProfiles(prevProfiles => prevProfiles.filter((_, i) => i !== index));
+    // Recargar todos los perfiles desde la BD para mantener sincronización
+    await fetchProfiles();
     alert("✅ Perfil eliminado correctamente");
   }
 
@@ -533,12 +353,8 @@ export default function AnalisisPage() {
     
     console.log("✅ Perfil actualizado en Supabase:", data);
     
-    // Actualizar estado local
-    setPopularProfiles(prevProfiles =>
-      prevProfiles.map(profile =>
-        profile.id === updatedProfile.id ? updatedProfile : profile
-      )
-    );
+    // Recargar todos los perfiles desde la BD para mantener sincronización
+    await fetchProfiles();
     setEditingProfile(null);
     alert("✅ Perfil actualizado correctamente");
   }
@@ -578,16 +394,19 @@ export default function AnalisisPage() {
     }
   }
 
-  // Función para cargar perfiles desde Supabase
+  // Función para cargar perfiles desde Supabase - SIEMPRE carga desde BD
   const fetchProfiles = async () => {
     console.log("🔄 Cargando perfiles desde Supabase...");
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.from("profiles").select("*").order('id');
+    
     if (error) {
       console.error("❌ Error al cargar perfiles desde Supabase:", error.message);
-      // Mantener datos locales como fallback
+      // En caso de error, mostrar array vacío para evitar datos hardcodeados
+      setPopularProfiles([]);
       return;
     }
+    
     if (data && Array.isArray(data) && data.length > 0) {
       console.log("✅ Perfiles cargados desde Supabase:", data.length);
       try {
@@ -605,10 +424,11 @@ export default function AnalisisPage() {
         console.log("✅ Perfiles procesados correctamente:", profiles.length);
       } catch (e) {
         console.error("❌ Error procesando perfiles:", e);
-        // Mantener los datos locales si hay error
+        setPopularProfiles([]);
       }
     } else {
-      console.log("⚠️ No hay perfiles en Supabase, manteniendo datos locales");
+      console.log("⚠️ No hay perfiles en Supabase, estableciendo array vacío");
+      setPopularProfiles([]);
     }
   }
 
@@ -752,19 +572,15 @@ export default function AnalisisPage() {
       alert("Error al agregar perfil: " + error.message);
       return;
     }
-    const newProfileData = {
-      id: Number(data?.id) || Date.now(),
-      title: String(data?.title || newProfile.title),
-      description: String(data?.description || newProfile.description),
-      price: Number(data?.price || newProfile.price),
-      image: String(data?.image || newProfile.image),
-      tests: Array.isArray(data?.tests) ? data.tests : newProfile.tests,
-    };
-    setPopularProfiles(prev => [...prev, newProfileData]);
+    
+    // Recargar todos los perfiles desde la BD para mantener sincronización
+    await fetchProfiles();
+    
     setIsAddProfileModalOpen(false);
     setNewProfile({
       title: '', description: '', price: 0, image: '', tests: [],
     });
+    alert("✅ Perfil agregado exitosamente");
   };
 
   // 3. Modifica handleDeleteAnalysis para borrar en Supabase
