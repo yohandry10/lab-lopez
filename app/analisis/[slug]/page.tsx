@@ -6,7 +6,7 @@ import { ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { analysisData } from "@/lib/analysis-data"
+// import { analysisData } from "@/lib/analysis-data" // REMOVED: hardcoded data
 import { analysisData as libraryData } from "@/components/digital-library"
 import { useCart } from "@/contexts/cart-context"
 import dynamic from 'next/dynamic'
@@ -193,23 +193,14 @@ export default function AnalysisPage() {
     }, [foundArticle.heroIcons])
 
     const handleSubmit = (values: any) => {
-      // Buscar el precio real del análisis desde la base de datos o datos locales
-      let realPrice = 0;
-      
-      // Buscar en los datos de análisis de la página principal
-      const matchingAnalysis = analysisData.find(analysis => 
-        analysis.name.toLowerCase().includes(foundArticle.title.toLowerCase()) ||
-        foundArticle.title.toLowerCase().includes(analysis.name.toLowerCase())
-      );
-      
-      if (matchingAnalysis) {
-        realPrice = matchingAnalysis.price;
-      }
+      // Use default price since hardcoded data was removed
+      // Analysis prices should now come from the database via admin interface
+      const defaultPrice = 100; // Default price for library analyses
       
       const item: CartItem = {
         id: foundArticle.id,
         name: foundArticle.title,
-        price: realPrice, // Usar precio real en lugar de 0
+        price: defaultPrice,
         patientInfo: values
       }
       addItem(item)

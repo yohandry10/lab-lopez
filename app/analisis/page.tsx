@@ -25,10 +25,23 @@ import { useAuth } from "@/contexts/auth-context"
 import { useCart } from "@/contexts/cart-context"
 import CategoriasAdminModal from "@/components/categorias-admin-modal"
 import { getSupabaseClient } from "@/lib/supabase-client"
-import { analysisData } from "@/lib/analysis-data"
 import { SchedulingFlow } from "@/components/scheduling-flow"
 import { SuccessDialog } from "@/components/success-dialog"
 import { HeroSchedulingDialog } from "@/components/hero-scheduling-dialog"
+
+// Definir el tipo para los análisis
+type Analysis = {
+  id: number;
+  name: string;
+  price: number;
+  conditions: string;
+  sample: string;
+  protocol: string;
+  suggestions?: string;
+  comments?: string;
+  category: string;
+  deliveryTime?: string;
+}
 
 // Definir el tipo para los perfiles
 type Profile = {
@@ -44,10 +57,10 @@ export default function AnalisisPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedLetter, setSelectedLetter] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [selectedAnalysis, setSelectedAnalysis] = useState<(typeof analysisData)[0] | null>(null)
+  const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [viewMode, setViewMode] = useState<"list" | "grid">("list")
-  const [localAnalysisData, setLocalAnalysisData] = useState<typeof analysisData>([])
+  const [localAnalysisData, setLocalAnalysisData] = useState<Analysis[]>([])
   const [categories, setCategories] = useState<string[]>([]) // Add state for categories
   const { addItem } = useCart()
   const router = useRouter()
@@ -241,7 +254,7 @@ export default function AnalisisPage() {
 
   const [isSchedulingOpen, setIsSchedulingOpen] = useState(false)
   const [isSuccessOpen, setIsSuccessOpen] = useState(false)
-  const [selectedTest, setSelectedTest] = useState<(typeof analysisData)[0] | null>(null)
+  const [selectedTest, setSelectedTest] = useState<Analysis | null>(null)
   const [patientName, setPatientName] = useState("")
 
   // State for hero scheduling dialog
@@ -325,7 +338,7 @@ export default function AnalisisPage() {
     return pages
   }
 
-  const handleAddToCart = (analysis: typeof analysisData[0]) => {
+  const handleAddToCart = (analysis: Analysis) => {
     setSelectedTest(analysis)
     setIsSchedulingOpen(true)
   }
@@ -368,9 +381,9 @@ export default function AnalisisPage() {
     router.push("/carrito")
   }
 
-  const [editingAnalysis, setEditingAnalysis] = useState<typeof analysisData[0] | null>(null)
+  const [editingAnalysis, setEditingAnalysis] = useState<Analysis | null>(null)
 
-  const handleUpdateAnalysis = async (updatedAnalysis: typeof analysisData[0]) => {
+  const handleUpdateAnalysis = async (updatedAnalysis: Analysis) => {
     console.log("🔄 INICIANDO ACTUALIZACIÓN COMPLETA");
     console.log("📊 Datos a actualizar:", updatedAnalysis);
     
@@ -538,13 +551,13 @@ export default function AnalisisPage() {
     if (error) {
       console.error("❌ Error al cargar análisis desde Supabase:", error);
       // Usar datos locales como fallback
-      setLocalAnalysisData(analysisData);
+      setLocalAnalysisData([]);
       return;
     }
     if (data && Array.isArray(data) && data.length > 0) {
       console.log("✅ Análisis cargados desde Supabase:", data.length);
       // Mapear datos de Supabase al formato esperado
-      const mappedData: typeof analysisData = data.map((item: any) => {
+      const mappedData: Analysis[] = data.map((item: any) => {
         return {
           id: parseInt(item.id?.toString() || '0') || 0,
           name: item.name?.toString() || '',
@@ -560,8 +573,8 @@ export default function AnalisisPage() {
       });
       setLocalAnalysisData(mappedData);
     } else {
-      console.log("⚠️ No hay datos en Supabase, usando datos locales");
-      setLocalAnalysisData(analysisData);
+      console.log("⚠️ No hay datos en Supabase, usando array vacío");
+      setLocalAnalysisData([]);
     }
   }
 
@@ -755,7 +768,7 @@ export default function AnalisisPage() {
   };
 
   // 3. Modifica handleDeleteAnalysis para borrar en Supabase
-  const handleDeleteAnalysis = async (analysis: typeof analysisData[0]) => {
+  const handleDeleteAnalysis = async (analysis: Analysis) => {
     if (!window.confirm('¿Estás seguro de que deseas eliminar este análisis?')) return;
     const supabase = getSupabaseClient();
     const { error } = await supabase.from("analyses").delete().eq("id", analysis.id);
