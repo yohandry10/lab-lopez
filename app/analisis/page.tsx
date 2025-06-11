@@ -1298,133 +1298,138 @@ export default function AnalisisPage() {
 
       {editingAnalysis && (
         <Dialog open={!!editingAnalysis} onOpenChange={() => setEditingAnalysis(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Editar Análisis: {editingAnalysis.name}</DialogTitle>
+          <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] overflow-hidden p-4 sm:p-6">
+            <DialogHeader className="pb-2">
+              <DialogTitle className="text-sm sm:text-lg">Editar Análisis: {editingAnalysis.name}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={async (e) => {
-              e.preventDefault()
-              console.log("📝 Formulario enviado");
-              const formData = new FormData(e.currentTarget)
-              const updatedAnalysis = {
-                ...editingAnalysis,
-                name: formData.get('name') as string,
-                price: parseFloat(formData.get('price') as string),
-                category: formData.get('category') as string,
-                conditions: formData.get('conditions') as string,
-                sample: formData.get('sample') as string,
-                protocol: formData.get('protocol') as string,
-                suggestions: formData.get('suggestions') as string,
-                comments: formData.get('comments') as string,
-                deliveryTime: formData.get('deliveryTime') as string,
-              }
-              console.log("📊 Datos a actualizar:", updatedAnalysis);
-              await handleUpdateAnalysis(updatedAnalysis)
-            }}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">Nombre</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    defaultValue={editingAnalysis.name}
-                    className="col-span-3"
-                  />
+            <div className="overflow-y-auto max-h-[calc(85vh-120px)] pr-2">
+              <form onSubmit={async (e) => {
+                e.preventDefault()
+                console.log("📝 Formulario enviado");
+                const formData = new FormData(e.currentTarget)
+                const updatedAnalysis = {
+                  ...editingAnalysis,
+                  name: formData.get('name') as string,
+                  price: parseFloat(formData.get('price') as string),
+                  category: formData.get('category') as string,
+                  conditions: formData.get('conditions') as string,
+                  sample: formData.get('sample') as string,
+                  protocol: formData.get('protocol') as string,
+                  suggestions: formData.get('suggestions') as string,
+                  comments: formData.get('comments') as string,
+                  deliveryTime: formData.get('deliveryTime') as string,
+                }
+                console.log("📊 Datos a actualizar:", updatedAnalysis);
+                await handleUpdateAnalysis(updatedAnalysis)
+              }}>
+                <div className="grid gap-3 sm:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-1 sm:gap-4">
+                    <Label htmlFor="name" className="text-left sm:text-right font-medium text-sm">Nombre</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      defaultValue={editingAnalysis.name}
+                      className="sm:col-span-3 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-1 sm:gap-4">
+                    <Label htmlFor="price" className="text-left sm:text-right font-medium text-sm">Precio</Label>
+                    <Input
+                      id="price"
+                      name="price"
+                      type="number"
+                      step="0.01"
+                      defaultValue={editingAnalysis.price}
+                      className="sm:col-span-3 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-1 sm:gap-4">
+                    <Label htmlFor="category" className="text-left sm:text-right font-medium text-sm">Categoría</Label>
+                    <Input
+                      id="category"
+                      name="category"
+                      defaultValue={editingAnalysis.category}
+                      className="sm:col-span-3 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-1 sm:gap-4">
+                    <Label htmlFor="conditions" className="text-left sm:text-right font-medium text-sm">Condiciones</Label>
+                    <Input
+                      id="conditions"
+                      name="conditions"
+                      defaultValue={editingAnalysis.conditions}
+                      className="sm:col-span-3 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-1 sm:gap-4">
+                    <Label htmlFor="sample" className="text-left sm:text-right font-medium text-sm">Muestra</Label>
+                    <Input
+                      id="sample"
+                      name="sample"
+                      defaultValue={editingAnalysis.sample}
+                      className="sm:col-span-3 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-1 sm:gap-4">
+                    <Label htmlFor="protocol" className="text-left sm:text-right font-medium text-sm">Protocolo</Label>
+                    <Textarea
+                      id="protocol"
+                      name="protocol"
+                      defaultValue={editingAnalysis.protocol}
+                      className="sm:col-span-3 min-h-[50px] text-sm resize-none"
+                      rows={2}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-1 sm:gap-4">
+                    <Label htmlFor="suggestions" className="text-left sm:text-right font-medium text-sm">Sugerencias</Label>
+                    <Textarea
+                      id="suggestions"
+                      name="suggestions"
+                      defaultValue={editingAnalysis.suggestions}
+                      className="sm:col-span-3 min-h-[50px] text-sm resize-none"
+                      rows={2}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-1 sm:gap-4">
+                    <Label htmlFor="comments" className="text-left sm:text-right font-medium text-sm">Comentarios</Label>
+                    <Textarea
+                      id="comments"
+                      name="comments"
+                      defaultValue={editingAnalysis.comments}
+                      className="sm:col-span-3 min-h-[50px] text-sm resize-none"
+                      rows={2}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-1 sm:gap-4">
+                    <Label htmlFor="deliveryTime" className="text-left sm:text-right font-medium text-sm">Tiempo de entrega</Label>
+                    <Input
+                      id="deliveryTime"
+                      name="deliveryTime"
+                      type="text"
+                      defaultValue={editingAnalysis.deliveryTime}
+                      className="sm:col-span-3 h-8 text-sm"
+                    />
+                  </div>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="price" className="text-right">Precio</Label>
-                  <Input
-                    id="price"
-                    name="price"
-                    type="number"
-                    step="0.01"
-                    defaultValue={editingAnalysis.price}
-                    className="col-span-3"
-                  />
+                <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 pt-4 mt-4 border-t">
+                  <Button type="button" variant="outline" onClick={() => setEditingAnalysis(null)} className="w-full sm:w-auto h-8 text-sm">
+                    Cancelar
+                  </Button>
+                  <Button type="submit" className="bg-[#3DA64A] hover:bg-[#1E5FAD] w-full sm:w-auto h-8 text-sm">
+                    Guardar cambios
+                  </Button>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="category" className="text-right">Categoría</Label>
-                  <Input
-                    id="category"
-                    name="category"
-                    defaultValue={editingAnalysis.category}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="conditions" className="text-right">Condiciones</Label>
-                  <Input
-                    id="conditions"
-                    name="conditions"
-                    defaultValue={editingAnalysis.conditions}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="sample" className="text-right">Muestra</Label>
-                  <Input
-                    id="sample"
-                    name="sample"
-                    defaultValue={editingAnalysis.sample}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="protocol" className="text-right">Protocolo</Label>
-                  <Textarea
-                    id="protocol"
-                    name="protocol"
-                    defaultValue={editingAnalysis.protocol}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="suggestions" className="text-right">Sugerencias</Label>
-                  <Textarea
-                    id="suggestions"
-                    name="suggestions"
-                    defaultValue={editingAnalysis.suggestions}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="comments" className="text-right">Comentarios</Label>
-                  <Textarea
-                    id="comments"
-                    name="comments"
-                    defaultValue={editingAnalysis.comments}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="deliveryTime" className="text-right">Tiempo de entrega</Label>
-                  <Input
-                    id="deliveryTime"
-                    name="deliveryTime"
-                    type="text"
-                    defaultValue={editingAnalysis.deliveryTime}
-                    className="col-span-3"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-4">
-                <Button type="button" variant="outline" onClick={() => setEditingAnalysis(null)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" className="bg-[#3DA64A] hover:bg-[#1E5FAD]">
-                  Guardar cambios
-                </Button>
-              </div>
-            </form>
+              </form>
+            </div>
           </DialogContent>
         </Dialog>
       )}
 
       {/* Diálogo de edición de perfiles */}
       <Dialog open={!!editingProfile} onOpenChange={() => setEditingProfile(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
           <DialogHeader>
-            <DialogTitle>Editar Perfil</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">Editar Perfil</DialogTitle>
           </DialogHeader>
           {editingProfile && (
             <form onSubmit={(e) => {
@@ -1450,28 +1455,28 @@ export default function AnalisisPage() {
               handleUpdateProfile(updatedProfile)
             }}>
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="title" className="text-right">Título</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                  <Label htmlFor="title" className="text-left sm:text-right font-medium">Título</Label>
                   <Input
                     id="title"
                     name="title"
                     defaultValue={editingProfile.title}
-                    className="col-span-3"
+                    className="sm:col-span-3"
                     required
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="description" className="text-right">Descripción</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                  <Label htmlFor="description" className="text-left sm:text-right font-medium">Descripción</Label>
                   <Input
                     id="description"
                     name="description"
                     defaultValue={editingProfile.description}
-                    className="col-span-3"
+                    className="sm:col-span-3"
                     required
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="price" className="text-right">Precio</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                  <Label htmlFor="price" className="text-left sm:text-right font-medium">Precio</Label>
                   <Input
                     id="price"
                     name="price"
@@ -1479,7 +1484,7 @@ export default function AnalisisPage() {
                     step="0.01"
                     min="0"
                     defaultValue={editingProfile.price}
-                    className="col-span-3"
+                    className="sm:col-span-3"
                     required
                     onFocus={(e) => {
                       // Seleccionar todo el texto al hacer foco para facilitar edición
@@ -1487,24 +1492,24 @@ export default function AnalisisPage() {
                     }}
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="tests" className="text-right">Análisis incluidos</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+                  <Label htmlFor="tests" className="text-left sm:text-right font-medium">Análisis incluidos</Label>
                   <Textarea
                     id="tests"
                     name="tests"
                     defaultValue={editingProfile.tests.join('\n')}
-                    className="col-span-3"
+                    className="sm:col-span-3 min-h-[120px]"
                     placeholder="Un análisis por línea"
                     rows={5}
                     required
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-4">
-                <Button type="button" variant="outline" onClick={() => setEditingProfile(null)}>
+              <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4">
+                <Button type="button" variant="outline" onClick={() => setEditingProfile(null)} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
-                <Button type="submit" className="bg-[#3DA64A] hover:bg-[#1E5FAD]">
+                <Button type="submit" className="bg-[#3DA64A] hover:bg-[#1E5FAD] w-full sm:w-auto">
                   Guardar cambios
                 </Button>
               </div>
@@ -1516,11 +1521,11 @@ export default function AnalisisPage() {
       {/* Modal para agregar análisis */}
       {isAddModalOpen && (
         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogContent>
+          <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
             <DialogHeader>
-              <DialogTitle>Agregar nuevo análisis</DialogTitle>
+              <DialogTitle className="text-base sm:text-lg">Agregar nuevo análisis</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3">
+            <div className="space-y-4 py-4">
               <Input placeholder="Nombre" value={newAnalysis.name} onChange={e => setNewAnalysis(a => ({ ...a, name: e.target.value }))} />
               <Input placeholder="Precio" type="number" value={newAnalysis.price} onChange={e => setNewAnalysis(a => ({ ...a, price: e.target.value }))} />
               <Input placeholder="Condiciones" value={newAnalysis.conditions} onChange={e => setNewAnalysis(a => ({ ...a, conditions: e.target.value }))} />
@@ -1546,7 +1551,7 @@ export default function AnalisisPage() {
               {/* Removed the conditional input for new categories */}
               
               <Input placeholder="Tiempo de entrega (ej: 2-4 horas)" value={newAnalysis.deliveryTime} onChange={e => setNewAnalysis(a => ({ ...a, deliveryTime: e.target.value }))} />
-              <Button className="w-full bg-green-600 hover:bg-green-700 text-white" onClick={handleAddAnalysis}>Guardar</Button>
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white mt-6" onClick={handleAddAnalysis}>Guardar</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -1555,11 +1560,11 @@ export default function AnalisisPage() {
       {/* Modal para agregar perfil */}
       {isAddProfileModalOpen && (
         <Dialog open={isAddProfileModalOpen} onOpenChange={setIsAddProfileModalOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
             <DialogHeader>
-              <DialogTitle>Agregar nuevo perfil</DialogTitle>
+              <DialogTitle className="text-base sm:text-lg">Agregar nuevo perfil</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 py-4">
               <Input 
                 placeholder="Título del perfil" 
                 value={newProfile.title} 
@@ -1588,9 +1593,10 @@ export default function AnalisisPage() {
                   rows={6}
                   value={newProfile.tests.join('\n')}
                   onChange={e => setNewProfile(p => ({ ...p, tests: e.target.value.split('\n').filter(test => test.trim() !== '') }))}
+                  className="min-h-[120px]"
                 />
               </div>
-              <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white" onClick={handleAddProfile}>Guardar</Button>
+              <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white mt-6" onClick={handleAddProfile}>Guardar</Button>
             </div>
           </DialogContent>
         </Dialog>
