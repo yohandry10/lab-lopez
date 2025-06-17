@@ -573,7 +573,7 @@ export default function ServiciosPage() {
     <div className="container mx-auto px-4 pt-16 sm:pt-20 md:pt-24 pb-8 sm:pb-10 md:pb-12">
       <div className="text-center mb-8 sm:mb-10 md:mb-12">
         <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-gray-900 mb-3 sm:mb-4">
-          Perfiles de bienestar
+          Perfiles Preventivos
         </h1>
         <p className="text-base sm:text-lg md:text-xl text-gray-500">
           Servicios diseñados para mejorar tu calidad de vida

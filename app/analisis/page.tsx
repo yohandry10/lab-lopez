@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -34,6 +35,8 @@ type Analysis = {
   id: number;
   name: string;
   price: number;
+  reference_price?: number;
+  show_public?: boolean;
   conditions: string;
   sample: string;
   protocol: string;
@@ -87,8 +90,13 @@ export default function AnalisisPage() {
     const matchesSearch = searchTerm ? analysis.name.toLowerCase().includes(searchTerm.toLowerCase()) : true
     const matchesLetter = selectedLetter ? analysis.name.charAt(0).toUpperCase() === selectedLetter : true
     const matchesCategory = selectedCategory ? analysis.category === selectedCategory : true
+    
+    // Si no hay usuario logueado, solo mostrar análisis marcados como públicos
+    const isVisibleToUser = user 
+      ? true // Usuario autenticado ve todos
+      : analysis.show_public === true // Usuario público solo ve los marcados como públicos
 
-    return matchesSearch && matchesLetter && matchesCategory
+    return matchesSearch && matchesLetter && matchesCategory && isVisibleToUser
   })
 
   // Calcular el número total de páginas
@@ -249,6 +257,8 @@ export default function AnalisisPage() {
          .update({
            name: updatedAnalysis.name,
            price: updatedAnalysis.price,
+           reference_price: updatedAnalysis.reference_price,
+        show_public: updatedAnalysis.show_public,
            category: updatedAnalysis.category,
            conditions: updatedAnalysis.conditions,
            sample: updatedAnalysis.sample,
@@ -378,6 +388,8 @@ export default function AnalisisPage() {
           id: parseInt(item.id?.toString() || '0') || 0,
           name: item.name?.toString() || '',
           price: parseFloat(item.price?.toString() || '0') || 0,
+          reference_price: item.reference_price ? parseFloat(item.reference_price?.toString() || '0') : undefined,
+        show_public: item.show_public || false,
           conditions: item.conditions?.toString() || '',
           sample: item.sample?.toString() || '',
           protocol: item.protocol?.toString() || '',
@@ -475,6 +487,9 @@ export default function AnalisisPage() {
   const [newAnalysis, setNewAnalysis] = useState({
     name: '',
     price: '',
+    reference_price: '',
+    price_type: 'public', // "public" o "business"
+    show_public: false,
     conditions: '',
     sample: '',
     protocol: '',
@@ -482,6 +497,19 @@ export default function AnalisisPage() {
     comments: '',
     category: '',
     deliveryTime: '2-4 horas',
+  } as {
+    name: string;
+    price: string;
+    reference_price: string;
+    price_type: string;
+    show_public: boolean;
+    conditions: string;
+    sample: string;
+    protocol: string;
+    suggestions: string;
+    comments: string;
+    category: string;
+    deliveryTime: string;
   });
   
   const [newProfile, setNewProfile] = useState({
@@ -497,6 +525,9 @@ export default function AnalisisPage() {
     setNewAnalysis({
       name: '',
       price: '',
+      reference_price: '',
+      price_type: 'public',
+      show_public: false,
       conditions: '',
       sample: '',
       protocol: '',
@@ -521,21 +552,52 @@ export default function AnalisisPage() {
       return
     }
 
+    // Validar precio de referencia si se proporciona
+    let referencePriceNumber = 0
+    if (newAnalysis.reference_price) {
+      referencePriceNumber = parseFloat(newAnalysis.reference_price)
+      if (isNaN(referencePriceNumber) || referencePriceNumber < 0) {
+        alert("Por favor ingresa un precio de referencia válido")
+        return
+      }
+    }
+
     try {
       const supabase = getSupabaseClient()
+      
+      // Determinar qué precio usar según el tipo seleccionado
+      let insertData = {
+        name: newAnalysis.name,
+        category: newAnalysis.category,
+        show_public: newAnalysis.show_public || false,
+        conditions: newAnalysis.conditions || "",
+        sample: newAnalysis.sample || "",
+        protocol: newAnalysis.protocol || "",
+        suggestions: newAnalysis.suggestions || "",
+        comments: newAnalysis.comments || "",
+        deliverytime: newAnalysis.deliveryTime || "2-4 horas"
+      } as any
+
+      if (newAnalysis.price_type === 'public') {
+        // Si es precio público, actualizar price
+        insertData.price = priceNumber
+        if (referencePriceNumber > 0) {
+          insertData.reference_price = referencePriceNumber
+        }
+      } else {
+        // Si es precio empresarial, actualizar reference_price
+        insertData.reference_price = priceNumber
+        // Mantener el precio público existente si no se especifica
+        if (newAnalysis.reference_price && parseFloat(newAnalysis.reference_price) > 0) {
+          insertData.price = parseFloat(newAnalysis.reference_price)
+        } else {
+          insertData.price = priceNumber // Como fallback
+        }
+      }
+
       const { data, error } = await supabase
         .from("analyses")
-        .insert([{
-          name: newAnalysis.name,
-          category: newAnalysis.category,
-          price: priceNumber,
-          conditions: newAnalysis.conditions || "",
-          sample: newAnalysis.sample || "",
-          protocol: newAnalysis.protocol || "",
-          suggestions: newAnalysis.suggestions || "",
-          comments: newAnalysis.comments || "",
-          deliverytime: newAnalysis.deliveryTime || "2-4 horas"
-        }])
+        .insert([insertData])
 
       if (error) {
         console.error("❌ Error al insertar análisis:", error)
@@ -547,7 +609,7 @@ export default function AnalisisPage() {
       
       // Recargar datos
       await fetchAnalyses()
-      await fetchCategories() // Refresh categories too
+      await fetchCategories()
       
       // Limpiar formulario y cerrar modal
       clearAnalysisForm()
@@ -684,29 +746,32 @@ export default function AnalisisPage() {
 
       {/* Rest of the content */}
       <div className="w-full max-w-[1200px] mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 xl:py-12">
-        {/* Tabs para perfiles populares */}
+        {/* Tabs para perfiles populares - Solo visible para pacientes y usuarios no autenticados */}
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="w-full max-w-2xl sm:max-w-3xl mx-auto bg-gray-100 p-1 rounded-xl h-10 sm:h-12 lg:h-14 flex relative overflow-hidden">
-            {/* Underline animado */}
-            <span id="tab-underline" className="absolute bottom-0 left-0 h-1 w-1/2 bg-gradient-to-r from-[#1E5FAD] via-[#3DA64A] to-[#1E5FAD] rounded-full transition-transform duration-500 ease-out z-0" style={{transform: `translateX(var(--tab-underline-x,0%))`}} />
-            {/* Tabs con gradiente animado y rebote */}
-            <TabsTrigger 
-              value="all" 
-              className="flex-1 h-8 sm:h-10 lg:h-12 text-xs sm:text-sm lg:text-base font-bold rounded-lg transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1E5FAD] data-[state=active]:to-[#3DA64A] data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:scale-110 data-[state=active]:ring-2 data-[state=active]:ring-[#3DA64A] data-[state=active]:ring-offset-2 transform hover:scale-105 hover:shadow-lg relative z-10 animate-tab-bounce px-2 sm:px-4"
-              onMouseEnter={() => { document.documentElement.style.setProperty('--tab-underline-x', '0%') }}
-            >
-              <span className="hidden sm:inline">Todos los análisis</span>
-              <span className="sm:hidden text-center">Todos</span>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="popular" 
-              className="flex-1 h-8 sm:h-10 lg:h-12 text-xs sm:text-sm lg:text-base font-bold rounded-lg transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1E5FAD] data-[state=active]:to-[#3DA64A] data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:scale-110 data-[state=active]:ring-2 data-[state=active]:ring-[#3DA64A] data-[state=active]:ring-offset-2 transform hover:scale-105 hover:shadow-lg relative z-10 animate-tab-bounce px-2 sm:px-4"
-              onMouseEnter={() => { document.documentElement.style.setProperty('--tab-underline-x', '100%') }}
-            >
-              <span className="hidden sm:inline">Perfiles populares</span>
-              <span className="sm:hidden text-center">Perfiles</span>
-            </TabsTrigger>
-          </TabsList>
+          {/* Ocultar tabs para empresas y médicos */}
+          {!(user && (user.user_type === "doctor" || user.user_type === "company")) && (
+            <TabsList className="w-full max-w-2xl sm:max-w-3xl mx-auto bg-gray-100 p-1 rounded-xl h-10 sm:h-12 lg:h-14 flex relative overflow-hidden">
+              {/* Underline animado */}
+              <span id="tab-underline" className="absolute bottom-0 left-0 h-1 w-1/2 bg-gradient-to-r from-[#1E5FAD] via-[#3DA64A] to-[#1E5FAD] rounded-full transition-transform duration-500 ease-out z-0" style={{transform: `translateX(var(--tab-underline-x,0%))`}} />
+              {/* Tabs con gradiente animado y rebote */}
+              <TabsTrigger 
+                value="all" 
+                className="flex-1 h-8 sm:h-10 lg:h-12 text-xs sm:text-sm lg:text-base font-bold rounded-lg transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1E5FAD] data-[state=active]:to-[#3DA64A] data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:scale-110 data-[state=active]:ring-2 data-[state=active]:ring-[#3DA64A] data-[state=active]:ring-offset-2 transform hover:scale-105 hover:shadow-lg relative z-10 animate-tab-bounce px-2 sm:px-4"
+                onMouseEnter={() => { document.documentElement.style.setProperty('--tab-underline-x', '0%') }}
+              >
+                <span className="hidden sm:inline">Todos los análisis</span>
+                <span className="sm:hidden text-center">Todos</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="popular" 
+                className="flex-1 h-8 sm:h-10 lg:h-12 text-xs sm:text-sm lg:text-base font-bold rounded-lg transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1E5FAD] data-[state=active]:to-[#3DA64A] data-[state=active]:text-white data-[state=active]:shadow-2xl data-[state=active]:scale-110 data-[state=active]:ring-2 data-[state=active]:ring-[#3DA64A] data-[state=active]:ring-offset-2 transform hover:scale-105 hover:shadow-lg relative z-10 animate-tab-bounce px-2 sm:px-4"
+                onMouseEnter={() => { document.documentElement.style.setProperty('--tab-underline-x', '100%') }}
+              >
+                <span className="hidden sm:inline">Perfiles populares</span>
+                <span className="sm:hidden text-center">Perfiles</span>
+              </TabsTrigger>
+            </TabsList>
+          )}
           <TabsContent value="all" className="mt-4 sm:mt-6 lg:mt-8">
             {/* Barra de búsqueda */}
             <div className="flex flex-col space-y-3 sm:space-y-4 lg:space-y-0 lg:flex-row lg:items-center lg:gap-4 mb-4 sm:mb-6 lg:mb-8">
@@ -879,11 +944,27 @@ export default function AnalisisPage() {
                           </span>
                         </div>
                         
-                        {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-lg font-bold text-gray-900">S/. {analysis.price.toFixed(2)}</span>
+                        <div className="flex justify-between items-center">
+                          <div className="flex flex-col">
+                            {/* Precios para MÉDICOS y EMPRESAS */}
+                            {user && (user.user_type === "doctor" || user.user_type === "company") && (
+                              <>
+                                <span className="text-lg font-bold text-blue-600">S/. {(analysis.reference_price || analysis.price * 0.8).toFixed(2)}</span>
+                                <span className="text-xs text-gray-500">Precio referencial</span>
+                              </>
+                            )}
+                            
+                            {/* Precios para ADMIN */}
+                            {user && user.user_type === "admin" && (
+                              <span className="text-lg font-bold text-gray-900">S/. {analysis.price.toFixed(2)}</span>
+                            )}
+                            
+                            {/* Precios para PACIENTES autenticados */}
+                            {user && user.user_type === "patient" && (
+                              <span className="text-lg font-bold text-green-600">S/. {analysis.price.toFixed(2)}</span>
+                            )}
                           </div>
-                        )}
+                        </div>
                         
                         <div className="flex flex-col sm:flex-row gap-2">
                           <Button
@@ -895,7 +976,7 @@ export default function AnalisisPage() {
                             VER DETALLE
                           </Button>
                           
-                          {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                          {user && (
                             <Button
                               size="sm"
                               className="bg-[#3DA64A] hover:bg-[#1E5FAD] h-8 text-xs flex-1"
@@ -941,7 +1022,7 @@ export default function AnalisisPage() {
                           <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                             Categoría
                           </th>
-                          {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                          {user && (
                             <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                               Precio
                             </th>
@@ -949,7 +1030,7 @@ export default function AnalisisPage() {
                           <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                             Detalle
                           </th>
-                          {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                          {user && (
                             <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                               Carrito
                             </th>
@@ -972,9 +1053,25 @@ export default function AnalisisPage() {
                                 {analysis.category}
                               </span>
                             </td>
-                            {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
-                              <td className="px-6 py-4 text-sm text-gray-900 font-semibold">
-                                S/. {analysis.price.toFixed(2)}
+                            {user && (
+                              <td className="px-6 py-4 text-sm font-semibold">
+                                {/* Precios para MÉDICOS y EMPRESAS */}
+                                {(user.user_type === "doctor" || user.user_type === "company") && (
+                                  <div className="flex flex-col">
+                                    <span className="text-blue-600">S/. {(analysis.reference_price || analysis.price * 0.8).toFixed(2)}</span>
+                                    <span className="text-xs text-gray-500">Precio referencial</span>
+                                  </div>
+                                )}
+                                
+                                {/* Precios para ADMIN */}
+                                {user.user_type === "admin" && (
+                                  <span className="text-gray-900">S/. {analysis.price.toFixed(2)}</span>
+                                )}
+                                
+                                {/* Precios para PACIENTES autenticados */}
+                                {user.user_type === "patient" && (
+                                  <span className="text-green-600">S/. {analysis.price.toFixed(2)}</span>
+                                )}
                               </td>
                             )}
                             <td className="px-6 py-4 text-sm font-medium">
@@ -987,7 +1084,7 @@ export default function AnalisisPage() {
                                 VER
                               </Button>
                             </td>
-                            {user && (user.user_type === "doctor" || user.user_type === "company" || user.user_type === "admin") && (
+                            {user && (
                               <td className="px-6 py-4 text-sm font-medium">
                                 <Button
                                   size="sm"
@@ -1136,7 +1233,9 @@ export default function AnalisisPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="popular" className="mt-4 sm:mt-6 lg:mt-8">
+          {/* Solo mostrar perfiles populares para pacientes y usuarios no autenticados */}
+          {!(user && (user.user_type === "doctor" || user.user_type === "company")) && (
+            <TabsContent value="popular" className="mt-4 sm:mt-6 lg:mt-8">
             {/* Botón para agregar perfil (solo admin) */}
             {user && user.user_type === "admin" && (
               <div className="mb-6 sm:mb-8">
@@ -1264,6 +1363,7 @@ export default function AnalisisPage() {
               ))}
             </div>
           </TabsContent>
+          )}
         </Tabs>
       </div>
 
@@ -1311,6 +1411,8 @@ export default function AnalisisPage() {
                   ...editingAnalysis,
                   name: formData.get('name') as string,
                   price: parseFloat(formData.get('price') as string),
+                  reference_price: formData.get('reference_price') ? parseFloat(formData.get('reference_price') as string) : undefined,
+                  show_public: formData.get('show_public') === 'on',
                   category: formData.get('category') as string,
                   conditions: formData.get('conditions') as string,
                   sample: formData.get('sample') as string,
@@ -1332,15 +1434,29 @@ export default function AnalisisPage() {
                       className="sm:col-span-3 h-8 text-sm"
                     />
                   </div>
+                  {/* Campos de precios */}
                   <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-1 sm:gap-4">
-                    <Label htmlFor="price" className="text-left sm:text-right font-medium text-sm">Precio</Label>
+                    <Label htmlFor="price" className="text-left sm:text-right font-medium text-sm">Precio Público</Label>
                     <Input
                       id="price"
                       name="price"
                       type="number"
                       step="0.01"
                       defaultValue={editingAnalysis.price}
-                      className="sm:col-span-3 h-8 text-sm"
+                      className="sm:col-span-3 h-8 text-sm border-green-300"
+                      placeholder="Precio para pacientes"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-1 sm:gap-4">
+                    <Label htmlFor="reference_price" className="text-left sm:text-right font-medium text-sm">Precio Empresarial</Label>
+                    <Input
+                      id="reference_price"
+                      name="reference_price"
+                      type="number"
+                      step="0.01"
+                      defaultValue={editingAnalysis.reference_price || ''}
+                      className="sm:col-span-3 h-8 text-sm border-blue-300"
+                      placeholder="Precio para médicos y empresas"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-1 sm:gap-4">
@@ -1409,6 +1525,17 @@ export default function AnalisisPage() {
                       defaultValue={editingAnalysis.deliveryTime}
                       className="sm:col-span-3 h-8 text-sm"
                     />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-1 sm:gap-4">
+                    <Label htmlFor="show_public" className="text-left sm:text-right font-medium text-sm">Mostrar al público</Label>
+                    <div className="sm:col-span-3 flex items-center space-x-2">
+                      <Checkbox
+                        id="show_public"
+                        name="show_public"
+                        defaultChecked={editingAnalysis?.show_public ?? false}
+                      />
+                      <span className="text-sm text-gray-600">Visible para usuarios no registrados</span>
+                    </div>
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 pt-4 mt-4 border-t">
@@ -1527,14 +1654,68 @@ export default function AnalisisPage() {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <Input placeholder="Nombre" value={newAnalysis.name} onChange={e => setNewAnalysis(a => ({ ...a, name: e.target.value }))} />
-              <Input placeholder="Precio" type="number" value={newAnalysis.price} onChange={e => setNewAnalysis(a => ({ ...a, price: e.target.value }))} />
+              
+              {/* Selector de tipo de precio */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tipo de precio a configurar</Label>
+                <Select value={newAnalysis.price_type} onValueChange={(value) => setNewAnalysis(a => ({ ...a, price_type: value }))}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">
+                      <div className="flex items-center space-x-2">
+                        <span>💰</span>
+                        <span>Precio Público (Pacientes)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="business">
+                      <div className="flex items-center space-x-2">
+                        <span>🏢</span>
+                        <span>Precio Empresarial (Médicos y Empresas)</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Campo de precio dinámico */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  {newAnalysis.price_type === 'public' ? 'Precio Público' : 'Precio Empresarial'}
+                </Label>
+                <Input 
+                  placeholder={newAnalysis.price_type === 'public' ? 'Precio para pacientes' : 'Precio para médicos y empresas'} 
+                  type="number" 
+                  step="0.01"
+                  value={newAnalysis.price} 
+                  onChange={e => setNewAnalysis(a => ({ ...a, price: e.target.value }))} 
+                  className={newAnalysis.price_type === 'public' ? 'border-green-300' : 'border-blue-300'}
+                />
+              </div>
+
+              {/* Campo opcional para el otro precio */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-600">
+                  {newAnalysis.price_type === 'public' ? 'Precio Empresarial (Opcional)' : 'Precio Público (Opcional)'}
+                </Label>
+                <Input 
+                  placeholder={newAnalysis.price_type === 'public' ? 'Precio para médicos y empresas' : 'Precio para pacientes'} 
+                  type="number" 
+                  step="0.01"
+                  value={newAnalysis.reference_price} 
+                  onChange={e => setNewAnalysis(a => ({ ...a, reference_price: e.target.value }))} 
+                  className="border-gray-300"
+                />
+              </div>
+
               <Input placeholder="Condiciones" value={newAnalysis.conditions} onChange={e => setNewAnalysis(a => ({ ...a, conditions: e.target.value }))} />
               <Input placeholder="Muestra" value={newAnalysis.sample} onChange={e => setNewAnalysis(a => ({ ...a, sample: e.target.value }))} />
               <Input placeholder="Protocolo" value={newAnalysis.protocol} onChange={e => setNewAnalysis(a => ({ ...a, protocol: e.target.value }))} />
               <Input placeholder="Sugerencias" value={newAnalysis.suggestions} onChange={e => setNewAnalysis(a => ({ ...a, suggestions: e.target.value }))} />
               <Input placeholder="Comentarios" value={newAnalysis.comments} onChange={e => setNewAnalysis(a => ({ ...a, comments: e.target.value }))} />
               
-              {/* Select para categorías - solo mostrar categorías activas */}
+              {/* Select para categorías */}
               <Select value={newAnalysis.category} onValueChange={(value) => setNewAnalysis(a => ({ ...a, category: value }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Seleccionar categoría" />
@@ -1548,9 +1729,20 @@ export default function AnalisisPage() {
                 </SelectContent>
               </Select>
               
-              {/* Removed the conditional input for new categories */}
-              
               <Input placeholder="Tiempo de entrega (ej: 2-4 horas)" value={newAnalysis.deliveryTime} onChange={e => setNewAnalysis(a => ({ ...a, deliveryTime: e.target.value }))} />
+              
+              {/* Checkbox para mostrar al público */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="show_public_new"
+                  checked={newAnalysis.show_public || false}
+                  onCheckedChange={(checked) => setNewAnalysis(a => ({ ...a, show_public: checked as boolean }))}
+                />
+                <Label htmlFor="show_public_new" className="text-sm font-medium">
+                  Mostrar al público (visible para usuarios no registrados)
+                </Label>
+              </div>
+              
               <Button className="w-full bg-green-600 hover:bg-green-700 text-white mt-6" onClick={handleAddAnalysis}>Guardar</Button>
             </div>
           </DialogContent>

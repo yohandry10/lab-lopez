@@ -1,18 +1,19 @@
 "use client"
 
-import dynamic from 'next/dynamic'
 import { ParallaxProvider } from 'react-scroll-parallax'
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
-import { User, Stethoscope, Building2, TestTubes } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
+import { User, Stethoscope, Building2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ImageGallery } from "@/components/image-gallery"
+import { useAuth } from "@/contexts/auth-context"
+import HeroSlider from "@/components/hero-slider"
+import MainServices from "@/components/main-services"
+import QualityCommitment from "@/components/quality-commitment"
 
-// Lazy load components with no SSR
-const HeroSlider = dynamic(() => import("@/components/hero-slider"), { ssr: false })
-const MainServices = dynamic(() => import("@/components/main-services"), { ssr: false })
-const QualityCommitment = dynamic(() => import("@/components/quality-commitment"), { ssr: false })
-const DigitalLibrary = dynamic(() => import("@/components/digital-library"), { ssr: false })
+import DigitalLibrary from "@/components/digital-library"
 
 // Memoized user type link component
 const UserTypeLink = ({ href, icon: Icon, label }: { href: string; icon: any; label: string }) => (
@@ -37,6 +38,16 @@ const UserTypeLink = ({ href, icon: Icon, label }: { href: string; icon: any; la
 )
 
 export default function Home() {
+  const { user } = useAuth()
+  const router = useRouter()
+
+  // Redirigir médicos y empresas directamente a análisis
+  useEffect(() => {
+    if (user && (user.user_type === "doctor" || user.user_type === "company")) {
+      router.replace("/analisis")
+    }
+  }, [user, router])
+
   return (
     <ParallaxProvider>
       <AnimatePresence mode="sync">
@@ -63,9 +74,20 @@ export default function Home() {
                   </div>
 
                   <div className="md:col-span-3 flex flex-col items-center gap-8 mt-6 md:mt-0 md:flex-row md:justify-around lg:justify-between md:px-0 lg:px-8">
-                    <UserTypeLink href="/resultados?type=patient" icon={User} label="Pacientes" />
-                    <UserTypeLink href="/login" icon={Stethoscope} label="Médicos" />
-                    <UserTypeLink href="/login" icon={Building2} label="Empresas" />
+                    {/* Si es médico o empresa autenticado: solo mostrar botones de médicos y empresas */}
+                    {user && (user.user_type === "doctor" || user.user_type === "company") ? (
+                      <>
+                        <UserTypeLink href="/resultados?type=doctor" icon={Stethoscope} label="Médicos" />
+                        <UserTypeLink href="/resultados?type=company" icon={Building2} label="Empresas" />
+                      </>
+                    ) : (
+                      /* Para todos los demás: mostrar los 3 botones normales */
+                      <>
+                        <UserTypeLink href="/resultados?type=patient" icon={User} label="Pacientes" />
+                        <UserTypeLink href="/login" icon={Stethoscope} label="Médicos" />
+                        <UserTypeLink href="/login" icon={Building2} label="Empresas" />
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -95,10 +117,13 @@ export default function Home() {
           >
             <ImageGallery />
           </motion.div>
+          
+
+          
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
+            transition={{ delay: 1.2 }}
           >
             <DigitalLibrary />
           </motion.div>

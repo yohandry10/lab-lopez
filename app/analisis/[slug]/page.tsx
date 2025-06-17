@@ -49,7 +49,7 @@ const RelatedArticles = ({ articles, category }: { articles: Analysis[], categor
 
   return (
     <div>
-      <h2 className="text-xl sm:text-2xl font-bold mb-6">Análisis relacionados</h2>
+      <h2 className="text-xl sm:text-2xl font-bold mb-6">Más promociones</h2>
       <div className="grid gap-6 md:grid-cols-2">
         {relatedArticles.map((relatedArticle) => (
           <Link
@@ -256,7 +256,7 @@ export default function AnalysisPage() {
             </Dialog>
           </div>
 
-          <Suspense fallback={<div>Cargando artículos relacionados...</div>}>
+          <Suspense fallback={<div>Cargando más promociones...</div>}>
             <RelatedArticles articles={articles} category={foundArticle.category} />
           </Suspense>
         </div>

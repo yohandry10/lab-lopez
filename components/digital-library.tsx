@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ChevronRight, Microscope, TestTube, Beaker, Baby, Dna, Search, Pencil, Trash2, Edit } from "lucide-react"
+import { ChevronLeft, ChevronRight, Microscope, TestTube, Beaker, Baby, Dna, Search, Pencil, Trash2, Edit, Settings } from "lucide-react"
 import { useState, useCallback, useEffect, useMemo } from "react"
 import { useInView } from "react-intersection-observer"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -148,76 +148,164 @@ Nuestros perfiles hormonales están diseñados para proporcionar una evaluación
 ]
 
 export default function DigitalLibrary() {
-  const [currentIndex, setCurrentIndex] = useState(0)
   const { user } = useAuth()
-  const [articles, setArticles] = useState<Analysis[]>([]) // Iniciar vacío, solo datos de Supabase
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [editingArticle, setEditingArticle] = useState<Analysis | null>(null)
+  const [articles, setArticles] = useState<Analysis[]>([])
+  const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [articlesLoading, setArticlesLoading] = useState(true)
+  const [sectionTitle, setSectionTitle] = useState("Promociones Disponibles")
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [showPrices, setShowPrices] = useState(false) // Estado para mostrar/ocultar precios
+  const [editingArticle, setEditingArticle] = useState<Analysis | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+  // Función para cargar artículos desde Supabase
+  const fetchArticles = async () => {
+    console.log("🔄 Cargando artículos desde Supabase...");
+    setArticlesLoading(true);
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from("biblioteca_digital")
+      .select("*")
+      .eq("activo", true)
+      .order("orden", { ascending: true });
+      
+    if (error) {
+      console.error("❌ Error al cargar artículos desde Supabase:", error);
+      setArticlesLoading(false);
+      return;
+    }
+    
+    if (data && Array.isArray(data) && data.length > 0) {
+      console.log("✅ Artículos cargados desde Supabase:", data.length);
+      // Mapear datos de Supabase al formato esperado
+      const mappedArticles: Analysis[] = data.map((item: any) => {
+        // Usar la imagen de la base de datos, con fallback a imágenes originales solo si no hay imagen_url
+        let imageToUse = item.imagen_url && item.imagen_url.trim() !== '' ? item.imagen_url : '/placeholder.svg';
+        
+        // Solo usar imágenes originales si NO hay imagen en la base de datos
+        if (!item.imagen_url || item.imagen_url.trim() === '') {
+          const titulo = String(item.titulo || '').toLowerCase();
+        if (titulo.includes('zuma')) {
+            imageToUse = '/emba.webp';
+        } else if (titulo.includes('cofactor') || titulo.includes('willebrand')) {
+            imageToUse = '/hemo.jpeg';
+        } else if (titulo.includes('antifosfolípidos') || titulo.includes('antifosfolipidos')) {
+            imageToUse = '/anti.jpeg';
+          }
+        }
+        
+        const generatedSlug = normalizeSlug(String(item.titulo || ''));
+        console.log("📝 Generando slug:", { titulo: item.titulo, slug: generatedSlug });
+        
+        return {
+          id: Number(item.id) || 0,
+          title: String(item.titulo || ''),
+          description: String(item.descripcion || ''),
+          image: imageToUse,
+          category: String(item.categoria || "Análisis clínicos"),
+          slug: generatedSlug,
+          content: String(item.contenido || item.descripcion || ''),
+          heroIcons: [],
+          sections: [],
+          date: item.created_at || new Date().toISOString(),
+          author: 'Dr. López',
+          readTime: '5 min',
+          price: item.precio ? Number(item.precio) : undefined
+        };
+      });
+      setArticles(mappedArticles);
+      console.log("🎨 DigitalLibrary - Artículos que se van a renderizar:", mappedArticles.map(a => ({ title: a.title, slug: a.slug })));
+    } else {
+      console.log("⚠️ No hay artículos en Supabase, usando datos locales");
+    }
+    setArticlesLoading(false);
+  }
 
   // Cargar artículos desde Supabase al iniciar
   useEffect(() => {
-    async function fetchArticles() {
-      console.log("🔄 Cargando artículos desde Supabase...");
-      const supabase = getSupabaseClient();
+    fetchArticles();
+    fetchSectionConfig();
+  }, []);
+
+  const fetchSectionConfig = async () => {
+    try {
+      const supabase = getSupabaseClient()
       const { data, error } = await supabase
-        .from("biblioteca_digital")
-        .select("*")
-        .eq("activo", true)
-        .order("orden", { ascending: true });
-        
+        .from("configuracion_secciones")
+        .select("titulo, mostrar_precios")
+        .eq("seccion", "biblioteca_digital")
+        .single()
+
       if (error) {
-        console.error("❌ Error al cargar artículos desde Supabase:", error);
-        // Mantener datos locales como fallback
+        console.log("⚠️ Error al obtener configuración de sección, usando valores por defecto:", error)
+        setSectionTitle("Promociones Disponibles");
+        setShowPrices(false);
+        return
+      }
+
+      if (data) {
+        setSectionTitle(data.titulo || "Promociones Disponibles");
+        setShowPrices(data.mostrar_precios || false);
+      }
+    } catch (err) {
+      console.error("❌ Error al obtener configuración:", err)
+      setSectionTitle("Promociones Disponibles");
+      setShowPrices(false);
+    }
+  }
+
+  // Guardar título de la sección en Supabase
+  const saveSectionTitle = async (newTitle: string) => {
+    if (!newTitle.trim()) {
+      alert("El título no puede estar vacío");
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+    
+    try {
+      const { data, error } = await supabase
+        .from("configuracion_secciones")
+        .upsert({
+          seccion: "biblioteca_digital",
+          titulo: newTitle.trim()
+        }, {
+          onConflict: "seccion"
+        })
+        .select();
+
+      if (error) {
+        console.error("❌ Error en upsert biblioteca digital:", error);
+        alert(`Error al guardar: ${error.message}`);
+        handleTitleCancel();
         return;
       }
+
+      console.log("✅ Título biblioteca digital guardado exitosamente:", data);
+      setSectionTitle(newTitle.trim());
+      setEditingTitle(false);
+      alert("✅ Título guardado correctamente");
       
-      if (data && Array.isArray(data) && data.length > 0) {
-        console.log("✅ Artículos cargados desde Supabase:", data.length);
-        // Mapear datos de Supabase al formato esperado
-        const mappedArticles: Analysis[] = data.map((item: any) => {
-          // Usar la imagen de la base de datos, con fallback a imágenes originales solo si no hay imagen_url
-          let imageToUse = item.imagen_url && item.imagen_url.trim() !== '' ? item.imagen_url : '/placeholder.svg';
-          
-          // Solo usar imágenes originales si NO hay imagen en la base de datos
-          if (!item.imagen_url || item.imagen_url.trim() === '') {
-            const titulo = String(item.titulo || '').toLowerCase();
-          if (titulo.includes('zuma')) {
-              imageToUse = '/emba.webp';
-          } else if (titulo.includes('cofactor') || titulo.includes('willebrand')) {
-              imageToUse = '/hemo.jpeg';
-          } else if (titulo.includes('antifosfolípidos') || titulo.includes('antifosfolipidos')) {
-              imageToUse = '/anti.jpeg';
-            }
-          }
-          
-          const generatedSlug = normalizeSlug(String(item.titulo || ''));
-          console.log("📝 Generando slug:", { titulo: item.titulo, slug: generatedSlug });
-          
-          return {
-            id: Number(item.id) || 0,
-            title: String(item.titulo || ''),
-            description: String(item.descripcion || ''),
-            image: imageToUse, // USAR LA IMAGEN DE LA BASE DE DATOS
-            category: String(item.categoria || "Análisis clínicos"),
-            slug: generatedSlug,
-            content: String(item.contenido || item.descripcion || ''), // USAR EL CONTENIDO DE LA BASE DE DATOS
-            heroIcons: [],
-            sections: [],
-            date: item.created_at || new Date().toISOString(),
-            author: 'Dr. López',
-            readTime: '5 min',
-            price: item.precio ? Number(item.precio) : undefined
-          };
-        });
-        setArticles(mappedArticles);
-        console.log("🎨 DigitalLibrary - Artículos que se van a renderizar:", mappedArticles.map(a => ({ title: a.title, slug: a.slug })));
-      } else {
-        console.log("⚠️ No hay artículos en Supabase, usando datos locales");
-      }
+    } catch (err) {
+      console.error("❌ Error inesperado:", err);
+      alert(`Error inesperado: ${String(err)}`);
+      handleTitleCancel();
     }
-    fetchArticles();
-  }, []);
+  };
+
+  const handleTitleEdit = () => {
+    if (editingTitle) {
+      saveSectionTitle(sectionTitle);
+    } else {
+      setEditingTitle(true);
+    }
+  };
+
+  const handleTitleCancel = () => {
+    setEditingTitle(false);
+    fetchSectionConfig();
+  };
 
   const handleEditArticle = (article: Analysis) => {
     setEditingArticle(article)
@@ -227,56 +315,65 @@ export default function DigitalLibrary() {
   const handleUpdateArticle = async (updatedArticle: Analysis) => {
     console.log("📝 Actualizando artículo:", updatedArticle);
     
-    if (!updatedArticle.title.trim()) {
+    if (!updatedArticle.title?.trim()) {
       alert("El título es requerido");
+      return;
+    }
+
+    if (!updatedArticle.description?.trim()) {
+      alert("La descripción es requerida");
+      return;
+    }
+
+    if (!updatedArticle.content?.trim()) {
+      alert("El contenido es requerido");
       return;
     }
 
     setLoading(true);
     try {
       const supabase = getSupabaseClient();
+      
+      // Preparar el precio: convertir a número o null
+      let precioValue = null;
+      if (updatedArticle.price !== undefined && updatedArticle.price !== null) {
+        const priceNumber = Number(updatedArticle.price);
+        if (!isNaN(priceNumber) && priceNumber > 0) {
+          precioValue = priceNumber;
+        }
+      }
+
+      console.log("💰 Precio a actualizar:", precioValue);
+      
+      const updateData = {
+        titulo: updatedArticle.title.trim(),
+        descripcion: updatedArticle.description.trim(),
+        contenido: updatedArticle.content.trim(),
+        imagen_url: updatedArticle.image?.trim() || '/placeholder.svg',
+        categoria: updatedArticle.category || 'Análisis clínicos',
+        precio: precioValue,
+        updated_at: new Date().toISOString()
+      };
+
+      console.log("📊 Datos a actualizar:", updateData);
+
       const { data, error } = await supabase
         .from("biblioteca_digital")
-        .update({
-          titulo: updatedArticle.title.trim(),
-          descripcion: updatedArticle.description.trim(),
-          contenido: updatedArticle.content.trim(),
-          imagen_url: updatedArticle.image.trim() || '/placeholder.svg',
-          categoria: updatedArticle.category,
-          precio: updatedArticle.price
-        })
+        .update(updateData)
         .eq("id", updatedArticle.id)
         .select()
         .single();
         
       if (error) {
         console.error("❌ Error al actualizar artículo:", error);
-        alert("Error al actualizar artículo: " + error.message);
+        alert("Error al actualizar artículo: " + (error.message || JSON.stringify(error)));
         return;
       }
       
       console.log("✅ Artículo actualizado en Supabase:", data);
       
-      // Actualizar estado local inmediatamente
-      setArticles(prevArticles =>
-        prevArticles.map(article =>
-          article.id === updatedArticle.id ? {
-            ...updatedArticle,
-            title: String(updatedArticle.title || article.title),
-            description: String(updatedArticle.description || article.description),
-            content: String(updatedArticle.content || article.content),
-            image: String(updatedArticle.image || article.image),
-            category: String(updatedArticle.category || article.category),
-            readTime: String(updatedArticle.readTime || article.readTime),
-            date: updatedArticle.date || article.date,
-            author: updatedArticle.author || article.author,
-            slug: article.slug,
-            heroIcons: article.heroIcons,
-            sections: article.sections,
-            price: updatedArticle.price || article.price
-          } : article
-        )
-      );
+      // Recargar artículos desde la base de datos para asegurar sincronización
+      await fetchArticles();
       
       setIsEditModalOpen(false);
       setEditingArticle(null);
@@ -290,19 +387,143 @@ export default function DigitalLibrary() {
     }
   }
 
+  const toggleShowPrices = async () => {
+    try {
+      const supabase = getSupabaseClient()
+      const newShowPrices = !showPrices
+      
+      const { error } = await supabase
+        .from("configuracion_secciones")
+        .update({ 
+          mostrar_precios: newShowPrices,
+          updated_at: new Date().toISOString()
+        })
+        .eq("seccion", "biblioteca_digital")
+
+      if (error) {
+        console.error("❌ Error al actualizar configuración de precios:", error)
+        alert("Error al actualizar configuración")
+        return
+      }
+
+      setShowPrices(newShowPrices)
+      console.log(`✅ Configuración actualizada: mostrar precios = ${newShowPrices}`)
+    } catch (err) {
+      console.error("❌ Error inesperado:", err)
+      alert("Error inesperado al actualizar configuración")
+    }
+  }
+
   return (
-    <section className="py-16">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col items-center mb-8">
-          <div className="relative w-full flex flex-col items-center md:flex-row md:justify-center md:items-center">
-            <h2 className="text-3xl sm:text-4xl font-light text-gray-900 mb-2 text-center md:text-left md:mr-8 md:mb-0">Biblioteca Digital</h2>
-            <div className="mt-4 md:mt-0 md:relative">
+    <section className="py-8 sm:py-12 md:py-16 lg:py-20 bg-gray-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-6 sm:mb-8 md:mb-12">
+          <div className="flex flex-col items-center gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              {editingTitle ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={sectionTitle}
+                    onChange={(e) => setSectionTitle(e.target.value)}
+                    className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 bg-transparent border-b-2 border-blue-500 outline-none text-center"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleTitleEdit()
+                      }
+                      if (e.key === 'Escape') {
+                        handleTitleCancel()
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleTitleEdit()
+                    }}
+                    className="h-8 w-8 p-0 text-green-600 hover:bg-green-100"
+                  >
+                    ✓
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleTitleCancel()
+                    }}
+                    className="h-8 w-8 p-0 text-red-600 hover:bg-red-100"
+                  >
+                    ✕
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-gray-900">
+                    {sectionTitle}
+                  </h2>
+                  
+                  {/* Botón de editar título solo para admin */}
+                  {user?.user_type === "admin" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleTitleEdit()
+                      }}
+                      className="ml-2 h-8 w-8 p-0 border-blue-500 text-blue-600 hover:bg-blue-100"
+                      title="Editar título"
+                    >
+                      ✏️
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+            
+            {/* Controles de admin */}
+            {user?.user_type === "admin" && (
+              <div className="flex gap-2 flex-wrap justify-center">
+                <Button
+                  onClick={toggleShowPrices}
+                  variant="outline"
+                  size="sm"
+                  className={`
+                    border transition-all duration-200
+                    ${showPrices 
+                      ? 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100' 
+                      : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }
+                  `}
+                  title={showPrices ? "Ocultar precios" : "Mostrar precios"}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  {showPrices ? "Ocultar Precios" : "Mostrar Precios"}
+                </Button>
+                
+                <Link href="/biblioteca" passHref>
+                  <Button className="bg-[#3da64a] hover:bg-[#3da64a]/90 text-white px-4 py-2 text-sm font-semibold shadow-lg transition-transform hover:scale-105">
+                    VER MAS
+                  </Button>
+                </Link>
+              </div>
+            )}
+            
+            {/* Solo mostrar VER MAS para usuarios no admin */}
+            {(!user || user.user_type !== "admin") && (
               <Link href="/biblioteca" passHref>
                 <Button className="bg-[#3da64a] hover:bg-[#3da64a]/90 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg transition-transform hover:scale-105">
                   VER MAS
                 </Button>
               </Link>
-            </div>
+            )}
           </div>
           <p className="text-gray-500 text-base sm:text-lg text-center mt-4">Servicios diseñados para mejorar tu calidad de vida</p>
         </div>
@@ -344,6 +565,12 @@ export default function DigitalLibrary() {
                           target.src = '/placeholder.svg';
                         }}
                       />
+                      {/* Mostrar precio solo si está habilitado y existe el precio */}
+                      {showPrices && article.price && (
+                        <div className="absolute bottom-2 left-2 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                          S/ {article.price}
+                        </div>
+                      )}
                     </div>
                     <CardHeader>
                       <CardTitle className="text-lg sm:text-xl font-medium line-clamp-2">{article.title}</CardTitle>
@@ -353,7 +580,7 @@ export default function DigitalLibrary() {
                       <div className="mt-4">
                         <Button asChild variant="outline" className="w-full">
                           <Link href={`/biblioteca/${article.slug}`}>
-                            Leer más
+                            Ver promoción
                           </Link>
                         </Button>
                       </div>
@@ -395,23 +622,58 @@ export default function DigitalLibrary() {
           <DialogHeader>
             <DialogTitle>Editar artículo</DialogTitle>
           </DialogHeader>
-          <form onSubmit={(e) => {
+          <form onSubmit={async (e) => {
             e.preventDefault();
+            console.log("🚀 Formulario enviado");
+            
+            if (!editingArticle) {
+              console.log("❌ No hay artículo en edición");
+              return;
+            }
+            
             const formData = new FormData(e.currentTarget);
             
-            if (!editingArticle) return;
+            // Obtener todos los valores del formulario
+            const title = formData.get('title') as string;
+            const description = formData.get('description') as string;
+            const content = formData.get('content') as string;
+            const image = formData.get('image') as string;
+            const category = formData.get('category') as string;
+            const priceInput = formData.get('price') as string;
+            
+            console.log("📝 Datos del formulario:", {
+              title,
+              description,
+              content,
+              image,
+              category,
+              priceInput
+            });
+            
+            // Procesar el precio
+            let price: number | undefined = undefined;
+            if (priceInput && priceInput.trim() !== '') {
+              const priceNumber = parseFloat(priceInput.trim());
+              if (!isNaN(priceNumber) && priceNumber > 0) {
+                price = priceNumber;
+              }
+            }
+            
+            console.log("💰 Precio procesado:", price);
             
             const updatedArticle: Analysis = {
               ...editingArticle,
-              title: formData.get('title') as string,
-              description: formData.get('description') as string,
-              content: formData.get('content') as string,
-              image: formData.get('image') as string || editingArticle.image,
-              category: formData.get('category') as string,
-              price: formData.get('price') ? Number(formData.get('price')) : undefined
+              title: title || editingArticle.title,
+              description: description || editingArticle.description,
+              content: content || editingArticle.content,
+              image: image || editingArticle.image,
+              category: category || editingArticle.category,
+              price: price
             };
             
-            handleUpdateArticle(updatedArticle);
+            console.log("🔄 Artículo actualizado a enviar:", updatedArticle);
+            
+            await handleUpdateArticle(updatedArticle);
           }}>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-1 items-center gap-2">
@@ -461,13 +723,16 @@ export default function DigitalLibrary() {
                 </select>
               </div>
               <div className="grid grid-cols-1 items-center gap-2">
-                <Label htmlFor="price">Precio</Label>
+                <Label htmlFor="price">Precio (S/)</Label>
                 <Input
                   id="price"
                   name="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
                   defaultValue={editingArticle?.price?.toString() || ''}
                   className="w-full"
-                  placeholder="Ej: 100.00"
+                  placeholder="Ej: 245.00"
                 />
               </div>
               <div className="grid grid-cols-1 items-center gap-2">
@@ -485,7 +750,12 @@ export default function DigitalLibrary() {
               <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" className="bg-[#3DA64A] hover:bg-[#3DA64A]/90 text-white" disabled={loading}>
+              <Button 
+                type="submit" 
+                className="bg-[#3DA64A] hover:bg-[#3DA64A]/90 text-white" 
+                disabled={loading}
+                onClick={() => console.log("🔴 CLICK en botón de guardar - loading:", loading)}
+              >
                 {loading ? 'Actualizando...' : 'Guardar Cambios'}
               </Button>
             </div>

@@ -74,7 +74,7 @@ export default function MainServices() {
   const [mounted, setMounted] = useState(false)
   const { user } = useAuth()
   const [perfilesBienestar, setPerfilesBienestar] = useState<PerfilBienestar[]>([])
-  const [sectionTitle, setSectionTitle] = useState("Perfiles de bienestar")
+  const [sectionTitle, setSectionTitle] = useState("Perfiles Preventivos")
   const [editingTitle, setEditingTitle] = useState(false)
   const [currentPage, setCurrentPage] = useState(0) // Para el carrusel
   const itemsPerPage = 3 // Siempre mostrar 3
@@ -134,11 +134,11 @@ export default function MainServices() {
         setSectionTitle(data.titulo)
       } else {
         console.log("⚠️ No hay título en la respuesta, usando por defecto")
-        setSectionTitle("Perfiles de bienestar")
+        setSectionTitle("Perfiles Preventivos")
       }
     } catch (err) {
       console.log("⚠️ Error al cargar título, usando por defecto:", err)
-      setSectionTitle("Perfiles de bienestar")
+      setSectionTitle("Perfiles Preventivos")
     }
   }
 
