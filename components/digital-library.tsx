@@ -245,8 +245,8 @@ export default function DigitalLibrary() {
       }
 
       if (data) {
-        setSectionTitle(data.titulo || "Promociones Disponibles");
-        setShowPrices(data.mostrar_precios || false);
+        setSectionTitle(String(data.titulo || "Promociones Disponibles"));
+        setShowPrices(Boolean(data.mostrar_precios));
       }
     } catch (err) {
       console.error("❌ Error al obtener configuración:", err)
