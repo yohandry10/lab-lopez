@@ -91,10 +91,27 @@ export default function AnalisisPage() {
     const matchesLetter = selectedLetter ? analysis.name.charAt(0).toUpperCase() === selectedLetter : true
     const matchesCategory = selectedCategory ? analysis.category === selectedCategory : true
     
-    // Si no hay usuario logueado, solo mostrar análisis marcados como públicos
-    const isVisibleToUser = user 
-      ? true // Usuario autenticado ve todos
-      : analysis.show_public === true // Usuario público solo ve los marcados como públicos
+    // LÓGICA DE SEGMENTACIÓN DE PRECIOS
+    const isVisibleToUser = (() => {
+      if (!user) {
+        // Usuario NO logueado: solo ve análisis marcados como públicos
+        return analysis.show_public === true
+      } else {
+        // Usuarios autenticados: lógica por rol
+        switch (user.user_type) {
+          case "admin":
+            return true // Admin ve todos
+          case "patient":
+            return true // Pacientes ven todos
+          case "doctor":
+          case "company":
+            // Médicos/Empresas NO ven análisis marcados como públicos (segmentación de precios)
+            return analysis.show_public !== true
+          default:
+            return true
+        }
+      }
+    })()
 
     return matchesSearch && matchesLetter && matchesCategory && isVisibleToUser
   })
@@ -946,7 +963,15 @@ export default function AnalisisPage() {
                         
                         <div className="flex justify-between items-center">
                           <div className="flex flex-col">
-                            {/* Precios para MÉDICOS y EMPRESAS */}
+                            {/* Precios para USUARIOS NO LOGUEADOS (Público) - Solo si show_public = true */}
+                            {!user && analysis.show_public && (
+                              <>
+                                <span className="text-lg font-bold text-green-600">S/. {analysis.price.toFixed(2)}</span>
+                                <span className="text-xs text-gray-500">Precio público</span>
+                              </>
+                            )}
+                            
+                            {/* Precios para MÉDICOS y EMPRESAS (solo análisis NO públicos) */}
                             {user && (user.user_type === "doctor" || user.user_type === "company") && (
                               <>
                                 <span className="text-lg font-bold text-blue-600">S/. {(analysis.reference_price || analysis.price * 0.8).toFixed(2)}</span>
@@ -1022,7 +1047,7 @@ export default function AnalisisPage() {
                           <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                             Categoría
                           </th>
-                          {user && (
+                          {(user || filteredAnalysis.some(a => !user && a.show_public)) && (
                             <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                               Precio
                             </th>
@@ -1053,10 +1078,18 @@ export default function AnalisisPage() {
                                 {analysis.category}
                               </span>
                             </td>
-                            {user && (
+                            {(user || (!user && analysis.show_public)) && (
                               <td className="px-6 py-4 text-sm font-semibold">
-                                {/* Precios para MÉDICOS y EMPRESAS */}
-                                {(user.user_type === "doctor" || user.user_type === "company") && (
+                                {/* Precios para USUARIOS NO LOGUEADOS (Público) - Solo si show_public = true */}
+                                {!user && analysis.show_public && (
+                                  <div className="flex flex-col">
+                                    <span className="text-green-600">S/. {analysis.price.toFixed(2)}</span>
+                                    <span className="text-xs text-gray-500">Precio público</span>
+                                  </div>
+                                )}
+                                
+                                {/* Precios para MÉDICOS y EMPRESAS (solo análisis NO públicos) */}
+                                {user && (user.user_type === "doctor" || user.user_type === "company") && (
                                   <div className="flex flex-col">
                                     <span className="text-blue-600">S/. {(analysis.reference_price || analysis.price * 0.8).toFixed(2)}</span>
                                     <span className="text-xs text-gray-500">Precio referencial</span>
@@ -1064,12 +1097,12 @@ export default function AnalisisPage() {
                                 )}
                                 
                                 {/* Precios para ADMIN */}
-                                {user.user_type === "admin" && (
+                                {user && user.user_type === "admin" && (
                                   <span className="text-gray-900">S/. {analysis.price.toFixed(2)}</span>
                                 )}
                                 
                                 {/* Precios para PACIENTES autenticados */}
-                                {user.user_type === "patient" && (
+                                {user && user.user_type === "patient" && (
                                   <span className="text-green-600">S/. {analysis.price.toFixed(2)}</span>
                                 )}
                               </td>

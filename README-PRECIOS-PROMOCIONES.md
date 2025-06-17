@@ -1,4 +1,4 @@
-# Control de Precios en Promociones Disponibles
+# 🏥 Sistema de Precios y Promociones - Laboratorio López
 
 ## 📋 Descripción
 Se ha implementado un sistema para que el administrador pueda controlar si mostrar o no los precios **SOLO en la sección "Promociones Disponibles" de la página principal**. 
@@ -113,3 +113,140 @@ WHERE seccion = 'biblioteca_digital';
 ---
 
 **Nota**: Esta funcionalidad está diseñada para dar control sobre la presentación de precios en la página principal, manteniendo SIEMPRE la información completa de precios disponible en cada artículo individual. 
+
+## 📊 Funcionalidades Implementadas
+
+### 1. 🎯 Control de Visibilidad de Precios en Promociones
+**Ubicación**: Página principal - Sección "Promociones Disponibles"
+
+**Funcionalidad**:
+- ✅ Admin puede mostrar/ocultar precios con botón toggle
+- ✅ Estado guardado en base de datos (`configuracion_secciones.mostrar_precios`)
+- ✅ Solo admin ve los controles de configuración
+- ✅ Usuarios ven precios según configuración del admin
+
+**Controles de Admin**:
+- 🟢 **"Mostrar Precios"** - Muestra precios en las tarjetas promocionales
+- 🔘 **"Ocultar Precios"** - Oculta precios de las tarjetas promocionales
+- ✏️ **Editar título** - Permite cambiar "Promociones Disponibles"
+
+### 2. 💰 Sistema de Precios Diferenciados por Audiencia
+
+**Nueva Funcionalidad**: El admin puede configurar cada artículo con:
+
+#### 📋 Al Agregar Artículo:
+- **Audiencia Objetivo**: 
+  - 👥 **Público general** - Para pacientes y público no registrado
+  - 🏥 **Médicos y Empresas** - Para usuarios corporativos
+
+- **Precio Dinámico**: 
+  - Si audiencia = "público" → Campo muestra "💰 Precio Público (Ej: 200.00)"
+  - Si audiencia = "médicos/empresas" → Campo muestra "🏢 Precio Empresarial (Ej: 150.00)"
+
+#### ✏️ Al Editar Artículo:
+- **Audiencia Objetivo**: Selector para cambiar audiencia
+- **💰 Precio Público**: Para pacientes (campo verde)
+- **🏢 Precio Empresarial**: Para médicos/empresas - OPCIONAL (campo azul)
+
+**Ventajas**:
+- 🎯 **Segmentación clara** de precios por tipo de usuario
+- 💡 **Interfaz intuitiva** con colores y emojis diferenciadores
+- 🔄 **Flexibilidad total** - cada artículo puede tener su propia audiencia
+- 💾 **Persistencia** - configuración guardada en base de datos
+
+### 3. 🔍 Comportamiento de Precios por Página
+
+#### 🏠 Página Principal (Promociones):
+- **Controlado por admin**: Toggle "Mostrar/Ocultar Precios"
+- **Si están ocultos**: No se muestran precios en ninguna tarjeta
+- **Si están visibles**: Se muestran precios según configuración
+
+#### 📖 Páginas Individuales de Artículos:
+- **SIEMPRE muestran precios** si existen (no afectado por toggle del admin)
+- **Comportamiento según audiencia**:
+  - Artículo para "público" → Muestra precio público
+  - Artículo para "médicos/empresas" → Muestra precio empresarial
+
+## 🗃️ Estructura de Base de Datos
+
+### Tabla: `biblioteca_digital`
+```sql
+-- Campos nuevos agregados:
+ALTER TABLE biblioteca_digital
+ADD COLUMN precio_referencia DECIMAL(10,2);      -- Precio para médicos/empresas
+ADD COLUMN audiencia_objetivo VARCHAR(20) DEFAULT 'publico';  -- 'publico' | 'medicos_empresas'
+```
+
+### Tabla: `configuracion_secciones`
+```sql
+-- Campo para controlar visibilidad de precios:
+mostrar_precios BOOLEAN DEFAULT FALSE;  -- Control del admin para mostrar/ocultar precios
+```
+
+## 🔧 Roles y Permisos
+
+### 👑 Admin
+- ✅ Ve todos los controles de configuración
+- ✅ Puede mostrar/ocultar precios en promociones
+- ✅ Puede agregar/editar artículos con precios diferenciados
+- ✅ Puede cambiar audiencia objetivo de artículos
+- ✅ Puede editar título de la sección
+
+### 👥 Pacientes/Público
+- ❌ No ven controles de admin
+- ✅ Ven precios públicos según configuración
+- ✅ Solo acceden a artículos para "público general"
+
+### 🏥 Médicos/Empresas  
+- ❌ No ven controles de admin
+- ✅ Ven precios empresariales cuando existen
+- ✅ Solo acceden a artículos para "médicos y empresas"
+- 🔒 **NO ven artículos marcados como "público"** (protección de preferenciales)
+
+## 🎨 Características de UI/UX
+
+### 🎯 Indicadores Visuales:
+- **🟢 Botón Verde**: Precios visibles
+- **⚪ Botón Gris**: Precios ocultos
+- **💰 Verde**: Campos de precio público
+- **🏢 Azul**: Campos de precio empresarial
+- **👥/🏥 Emojis**: Diferenciación clara de audiencias
+
+### 📱 Responsive Design:
+- ✅ Funciona en móviles, tablets y desktop
+- ✅ Controles de admin adaptativos
+- ✅ Formularios optimizados para touch
+
+## 🚀 Beneficios del Sistema
+
+1. **🎯 Segmentación Efectiva**: Precios diferenciados por tipo de cliente
+2. **🔒 Protección Comercial**: Médicos/empresas no ven precios públicos
+3. **👑 Control Total**: Admin decide qué se muestra y cuándo
+4. **📊 Flexibilidad**: Cada artículo puede tener su propia configuración
+5. **💡 UX Intuitiva**: Interfaz clara y fácil de usar
+6. **🔄 Sincronización**: Cambios se reflejan inmediatamente en la web
+
+## 📋 Scripts de Base de Datos
+
+### Para aplicar las nuevas funcionalidades:
+1. `scripts/add-show-prices-setting.sql` - Control de visibilidad de precios
+2. `scripts/add-differential-pricing-biblioteca.sql` - Precios diferenciados por audiencia
+3. `scripts/update-section-titles.sql` - Configuración de títulos editables
+
+### Verificación:
+```sql
+-- Verificar nuevas columnas
+SELECT column_name, data_type, is_nullable, column_default 
+FROM information_schema.columns 
+WHERE table_name = 'biblioteca_digital' 
+AND column_name IN ('precio_referencia', 'audiencia_objetivo');
+```
+
+---
+
+## 📞 Notas Técnicas
+
+- **Compatibilidad**: Sistema compatible con todos los navegadores modernos
+- **Performance**: Consultas optimizadas con índices en campos clave
+- **Seguridad**: Validaciones tanto en frontend como backend
+- **Mantenimiento**: Código modular y bien documentado para futuras actualizaciones

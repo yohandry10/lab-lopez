@@ -42,7 +42,8 @@ export default function BibliotecaPage() {
     contenido: "",
     imagen_url: "",
     categoria: "Análisis clínicos",
-    precio: 150.00
+    precio: 150.00,
+    audiencia_objetivo: "publico" as 'publico' | 'medicos_empresas'
   })
 
   // Cargar artículos desde Supabase al iniciar
@@ -147,6 +148,7 @@ export default function BibliotecaPage() {
           imagen_url: newArticle.imagen_url.trim() || '/placeholder.svg',
           categoria: newArticle.categoria,
           precio: newArticle.precio || 150.00,
+          audiencia_objetivo: newArticle.audiencia_objetivo,
           activo: true,
           orden: allArticles.length + 1
         })
@@ -166,7 +168,15 @@ export default function BibliotecaPage() {
       fetchArticles()
       
       // Limpiar formulario y cerrar modal
-      setNewArticle({ titulo: "", descripcion: "", contenido: "", imagen_url: "", categoria: "Análisis clínicos", precio: 150.00 })
+      setNewArticle({ 
+        titulo: "", 
+        descripcion: "", 
+        contenido: "", 
+        imagen_url: "", 
+        categoria: "Análisis clínicos", 
+        precio: 150.00,
+        audiencia_objetivo: "publico"
+      })
       setShowAddModal(false)
       
       alert("✅ Artículo agregado correctamente")
@@ -408,16 +418,33 @@ export default function BibliotecaPage() {
               </select>
             </div>
 
+            {/* Selector de audiencia objetivo */}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="audiencia" className="text-right">
+                Audiencia *
+              </Label>
+              <select
+                id="audiencia"
+                value={newArticle.audiencia_objetivo || 'publico'}
+                onChange={(e) => setNewArticle({ ...newArticle, audiencia_objetivo: e.target.value as 'publico' | 'medicos_empresas' })}
+                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="publico">👥 Público general</option>
+                <option value="medicos_empresas">🏥 Médicos y Empresas</option>
+              </select>
+            </div>
+
+            {/* Precio según audiencia */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="precio" className="text-right">
-                Precio
+                {newArticle.audiencia_objetivo === 'publico' ? '💰 Precio Público' : '🏢 Precio Empresarial'}
               </Label>
               <Input
                 id="precio"
                 value={newArticle.precio.toString()}
                 onChange={(e) => setNewArticle({ ...newArticle, precio: parseFloat(e.target.value) })}
                 className="col-span-3"
-                placeholder="Ej: 150.00"
+                placeholder={newArticle.audiencia_objetivo === 'publico' ? "Ej: 200.00 (precio para pacientes)" : "Ej: 150.00 (precio para médicos/empresas)"}
               />
             </div>
           </div>

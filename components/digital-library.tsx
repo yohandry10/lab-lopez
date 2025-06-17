@@ -44,6 +44,8 @@ export interface Analysis {
   author?: string
   readTime?: string
   price?: number
+  reference_price?: number // Precio para médicos/empresas
+  target_audience?: 'publico' | 'medicos_empresas' // Audiencia objetivo
 }
 
 // Solo mantener datos mínimos como ejemplo - la mayoría vendrá de Supabase
@@ -211,7 +213,9 @@ export default function DigitalLibrary() {
           date: item.created_at || new Date().toISOString(),
           author: 'Dr. López',
           readTime: '5 min',
-          price: item.precio ? Number(item.precio) : undefined
+          price: item.precio ? Number(item.precio) : undefined,
+          reference_price: item.precio_referencia ? Number(item.precio_referencia) : undefined,
+          target_audience: item.audiencia_objetivo || 'publico'
         };
       });
       setArticles(mappedArticles);
@@ -334,7 +338,7 @@ export default function DigitalLibrary() {
     try {
       const supabase = getSupabaseClient();
       
-      // Preparar el precio: convertir a número o null
+      // Preparar el precio público: convertir a número o null
       let precioValue = null;
       if (updatedArticle.price !== undefined && updatedArticle.price !== null) {
         const priceNumber = Number(updatedArticle.price);
@@ -343,7 +347,16 @@ export default function DigitalLibrary() {
         }
       }
 
-      console.log("💰 Precio a actualizar:", precioValue);
+      // Preparar el precio de referencia: convertir a número o null
+      let referencePriceValue = null;
+      if (updatedArticle.reference_price !== undefined && updatedArticle.reference_price !== null) {
+        const referencePriceNumber = Number(updatedArticle.reference_price);
+        if (!isNaN(referencePriceNumber) && referencePriceNumber > 0) {
+          referencePriceValue = referencePriceNumber;
+        }
+      }
+
+      console.log("💰 Precios a actualizar:", { precio: precioValue, referencia: referencePriceValue, audiencia: updatedArticle.target_audience });
       
       const updateData = {
         titulo: updatedArticle.title.trim(),
@@ -352,6 +365,8 @@ export default function DigitalLibrary() {
         imagen_url: updatedArticle.image?.trim() || '/placeholder.svg',
         categoria: updatedArticle.category || 'Análisis clínicos',
         precio: precioValue,
+        precio_referencia: referencePriceValue,
+        audiencia_objetivo: updatedArticle.target_audience || 'publico',
         updated_at: new Date().toISOString()
       };
 
@@ -640,6 +655,8 @@ export default function DigitalLibrary() {
             const image = formData.get('image') as string;
             const category = formData.get('category') as string;
             const priceInput = formData.get('price') as string;
+            const referencePriceInput = formData.get('reference_price') as string;
+            const targetAudience = formData.get('target_audience') as 'publico' | 'medicos_empresas';
             
             console.log("📝 Datos del formulario:", {
               title,
@@ -647,10 +664,12 @@ export default function DigitalLibrary() {
               content,
               image,
               category,
-              priceInput
+              priceInput,
+              referencePriceInput,
+              targetAudience
             });
             
-            // Procesar el precio
+            // Procesar el precio público
             let price: number | undefined = undefined;
             if (priceInput && priceInput.trim() !== '') {
               const priceNumber = parseFloat(priceInput.trim());
@@ -658,8 +677,17 @@ export default function DigitalLibrary() {
                 price = priceNumber;
               }
             }
+
+            // Procesar el precio de referencia (empresarial)
+            let referencePrice: number | undefined = undefined;
+            if (referencePriceInput && referencePriceInput.trim() !== '') {
+              const referencePriceNumber = parseFloat(referencePriceInput.trim());
+              if (!isNaN(referencePriceNumber) && referencePriceNumber > 0) {
+                referencePrice = referencePriceNumber;
+              }
+            }
             
-            console.log("💰 Precio procesado:", price);
+            console.log("💰 Precios procesados:", { price, referencePrice, targetAudience });
             
             const updatedArticle: Analysis = {
               ...editingArticle,
@@ -668,7 +696,9 @@ export default function DigitalLibrary() {
               content: content || editingArticle.content,
               image: image || editingArticle.image,
               category: category || editingArticle.category,
-              price: price
+              price: price,
+              reference_price: referencePrice,
+              target_audience: targetAudience || 'publico'
             };
             
             console.log("🔄 Artículo actualizado a enviar:", updatedArticle);
@@ -722,8 +752,23 @@ export default function DigitalLibrary() {
                   <option value="Nutrición">Nutrición</option>
                 </select>
               </div>
+              {/* Audiencia objetivo */}
               <div className="grid grid-cols-1 items-center gap-2">
-                <Label htmlFor="price">Precio (S/)</Label>
+                <Label htmlFor="target_audience">Audiencia objetivo *</Label>
+                <select
+                  id="target_audience"
+                  name="target_audience"
+                  defaultValue={editingArticle?.target_audience || 'publico'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3DA64A]"
+                >
+                  <option value="publico">👥 Público general</option>
+                  <option value="medicos_empresas">🏥 Médicos y Empresas</option>
+                </select>
+              </div>
+
+              {/* Precio público */}
+              <div className="grid grid-cols-1 items-center gap-2">
+                <Label htmlFor="price">💰 Precio Público (S/) - Para pacientes</Label>
                 <Input
                   id="price"
                   name="price"
@@ -731,8 +776,23 @@ export default function DigitalLibrary() {
                   step="0.01"
                   min="0"
                   defaultValue={editingArticle?.price?.toString() || ''}
-                  className="w-full"
-                  placeholder="Ej: 245.00"
+                  className="w-full border-green-300 focus:border-green-500"
+                  placeholder="Ej: 200.00"
+                />
+              </div>
+
+              {/* Precio empresarial */}
+              <div className="grid grid-cols-1 items-center gap-2">
+                <Label htmlFor="reference_price">🏢 Precio Empresarial (S/) - Para médicos/empresas (opcional)</Label>
+                <Input
+                  id="reference_price"
+                  name="reference_price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  defaultValue={editingArticle?.reference_price?.toString() || ''}
+                  className="w-full border-blue-300 focus:border-blue-500"
+                  placeholder="Ej: 150.00"
                 />
               </div>
               <div className="grid grid-cols-1 items-center gap-2">

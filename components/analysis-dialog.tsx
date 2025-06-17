@@ -45,6 +45,8 @@ interface AnalysisDialogProps {
     id: number
     name: string
     price: number
+    reference_price?: number
+    show_public?: boolean
     conditions: string
     sample: string
     protocol: string
@@ -142,9 +144,42 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
           <DialogTitle className="text-lg font-medium">{analysis.name}</DialogTitle>
         </DialogHeader>
         
-        <div className="bg-blue-50 -mx-6 px-6 py-2 text-right text-sm">
-          <span className="font-medium">Precio: S/. {analysis.price.toFixed(2)}</span> <span className="text-gray-600">(incluido IGV)</span>
-        </div>
+        {/* Mostrar precio según segmentación de roles */}
+        {(user || analysis.show_public) && (
+          <div className="bg-blue-50 -mx-6 px-6 py-2 text-right text-sm">
+            {/* Precio para usuarios NO logueados (público) */}
+            {!user && analysis.show_public && (
+              <>
+                <span className="font-medium">Precio: S/. {analysis.price.toFixed(2)}</span>
+                <span className="text-gray-600"> (incluido IGV)</span>
+              </>
+            )}
+            
+            {/* Precio para médicos/empresas (solo análisis NO públicos) */}
+            {user && (user.user_type === "doctor" || user.user_type === "company") && (
+              <>
+                <span className="font-medium">Precio: S/. {(analysis.reference_price || analysis.price * 0.8).toFixed(2)}</span>
+                <span className="text-gray-600"> (incluido IGV) - Precio referencial</span>
+              </>
+            )}
+            
+            {/* Precio para pacientes autenticados */}
+            {user && user.user_type === "patient" && (
+              <>
+                <span className="font-medium">Precio: S/. {analysis.price.toFixed(2)}</span>
+                <span className="text-gray-600"> (incluido IGV)</span>
+              </>
+            )}
+            
+            {/* Precio para admin */}
+            {user && user.user_type === "admin" && (
+              <>
+                <span className="font-medium">Precio: S/. {analysis.price.toFixed(2)}</span>
+                <span className="text-gray-600"> (incluido IGV)</span>
+              </>
+            )}
+          </div>
+        )}
         
         <div className="space-y-4 pt-2">
           <div>

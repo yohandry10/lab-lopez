@@ -15,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Input } from "@/components/ui/input"
 import { SchedulingFlow } from "./scheduling-flow"
 import { useCart } from "@/contexts/cart-context"
+import { useAuth } from "@/contexts/auth-context"
 import { SuccessDialog } from "./success-dialog"
 import { Home, Search } from "lucide-react"
 import { getSupabaseClient } from "@/lib/supabase-client"
@@ -28,6 +29,8 @@ interface Analysis {
   id: number
   name: string
   price: number
+  reference_price?: number
+  show_public?: boolean
   category?: string
 }
 
@@ -65,6 +68,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
   const [patientName, setPatientName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { addItem } = useCart()
+  const { user } = useAuth()
 
   // Cargar análisis desde Supabase al abrir el modal
   useEffect(() => {
@@ -108,7 +112,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
       
       const { data, error } = await supabase
         .from("analyses")
-        .select("id, name, price, category")
+        .select("id, name, price, reference_price, show_public, category")
         .order("name", { ascending: true })
 
       console.log("📊 Respuesta de Supabase:", { data: data?.length, error })
@@ -125,9 +129,34 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
           id: Number(item.id),
           name: String(item.name || '').trim(),
           price: Number(item.price || 0),
+          reference_price: item.reference_price ? Number(item.reference_price) : undefined,
+          show_public: Boolean(item.show_public),
           category: String(item.category || '').trim()
         }))
-        setAllAnalyses(mappedAnalyses)
+        
+        // Aplicar segmentación de precios según rol de usuario
+        const filteredByRole = mappedAnalyses.filter(analysis => {
+          if (!user) {
+            // Usuario NO logueado: solo ve análisis públicos
+            return analysis.show_public === true
+          } else {
+            // Usuarios autenticados: lógica por rol
+            switch (user.user_type) {
+              case "admin":
+                return true // Admin ve todos
+              case "patient":
+                return true // Pacientes ven todos
+              case "doctor":
+              case "company":
+                // Médicos/Empresas NO ven análisis marcados como públicos
+                return analysis.show_public !== true
+              default:
+                return true
+            }
+          }
+        })
+        
+        setAllAnalyses(filteredByRole)
         console.log("📋 Primeros 3 análisis:", mappedAnalyses.slice(0, 3))
       } else {
         console.log("⚠️ No hay datos en la base de datos")
@@ -155,12 +184,19 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
     const fullName = `${data.firstName} ${data.lastName}`
     setPatientName(fullName)
 
-    // Add item to cart
+    // Add item to cart with correct price based on user role
     if (selectedAnalysis) {
+      let priceToUse = selectedAnalysis.price // Default to public price
+      
+      // Determine price based on user role
+      if (user && (user.user_type === "doctor" || user.user_type === "company")) {
+        priceToUse = selectedAnalysis.reference_price || selectedAnalysis.price * 0.8
+      }
+      
       addItem({
         id: selectedAnalysis.id,
         name: selectedAnalysis.name,
-        price: selectedAnalysis.price,
+        price: priceToUse,
         patientDetails: data,
       })
     }
@@ -236,7 +272,16 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
                       <div className="font-medium text-gray-900">{analysis.name}</div>
                       <div className="text-sm text-gray-600 flex justify-between">
                         <span>{analysis.category}</span>
-                        <span className="font-medium">S/. {analysis.price.toFixed(2)}</span>
+                        {/* Mostrar precio según rol de usuario */}
+                        {!user && analysis.show_public && (
+                          <span className="font-medium text-green-600">S/. {analysis.price.toFixed(2)}</span>
+                        )}
+                        {user && (user.user_type === "doctor" || user.user_type === "company") && (
+                          <span className="font-medium text-blue-600">S/. {(analysis.reference_price || analysis.price * 0.8).toFixed(2)}</span>
+                        )}
+                        {user && (user.user_type === "patient" || user.user_type === "admin") && (
+                          <span className="font-medium text-green-600">S/. {analysis.price.toFixed(2)}</span>
+                        )}
                       </div>
                     </button>
                   ))}
@@ -256,7 +301,16 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
                   <div className="font-medium text-blue-900">{selectedAnalysis.name}</div>
                   <div className="text-sm text-blue-700 flex justify-between">
                     <span>{selectedAnalysis.category}</span>
-                    <span className="font-medium">S/. {selectedAnalysis.price.toFixed(2)}</span>
+                    {/* Mostrar precio según rol de usuario */}
+                    {!user && selectedAnalysis.show_public && (
+                      <span className="font-medium">S/. {selectedAnalysis.price.toFixed(2)}</span>
+                    )}
+                    {user && (user.user_type === "doctor" || user.user_type === "company") && (
+                      <span className="font-medium">S/. {(selectedAnalysis.reference_price || selectedAnalysis.price * 0.8).toFixed(2)}</span>
+                    )}
+                    {user && (user.user_type === "patient" || user.user_type === "admin") && (
+                      <span className="font-medium">S/. {selectedAnalysis.price.toFixed(2)}</span>
+                    )}
                   </div>
                 </div>
               )}
