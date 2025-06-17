@@ -1396,13 +1396,13 @@ export default function AnalisisPage() {
 
       <HeroSchedulingDialog isOpen={isHeroSchedulingOpen} onClose={() => setIsHeroSchedulingOpen(false)} />
 
-      {editingAnalysis && (
-        <Dialog open={!!editingAnalysis} onOpenChange={() => setEditingAnalysis(null)}>
-          <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] overflow-hidden p-4 sm:p-6">
+      <Dialog open={!!editingAnalysis} onOpenChange={() => setEditingAnalysis(null)}>
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] overflow-hidden p-4 sm:p-6">
             <DialogHeader className="pb-2">
-              <DialogTitle className="text-sm sm:text-lg">Editar Análisis: {editingAnalysis.name}</DialogTitle>
+              <DialogTitle className="text-sm sm:text-lg">Editar Análisis: {editingAnalysis?.name || 'Cargando...'}</DialogTitle>
             </DialogHeader>
             <div className="overflow-y-auto max-h-[calc(85vh-120px)] pr-2">
+              {editingAnalysis && (
               <form onSubmit={async (e) => {
                 e.preventDefault()
                 console.log("📝 Formulario enviado");
@@ -1547,10 +1547,10 @@ export default function AnalisisPage() {
                   </Button>
                 </div>
               </form>
+              )}
             </div>
           </DialogContent>
         </Dialog>
-      )}
 
       {/* Diálogo de edición de perfiles */}
       <Dialog open={!!editingProfile} onOpenChange={() => setEditingProfile(null)}>
@@ -1646,9 +1646,8 @@ export default function AnalisisPage() {
       </Dialog>
 
       {/* Modal para agregar análisis */}
-      {isAddModalOpen && (
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
             <DialogHeader>
               <DialogTitle className="text-base sm:text-lg">Agregar nuevo análisis</DialogTitle>
             </DialogHeader>
@@ -1747,12 +1746,10 @@ export default function AnalisisPage() {
             </div>
           </DialogContent>
         </Dialog>
-      )}
 
       {/* Modal para agregar perfil */}
-      {isAddProfileModalOpen && (
-        <Dialog open={isAddProfileModalOpen} onOpenChange={setIsAddProfileModalOpen}>
-          <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+      <Dialog open={isAddProfileModalOpen} onOpenChange={setIsAddProfileModalOpen}>
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
             <DialogHeader>
               <DialogTitle className="text-base sm:text-lg">Agregar nuevo perfil</DialogTitle>
             </DialogHeader>
@@ -1792,7 +1789,6 @@ export default function AnalisisPage() {
             </div>
           </DialogContent>
         </Dialog>
-      )}
 
       {/* Modal de gestión de categorías */}
       <CategoriasAdminModal 
