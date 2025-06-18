@@ -309,7 +309,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
                       <span className="font-medium">S/. {(selectedAnalysis.reference_price || selectedAnalysis.price * 0.8).toFixed(2)}</span>
                     )}
                     {user && (user.user_type === "patient" || user.user_type === "admin") && (
-                      <span className="font-medium">S/. {selectedAnalysis.price.toFixed(2)}</span>
+                    <span className="font-medium">S/. {selectedAnalysis.price.toFixed(2)}</span>
                     )}
                   </div>
                 </div>

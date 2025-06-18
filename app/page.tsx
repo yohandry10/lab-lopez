@@ -84,8 +84,8 @@ export default function Home() {
                       /* Para todos los demás: mostrar los 3 botones normales */
                       <>
                         <UserTypeLink href="/resultados?type=patient" icon={User} label="Pacientes" />
-                        <UserTypeLink href="/login" icon={Stethoscope} label="Médicos" />
-                        <UserTypeLink href="/login" icon={Building2} label="Empresas" />
+                        <UserTypeLink href="/resultados?type=doctor" icon={Stethoscope} label="Médicos" />
+                        <UserTypeLink href="/resultados?type=company" icon={Building2} label="Empresas" />
                       </>
                     )}
                   </div>

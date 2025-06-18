@@ -146,7 +146,7 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
         
         {/* Mostrar precio según segmentación de roles */}
         {(user || analysis.show_public) && (
-          <div className="bg-blue-50 -mx-6 px-6 py-2 text-right text-sm">
+        <div className="bg-blue-50 -mx-6 px-6 py-2 text-right text-sm">
             {/* Precio para usuarios NO logueados (público) */}
             {!user && analysis.show_public && (
               <>
@@ -178,7 +178,7 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
                 <span className="text-gray-600"> (incluido IGV)</span>
               </>
             )}
-          </div>
+        </div>
         )}
         
         <div className="space-y-4 pt-2">

@@ -23,7 +23,7 @@ type RegisterData = {
 type AuthContextType = {
   user: User | null
   isLoading: boolean
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>
   logout: () => Promise<{ success: boolean; error?: string }>
   register: (userData: RegisterData) => Promise<{ success: boolean; error?: string }>
   adminRegister: (userData: RegisterData) => Promise<{ success: boolean; error?: string }>
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await signIn(email, password)
       if (result.success && result.user) {
         setUser(result.user as User)
-        return { success: true }
+        return { success: true, user: result.user as User }
       }
       return { success: false, error: result.error }
     } catch (error) {

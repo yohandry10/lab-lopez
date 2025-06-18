@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Plus } from "lucide-react"
+import { Search, Plus, Trash2 } from "lucide-react"
 import { analysisData } from "@/components/digital-library"
 import { motion } from "framer-motion"
 import { getSupabaseClient } from "@/lib/supabase-client"
@@ -186,6 +186,38 @@ export default function BibliotecaPage() {
     }
   }
 
+  // Función para eliminar artículo
+  const handleDeleteArticle = async (articleId: number, articleTitle: string) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar el artículo "${articleTitle}"?`)) {
+      return
+    }
+
+    const supabase = getSupabaseClient()
+    
+    try {
+      const { error } = await supabase
+        .from("biblioteca_digital")
+        .delete()
+        .eq("id", articleId)
+
+      if (error) {
+        console.error("❌ Error al eliminar artículo:", error)
+        alert("Error al eliminar artículo: " + error.message)
+        return
+      }
+
+      console.log("✅ Artículo eliminado correctamente")
+      
+      // Recargar artículos
+      fetchArticles()
+      
+      alert("✅ Artículo eliminado correctamente")
+    } catch (err) {
+      console.error("❌ Error inesperado al eliminar:", err)
+      alert("Error inesperado: " + String(err))
+    }
+  }
+
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -211,7 +243,7 @@ export default function BibliotecaPage() {
       >
         <div className="flex items-center justify-center gap-4 mb-4">
           <h1 className="text-4xl font-light tracking-tight sm:text-5xl md:text-6xl text-gray-900">
-            Biblioteca Digital
+            Artículos
           </h1>
           {/* Botón de agregar artículo solo para admin */}
           {user?.user_type === "admin" && (
@@ -312,7 +344,24 @@ export default function BibliotecaPage() {
                   </div>
                 </div>
                 <CardHeader className="flex-grow">
-                  <CardTitle>{article.title}</CardTitle>
+                  <CardTitle className="flex justify-between items-start">
+                    <span>{article.title}</span>
+                    {/* Botón de eliminar solo para admin */}
+                    {user?.user_type === "admin" && (
+                      <Button
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          handleDeleteArticle(article.id, article.title)
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-2 shrink-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </CardTitle>
                   <CardDescription>{article.description}</CardDescription>
                 </CardHeader>
                 <CardContent>

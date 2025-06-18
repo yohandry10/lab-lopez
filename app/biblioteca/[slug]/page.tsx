@@ -93,7 +93,7 @@ export default function ArticlePage() {
       console.log("🔍 Buscando artículo con slug:", slug)
       
       const foundArticle = articles.find((a) => a.slug === slug)
-      
+
       if (!foundArticle) {
         console.log("❌ Artículo no encontrado")
         router.push("/biblioteca")

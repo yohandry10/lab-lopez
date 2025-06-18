@@ -93,8 +93,14 @@ export default function LoginPage() {
       // Login con identificador y contraseña
       const result = await login(formData.identifier, formData.password)
       if (result.success) {
-        // Siempre redirigir a la página de inicio
-        router.push("/")
+        // Redirigir según el tipo de usuario
+        if (result.user?.user_type === "doctor" || result.user?.user_type === "company") {
+          // Médicos y empresas van directamente a análisis
+          router.push("/analisis")
+        } else {
+          // Otros usuarios (admin, pacientes) van a inicio
+          router.push("/")
+        }
       } else {
         // Mostrar error de autenticación
         setErrors(prev => ({ 

@@ -962,33 +962,7 @@ export default function AnalisisPage() {
                         </div>
                         
                         <div className="flex justify-between items-center">
-                          <div className="flex flex-col">
-                            {/* Precios para USUARIOS NO LOGUEADOS (Público) - Solo si show_public = true */}
-                            {!user && analysis.show_public && (
-                              <>
-                                <span className="text-lg font-bold text-green-600">S/. {analysis.price.toFixed(2)}</span>
-                                <span className="text-xs text-gray-500">Precio público</span>
-                              </>
-                            )}
-                            
-                            {/* Precios para MÉDICOS y EMPRESAS (solo análisis NO públicos) */}
-                            {user && (user.user_type === "doctor" || user.user_type === "company") && (
-                              <>
-                                <span className="text-lg font-bold text-blue-600">S/. {(analysis.reference_price || analysis.price * 0.8).toFixed(2)}</span>
-                                <span className="text-xs text-gray-500">Precio referencial</span>
-                              </>
-                            )}
-                            
-                            {/* Precios para ADMIN */}
-                            {user && user.user_type === "admin" && (
-                              <span className="text-lg font-bold text-gray-900">S/. {analysis.price.toFixed(2)}</span>
-                            )}
-                            
-                            {/* Precios para PACIENTES autenticados */}
-                            {user && user.user_type === "patient" && (
-                              <span className="text-lg font-bold text-green-600">S/. {analysis.price.toFixed(2)}</span>
-                            )}
-                          </div>
+                          {/* Precios removidos de la vista móvil - solo se mostrarán en el detalle */}
                         </div>
                         
                         <div className="flex flex-col sm:flex-row gap-2">
@@ -1047,11 +1021,6 @@ export default function AnalisisPage() {
                           <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                             Categoría
                           </th>
-                          {(user || filteredAnalysis.some(a => !user && a.show_public)) && (
-                            <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
-                              Precio
-                            </th>
-                          )}
                           <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                             Detalle
                           </th>
@@ -1078,35 +1047,6 @@ export default function AnalisisPage() {
                                 {analysis.category}
                               </span>
                             </td>
-                            {(user || (!user && analysis.show_public)) && (
-                              <td className="px-6 py-4 text-sm font-semibold">
-                                {/* Precios para USUARIOS NO LOGUEADOS (Público) - Solo si show_public = true */}
-                                {!user && analysis.show_public && (
-                                  <div className="flex flex-col">
-                                    <span className="text-green-600">S/. {analysis.price.toFixed(2)}</span>
-                                    <span className="text-xs text-gray-500">Precio público</span>
-                                  </div>
-                                )}
-                                
-                                {/* Precios para MÉDICOS y EMPRESAS (solo análisis NO públicos) */}
-                                {user && (user.user_type === "doctor" || user.user_type === "company") && (
-                                  <div className="flex flex-col">
-                                    <span className="text-blue-600">S/. {(analysis.reference_price || analysis.price * 0.8).toFixed(2)}</span>
-                                    <span className="text-xs text-gray-500">Precio referencial</span>
-                                  </div>
-                                )}
-                                
-                                {/* Precios para ADMIN */}
-                                {user && user.user_type === "admin" && (
-                                  <span className="text-gray-900">S/. {analysis.price.toFixed(2)}</span>
-                                )}
-                                
-                                {/* Precios para PACIENTES autenticados */}
-                                {user && user.user_type === "patient" && (
-                                  <span className="text-green-600">S/. {analysis.price.toFixed(2)}</span>
-                                )}
-                              </td>
-                            )}
                             <td className="px-6 py-4 text-sm font-medium">
                               <Button
                                 variant="outline"
@@ -1429,8 +1369,8 @@ export default function AnalisisPage() {
 
       <HeroSchedulingDialog isOpen={isHeroSchedulingOpen} onClose={() => setIsHeroSchedulingOpen(false)} />
 
-      <Dialog open={!!editingAnalysis} onOpenChange={() => setEditingAnalysis(null)}>
-        <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] overflow-hidden p-4 sm:p-6">
+        <Dialog open={!!editingAnalysis} onOpenChange={() => setEditingAnalysis(null)}>
+          <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] overflow-hidden p-4 sm:p-6">
             <DialogHeader className="pb-2">
               <DialogTitle className="text-sm sm:text-lg">Editar Análisis: {editingAnalysis?.name || 'Cargando...'}</DialogTitle>
             </DialogHeader>
@@ -1679,8 +1619,8 @@ export default function AnalisisPage() {
       </Dialog>
 
       {/* Modal para agregar análisis */}
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+          <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
             <DialogHeader>
               <DialogTitle className="text-base sm:text-lg">Agregar nuevo análisis</DialogTitle>
             </DialogHeader>
@@ -1781,8 +1721,8 @@ export default function AnalisisPage() {
         </Dialog>
 
       {/* Modal para agregar perfil */}
-      <Dialog open={isAddProfileModalOpen} onOpenChange={setIsAddProfileModalOpen}>
-        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+        <Dialog open={isAddProfileModalOpen} onOpenChange={setIsAddProfileModalOpen}>
+          <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
             <DialogHeader>
               <DialogTitle className="text-base sm:text-lg">Agregar nuevo perfil</DialogTitle>
             </DialogHeader>

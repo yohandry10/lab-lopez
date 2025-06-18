@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ChevronRight, Microscope, TestTube, Beaker, Baby, Dna, Search, Pencil, Trash2, Edit, Settings } from "lucide-react"
+import { ChevronLeft, ChevronRight, Microscope, TestTube, Beaker, Baby, Dna, Search, Pencil, Trash2, Edit, Settings, MoreHorizontal, PlusCircle } from "lucide-react"
 import { useState, useCallback, useEffect, useMemo } from "react"
 import { useInView } from "react-intersection-observer"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -14,6 +14,17 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/auth-context"
 import { getSupabaseClient } from "@/lib/supabase-client"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { useToast } from '@/components/ui/use-toast'
 
 // Función para normalizar slugs (remover acentos y caracteres especiales)
 function normalizeSlug(text: string): string {
@@ -160,71 +171,76 @@ export default function DigitalLibrary() {
   const [showPrices, setShowPrices] = useState(false) // Estado para mostrar/ocultar precios
   const [editingArticle, setEditingArticle] = useState<Analysis | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [articleToDelete, setArticleToDelete] = useState<Analysis | null>(null)
+  const { toast } = useToast()
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('all')
 
   // Función para cargar artículos desde Supabase
   const fetchArticles = async () => {
-    console.log("🔄 Cargando artículos desde Supabase...");
+      console.log("🔄 Cargando artículos desde Supabase...");
     setArticlesLoading(true);
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase
-      .from("biblioteca_digital")
-      .select("*")
-      .eq("activo", true)
-      .order("orden", { ascending: true });
-      
-    if (error) {
-      console.error("❌ Error al cargar artículos desde Supabase:", error);
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase
+        .from("biblioteca_digital")
+        .select("*")
+        .eq("activo", true)
+        .order("orden", { ascending: true });
+        
+      if (error) {
+        console.error("❌ Error al cargar artículos desde Supabase:", error);
       setArticlesLoading(false);
-      return;
-    }
-    
-    if (data && Array.isArray(data) && data.length > 0) {
-      console.log("✅ Artículos cargados desde Supabase:", data.length);
-      // Mapear datos de Supabase al formato esperado
-      const mappedArticles: Analysis[] = data.map((item: any) => {
-        // Usar la imagen de la base de datos, con fallback a imágenes originales solo si no hay imagen_url
-        let imageToUse = item.imagen_url && item.imagen_url.trim() !== '' ? item.imagen_url : '/placeholder.svg';
-        
-        // Solo usar imágenes originales si NO hay imagen en la base de datos
-        if (!item.imagen_url || item.imagen_url.trim() === '') {
-          const titulo = String(item.titulo || '').toLowerCase();
-        if (titulo.includes('zuma')) {
-            imageToUse = '/emba.webp';
-        } else if (titulo.includes('cofactor') || titulo.includes('willebrand')) {
-            imageToUse = '/hemo.jpeg';
-        } else if (titulo.includes('antifosfolípidos') || titulo.includes('antifosfolipidos')) {
-            imageToUse = '/anti.jpeg';
+        return;
+      }
+      
+      if (data && Array.isArray(data) && data.length > 0) {
+        console.log("✅ Artículos cargados desde Supabase:", data.length);
+        // Mapear datos de Supabase al formato esperado
+        const mappedArticles: Analysis[] = data.map((item: any) => {
+          // Usar la imagen de la base de datos, con fallback a imágenes originales solo si no hay imagen_url
+          let imageToUse = item.imagen_url && item.imagen_url.trim() !== '' ? item.imagen_url : '/placeholder.svg';
+          
+          // Solo usar imágenes originales si NO hay imagen en la base de datos
+          if (!item.imagen_url || item.imagen_url.trim() === '') {
+            const titulo = String(item.titulo || '').toLowerCase();
+          if (titulo.includes('zuma')) {
+              imageToUse = '/emba.webp';
+          } else if (titulo.includes('cofactor') || titulo.includes('willebrand')) {
+              imageToUse = '/hemo.jpeg';
+          } else if (titulo.includes('antifosfolípidos') || titulo.includes('antifosfolipidos')) {
+              imageToUse = '/anti.jpeg';
+            }
           }
-        }
-        
-        const generatedSlug = normalizeSlug(String(item.titulo || ''));
-        console.log("📝 Generando slug:", { titulo: item.titulo, slug: generatedSlug });
-        
-        return {
-          id: Number(item.id) || 0,
-          title: String(item.titulo || ''),
-          description: String(item.descripcion || ''),
+          
+          const generatedSlug = normalizeSlug(String(item.titulo || ''));
+          console.log("📝 Generando slug:", { titulo: item.titulo, slug: generatedSlug });
+          
+          return {
+            id: Number(item.id) || 0,
+            title: String(item.titulo || ''),
+            description: String(item.descripcion || ''),
           image: imageToUse,
-          category: String(item.categoria || "Análisis clínicos"),
-          slug: generatedSlug,
+            category: String(item.categoria || "Análisis clínicos"),
+            slug: generatedSlug,
           content: String(item.contenido || item.descripcion || ''),
-          heroIcons: [],
-          sections: [],
-          date: item.created_at || new Date().toISOString(),
-          author: 'Dr. López',
-          readTime: '5 min',
+            heroIcons: [],
+            sections: [],
+            date: item.created_at || new Date().toISOString(),
+            author: 'Dr. López',
+            readTime: '5 min',
           price: item.precio ? Number(item.precio) : undefined,
           reference_price: item.precio_referencia ? Number(item.precio_referencia) : undefined,
           target_audience: item.audiencia_objetivo || 'publico'
-        };
-      });
-      setArticles(mappedArticles);
-      console.log("🎨 DigitalLibrary - Artículos que se van a renderizar:", mappedArticles.map(a => ({ title: a.title, slug: a.slug })));
-    } else {
-      console.log("⚠️ No hay artículos en Supabase, usando datos locales");
-    }
+          };
+        });
+        setArticles(mappedArticles);
+        console.log("🎨 DigitalLibrary - Artículos que se van a renderizar:", mappedArticles.map(a => ({ title: a.title, slug: a.slug })));
+      } else {
+        console.log("⚠️ No hay artículos en Supabase, usando datos locales");
+      }
     setArticlesLoading(false);
-  }
+    }
 
   // Cargar artículos desde Supabase al iniciar
   useEffect(() => {
@@ -427,6 +443,54 @@ export default function DigitalLibrary() {
       console.error("❌ Error inesperado:", err)
       alert("Error inesperado al actualizar configuración")
     }
+  }
+
+  const handleDeleteClick = (article: Analysis) => {
+    setArticleToDelete(article)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleDeleteArticle = async () => {
+    if (!articleToDelete) return
+
+    // Primero, intenta eliminar la imagen de Supabase Storage si existe.
+    if (articleToDelete.image && articleToDelete.image.match(/public\/(.*)$/)) {
+      const match = articleToDelete.image.match(/public\/(.*)$/);
+      const imagePath = match ? match[0] : null;
+
+      if (imagePath) {
+        const { error: storageError } = await supabase.storage.from('biblioteca').remove([imagePath])
+
+        if (storageError) {
+          console.error('Error deleting image from storage:', storageError)
+          toast({
+            title: 'Advertencia',
+            description: 'No se pudo eliminar la imagen asociada, pero se intentará eliminar el artículo.',
+            variant: 'destructive',
+          })
+        }
+      }
+    }
+
+    const { error } = await supabase.from('biblioteca_digital').delete().eq('id', articleToDelete.id)
+
+    if (error) {
+      console.error('Error deleting article:', error)
+      toast({
+        title: 'Error',
+        description: 'No se pudo eliminar el artículo.',
+        variant: 'destructive',
+      })
+    } else {
+      setArticles(prev => prev.filter(a => a.id !== articleToDelete.id))
+      toast({
+        title: 'Éxito',
+        description: 'Artículo eliminado correctamente.',
+      })
+    }
+
+    setIsDeleteDialogOpen(false)
+    setArticleToDelete(null)
   }
 
   return (
@@ -822,6 +886,21 @@ export default function DigitalLibrary() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás realmente seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente el artículo y todos sus datos asociados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteArticle} className="bg-red-600 hover:bg-red-700">Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   )
 }

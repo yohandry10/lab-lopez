@@ -48,6 +48,38 @@ const mobileNavItems = [
   { href: "/domicilio", etiqueta: "Servicio a domicilio", icono: MapPin },
 ]
 
+// Función para filtrar items de navegación según el rol del usuario
+const getFilteredNavItems = (user: any) => {
+  if (!user) return navItems // Usuario no logueado ve todo
+  
+  if (user.user_type === "doctor" || user.user_type === "company") {
+    // Médicos y empresas solo ven: Análisis, Resultados y Sedes
+    return navItems.filter(item => 
+      item.etiqueta === "Análisis" || 
+      item.etiqueta === "Resultados" || 
+      item.etiqueta === "Sedes"
+    )
+  }
+  
+  return navItems // Otros usuarios (admin, pacientes) ven todo
+}
+
+// Función para filtrar items móviles según el rol del usuario
+const getFilteredMobileNavItems = (user: any) => {
+  if (!user) return mobileNavItems // Usuario no logueado ve todo
+  
+  if (user.user_type === "doctor" || user.user_type === "company") {
+    // Médicos y empresas solo ven: Análisis, Resultados y Sedes
+    return mobileNavItems.filter(item => 
+      item.etiqueta === "Análisis" || 
+      item.etiqueta === "Resultados" || 
+      item.etiqueta === "Sedes"
+    )
+  }
+  
+  return mobileNavItems // Otros usuarios (admin, pacientes) ven todo
+}
+
 interface NavbarContextType {
   isScrolled: boolean
 }
@@ -209,7 +241,7 @@ export function Navbar() {
             <div className="flex h-24 items-center justify-between">
               <Logo />
               <nav className="hidden lg:flex items-center gap-8">
-                {navItems.map(({ href, etiqueta, hasDropdown }) => (
+                {getFilteredNavItems(user).map(({ href, etiqueta, hasDropdown }) => (
                   <div key={etiqueta} className="relative">
                     <NavLink
                       href={href}
@@ -362,7 +394,7 @@ export function Navbar() {
                       <SheetTitle className="text-lg font-semibold">Menú principal</SheetTitle>
                     </SheetHeader>
                     <nav className="flex flex-col gap-6 pt-8 flex-grow">
-                      {mobileNavItems.map(({ href, etiqueta, icono: Icon, hasDropdown }) => (
+                      {getFilteredMobileNavItems(user).map(({ href, etiqueta, icono: Icon, hasDropdown }) => (
                         <div key={etiqueta}>
                           {hasDropdown ? (
                             <DropdownMenu>
