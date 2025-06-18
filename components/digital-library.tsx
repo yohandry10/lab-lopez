@@ -453,6 +453,8 @@ export default function DigitalLibrary() {
   const handleDeleteArticle = async () => {
     if (!articleToDelete) return
 
+    const supabase = getSupabaseClient()
+
     // Primero, intenta eliminar la imagen de Supabase Storage si existe.
     if (articleToDelete.image && articleToDelete.image.match(/public\/(.*)$/)) {
       const match = articleToDelete.image.match(/public\/(.*)$/);
