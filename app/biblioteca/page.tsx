@@ -243,7 +243,7 @@ export default function BibliotecaPage() {
       >
         <div className="flex items-center justify-center gap-4 mb-4">
           <h1 className="text-4xl font-light tracking-tight sm:text-5xl md:text-6xl text-gray-900">
-            Artículos
+            Promociones Disponibles
           </h1>
           {/* Botón de agregar artículo solo para admin */}
           {user?.user_type === "admin" && (
@@ -331,51 +331,45 @@ export default function BibliotecaPage() {
         ) : filteredArticles.length > 0 ? (
           filteredArticles.map((article) => (
             <motion.div key={article.id} variants={item}>
-              <Card className="overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-full flex flex-col">
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src={article.image || "/placeholder.svg"}
-                    alt={article.title}
-                    fill
-                    className="object-cover transition-transform duration-500 hover:scale-110"
-                  />
-                  <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
-                    {article.category}
-                  </div>
-                </div>
-                <CardHeader className="flex-grow">
-                  <CardTitle className="flex justify-between items-start">
-                    <span>{article.title}</span>
-                    {/* Botón de eliminar solo para admin */}
-                    {user?.user_type === "admin" && (
-                      <Button
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          handleDeleteArticle(article.id, article.title)
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-2 shrink-0"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </CardTitle>
-                  <CardDescription>{article.description}</CardDescription>
+              <Card className="flex flex-col h-full overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group">
+                <CardHeader className="p-0">
+                  <Link href={`/biblioteca/${article.slug}`} className="block overflow-hidden">
+                    <Image
+                      src={article.image}
+                      alt={article.title}
+                      width={600}
+                      height={400}
+                      className="w-full h-56 object-cover transform transition-transform duration-500 group-hover:scale-110"
+                    />
+                  </Link>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center">
-                    <time className="text-sm text-gray-500">
-                      {article.date ? new Date(article.date).toLocaleDateString("es-ES", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      }) : "Fecha no disponible"}
-                    </time>
-                    <Button asChild variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50">
-                      <Link href={`/biblioteca/${article.slug}`}>Leer más</Link>
-                    </Button>
+                <CardContent className="flex flex-col flex-grow p-6">
+                  <h2 className="text-xl font-semibold mb-2 text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                    <Link href={`/biblioteca/${article.slug}`}>
+                      {article.title}
+                    </Link>
+                  </h2>
+                  <CardDescription className="flex-grow text-gray-600 mb-4">
+                    {article.description}
+                  </CardDescription>
+                  <div className="flex items-center justify-between mt-auto">
+                    <span className="text-lg font-bold text-blue-600">
+                      S/. {article.price?.toFixed(2)}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/biblioteca/${article.slug}`} className="text-blue-500 font-semibold hover:underline">
+                        Ver más
+                      </Link>
+                      {user?.user_type === "admin" && (
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => handleDeleteArticle(article.id, article.title)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
