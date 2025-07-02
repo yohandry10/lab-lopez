@@ -501,7 +501,6 @@ export function TariffsAdminPanel({ isOpen, onClose }: TariffsAdminPanelProps) {
                                <Switch
                                  checked={isEnabled}
                                  onCheckedChange={(checked) => handleToggleTariff(tariff.id, checked)}
-                                 size="sm"
                                />
                                <span className="text-sm font-medium">
                                  {isEnabled ? 'Habilitada' : 'Deshabilitada'}

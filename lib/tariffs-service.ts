@@ -40,7 +40,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as Tariff[] }
+      return { success: true, data: data as unknown as Tariff[] }
     } catch (error) {
       console.error('Unexpected error fetching tariffs:', error)
       return { success: false, error: 'Error inesperado al obtener tarifas' }
@@ -60,7 +60,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as Tariff }
+      return { success: true, data: data as unknown as Tariff }
     } catch (error) {
       console.error('Unexpected error fetching tariff:', error)
       return { success: false, error: 'Error inesperado al obtener tarifa' }
@@ -71,7 +71,7 @@ export class TariffsService {
     try {
       const { data, error } = await this.supabase
         .from('tariffs')
-        .insert(tariffData)
+        .insert(tariffData as any)
         .select()
         .single()
 
@@ -80,7 +80,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as Tariff }
+      return { success: true, data: data as unknown as Tariff }
     } catch (error) {
       console.error('Unexpected error creating tariff:', error)
       return { success: false, error: 'Error inesperado al crear tarifa' }
@@ -102,7 +102,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as Tariff }
+      return { success: true, data: data as unknown as Tariff }
     } catch (error) {
       console.error('Unexpected error updating tariff:', error)
       return { success: false, error: 'Error inesperado al actualizar tarifa' }
@@ -149,7 +149,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as TariffPrice[] }
+      return { success: true, data: data as unknown as TariffPrice[] }
     } catch (error) {
       console.error('Unexpected error fetching tariff prices:', error)
       return { success: false, error: 'Error inesperado al obtener precios' }
@@ -180,7 +180,7 @@ export class TariffsService {
       }
 
       console.log(`✅ ${data.length} precios de tarifa cargados correctamente`)
-      return { success: true, data: data as TariffPrice[] }
+      return { success: true, data: data as unknown as TariffPrice[] }
     } catch (error) {
       console.error('❌ Unexpected error fetching all tariff prices:', error)
       return { success: false, error: 'Error inesperado al obtener todos los precios' }
@@ -191,7 +191,7 @@ export class TariffsService {
     try {
       const { data, error } = await this.supabase
         .from('tariff_prices')
-        .insert(priceData)
+        .insert(priceData as any)
         .select(`
           *,
           tariff:tariffs(*),
@@ -204,7 +204,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as TariffPrice }
+      return { success: true, data: data as unknown as TariffPrice }
     } catch (error) {
       console.error('Unexpected error creating tariff price:', error)
       return { success: false, error: 'Error inesperado al crear precio' }
@@ -230,7 +230,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as TariffPrice }
+      return { success: true, data: data as unknown as TariffPrice }
     } catch (error) {
       console.error('Unexpected error updating tariff price:', error)
       return { success: false, error: 'Error inesperado al actualizar precio' }
@@ -276,12 +276,12 @@ export class TariffsService {
 
       if (existingPrice) {
         // 2. ACTUALIZAR precio existente
-        console.log("✏️ UPSERT: Actualizando precio existente ID:", existingPrice.id, "precio anterior:", existingPrice.price, "precio nuevo:", price)
+        console.log("✏️ UPSERT: Actualizando precio existente ID:", (existingPrice as any).id, "precio anterior:", (existingPrice as any).price, "precio nuevo:", price)
         
         const { data, error } = await this.supabase
           .from('tariff_prices')
           .update({ price })
-          .eq('id', existingPrice.id)
+          .eq('id', (existingPrice as any).id)
           .select(`
             *,
             tariff:tariffs(*),
@@ -295,7 +295,7 @@ export class TariffsService {
         }
 
         console.log("✅ UPSERT: Precio actualizado exitosamente")
-        return { success: true, data: data as TariffPrice }
+        return { success: true, data: data as unknown as TariffPrice }
       } else {
         // 3. CREAR nuevo precio
         console.log("➕ UPSERT: Creando nuevo precio para tarifa:", tariffId, "examen:", examId, "precio:", price)
@@ -306,7 +306,7 @@ export class TariffsService {
             tariff_id: tariffId,
             exam_id: examId,
             price: price
-          })
+          } as any)
           .select(`
             *,
             tariff:tariffs(*),
@@ -320,7 +320,7 @@ export class TariffsService {
         }
 
         console.log("✅ UPSERT: Nuevo precio creado exitosamente")
-        return { success: true, data: data as TariffPrice }
+        return { success: true, data: data as unknown as TariffPrice }
       }
     } catch (error) {
       console.error('Unexpected error in upsert tariff price:', error)
@@ -347,7 +347,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as ReferenceWithTariff[] }
+      return { success: true, data: data as unknown as ReferenceWithTariff[] }
     } catch (error) {
       console.error('Unexpected error fetching references:', error)
       return { success: false, error: 'Error inesperado al obtener referencias' }
@@ -370,7 +370,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as ReferenceWithTariff }
+      return { success: true, data: data as unknown as ReferenceWithTariff }
     } catch (error) {
       console.error('Unexpected error fetching reference:', error)
       return { success: false, error: 'Error inesperado al obtener referencia' }
@@ -381,7 +381,7 @@ export class TariffsService {
     try {
       const { data, error } = await this.supabase
         .from('references')
-        .insert(referenceData)
+        .insert(referenceData as any)
         .select(`
           *,
           default_tariff:tariffs(*)
@@ -393,7 +393,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as ReferenceWithTariff }
+      return { success: true, data: data as unknown as ReferenceWithTariff }
     } catch (error) {
       console.error('Unexpected error creating reference:', error)
       return { success: false, error: 'Error inesperado al crear referencia' }
@@ -418,7 +418,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as ReferenceWithTariff }
+      return { success: true, data: data as unknown as ReferenceWithTariff }
     } catch (error) {
       console.error('Unexpected error updating reference:', error)
       return { success: false, error: 'Error inesperado al actualizar referencia' }
@@ -466,7 +466,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as UserReference[] }
+      return { success: true, data: data as unknown as UserReference[] }
     } catch (error) {
       console.error('Unexpected error fetching user references:', error)
       return { success: false, error: 'Error inesperado al obtener referencias del usuario' }
@@ -477,7 +477,7 @@ export class TariffsService {
     try {
       const { data, error } = await this.supabase
         .from('user_references')
-        .insert(assignmentData)
+        .insert(assignmentData as any)
         .select(`
           *,
           reference:references(
@@ -492,7 +492,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as UserReference }
+      return { success: true, data: data as unknown as UserReference }
     } catch (error) {
       console.error('Unexpected error assigning user reference:', error)
       return { success: false, error: 'Error inesperado al asignar referencia al usuario' }
@@ -551,7 +551,7 @@ export class TariffsService {
       
       return {
         user_id: userId,
-        reference: publicRef,
+        reference: publicRef || undefined,
         applicable_tariff: publicRef?.default_tariff,
         has_special_pricing: false
       }
@@ -578,7 +578,7 @@ export class TariffsService {
         return null
       }
 
-      return data as ReferenceWithTariff
+      return data as unknown as ReferenceWithTariff
     } catch (error) {
       console.error('Unexpected error fetching public reference:', error)
       return null
@@ -623,8 +623,8 @@ export class TariffsService {
       }
 
       return {
-        price: data.price,
-        tariff_name: data.tariff?.name || 'Sin nombre'
+        price: (data as any).price,
+        tariff_name: (data as any).tariff?.name || 'Sin nombre'
       }
     } catch (error) {
       console.error('Unexpected error getting exam price:', error)
@@ -666,12 +666,12 @@ export class TariffsService {
       }
 
       // Combinar exámenes con precios
-      const examsWithPrices: ExamWithPrices[] = exams.map(exam => {
+      const examsWithPrices: ExamWithPrices[] = (exams as any[]).map((exam: any) => {
         const examPrices = prices?.filter(p => p.exam_id === exam.id) || []
         
         const pricesMap: { [tariffId: string]: { price: number; tariff_name: string; is_taxable: boolean } } = {}
         
-        examPrices.forEach(p => {
+        examPrices.forEach((p: any) => {
           if (p.tariff) {
             pricesMap[p.tariff.id] = {
               price: p.price,
@@ -722,7 +722,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as TariffPrice[] }
+      return { success: true, data: data as unknown as TariffPrice[] }
     } catch (error) {
       console.error('Unexpected error updating multiple prices:', error)
       return { success: false, error: 'Error inesperado al actualizar precios múltiples' }
@@ -762,7 +762,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as TariffPrice[] }
+      return { success: true, data: data as unknown as TariffPrice[] }
     } catch (error) {
       console.error('Unexpected error copying tariff prices:', error)
       return { success: false, error: 'Error inesperado al copiar precios de tarifa' }

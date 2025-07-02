@@ -9,6 +9,19 @@ import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/contexts/auth-context"
 import { getSupabaseClient } from "@/lib/supabase-client"
 import { tariffsService } from "@/lib/tariffs-service"
+import type { Tariff } from "@/lib/tariffs.types"
+
+interface AnalysisForMigration {
+  id: string
+  name: string
+  price: number
+  reference_price?: number
+}
+
+interface ReferenceForMigration {
+  id: string
+  name: string
+}
 
 interface MigrationStatus {
   totalAnalyses: number
@@ -96,8 +109,8 @@ export default function MigrateTariffsPage() {
         throw new Error('No se encontraron tarifas. Ejecutar primero create-tariffs-system.sql')
       }
       
-      const baseTariff = tariffs.find(t => t.name === 'Base' && t.type === 'sale')
-      const referenceTariff = tariffs.find(t => t.name === 'Referencial con IGV' && t.type === 'sale')
+      const baseTariff = (tariffs as Tariff[]).find(t => t.name === 'Base' && t.type === 'sale')
+      const referenceTariff = (tariffs as Tariff[]).find(t => t.name === 'Referencial con IGV' && t.type === 'sale')
       
       if (!baseTariff || !referenceTariff) {
         throw new Error('No se encontraron las tarifas Base y Referencial necesarias')
@@ -124,24 +137,25 @@ export default function MigrateTariffsPage() {
       addLog('🔄 Iniciando migración de precios...')
       let migratedCount = 0
       const batchSize = 20
+      const typedAnalyses = analyses as AnalysisForMigration[]
       
-      for (let i = 0; i < analyses.length; i += batchSize) {
-        const batch = analyses.slice(i, i + batchSize)
+      for (let i = 0; i < typedAnalyses.length; i += batchSize) {
+        const batch: AnalysisForMigration[] = typedAnalyses.slice(i, i + batchSize)
         
         for (const analysis of batch) {
           try {
             // Precio base
             await tariffsService.createTariffPrice({
-              tariff_id: baseTariff.id,
-              exam_id: analysis.id,
-              price: analysis.price
+              tariff_id: baseTariff.id as string,
+              exam_id: analysis.id as string,
+              price: analysis.price as number
             })
             
             // Precio referencial
             const referencePrice = analysis.reference_price || (analysis.price * 0.8)
             await tariffsService.createTariffPrice({
-              tariff_id: referenceTariff.id,
-              exam_id: analysis.id,
+              tariff_id: referenceTariff.id as string,
+              exam_id: analysis.id as string,
               price: referencePrice
             })
             
@@ -152,7 +166,7 @@ export default function MigrateTariffsPage() {
           }
         }
         
-        addLog(`📈 Progreso: ${migratedCount}/${analyses.length} análisis migrados`)
+        addLog(`📈 Progreso: ${migratedCount}/${typedAnalyses.length} análisis migrados`)
       }
       
       // 4. Configurar referencias
@@ -164,7 +178,8 @@ export default function MigrateTariffsPage() {
           .in('name', ['Público General', 'Médicos', 'Empresas'])
         
         if (references) {
-          for (const ref of references) {
+          const typedReferences = references as ReferenceForMigration[]
+          for (const ref of typedReferences) {
             let tariffId = baseTariff.id
             if (ref.name === 'Médicos' || ref.name === 'Empresas') {
               tariffId = referenceTariff.id
@@ -173,7 +188,7 @@ export default function MigrateTariffsPage() {
             await supabase
               .from('references')
               .update({ default_tariff_id: tariffId })
-              .eq('id', ref.id)
+              .eq('id', ref.id as string)
           }
           
           addLog('✅ Referencias configuradas correctamente')

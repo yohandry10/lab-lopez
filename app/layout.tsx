@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { Navbar } from "@/components/navbar"
@@ -10,12 +10,16 @@ import { Toaster } from "sonner"
 
 const inter = Inter({ subsets: ["latin"] })
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
+
 export const metadata: Metadata = {
   title: "Laboratorio Clínico López - Análisis Clínicos y Medicina Preventiva",
   description: "Laboratorio Clínico López - Servicios especializados en análisis clínicos, medicina preventiva y diagnóstico médico. Perfiles preventivos, promociones disponibles y atención domiciliaria.",
   keywords: "laboratorio clínico, análisis clínicos, medicina preventiva, López, diagnóstico médico, exámenes de sangre, perfiles preventivos",
   authors: [{ name: "Laboratorio Clínico López" }],
-  viewport: "width=device-width, initial-scale=1",
   robots: "index, follow",
   icons: {
     icon: [

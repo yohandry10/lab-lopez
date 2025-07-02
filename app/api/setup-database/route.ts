@@ -248,19 +248,19 @@ export async function POST(request: NextRequest) {
       for (const analysis of analyses) {
         // Precio base (público)
         tariffPrices.push({
-          tariff_id: baseTariff.id,
-          exam_id: analysis.id,
-          price: analysis.price
+          tariff_id: (baseTariff as any).id,
+          exam_id: (analysis as any).id,
+          price: (analysis as any).price
         })
 
         // Precio referencial (empresarial)
-        const referencePrice = analysis.reference_price && analysis.reference_price > 0 
-          ? analysis.reference_price 
-          : analysis.price * 0.8
+        const referencePrice = (analysis as any).reference_price && (analysis as any).reference_price > 0 
+          ? (analysis as any).reference_price 
+          : (analysis as any).price * 0.8
 
         tariffPrices.push({
-          tariff_id: referenceTariff.id,
-          exam_id: analysis.id,
+          tariff_id: (referenceTariff as any).id,
+          exam_id: (analysis as any).id,
           price: Math.round(referencePrice * 100) / 100 // Redondear a 2 decimales
         })
       }
@@ -293,17 +293,17 @@ export async function POST(request: NextRequest) {
       // 7. Configurar referencias por defecto
       await supabase
         .from('references')
-        .update({ default_tariff_id: baseTariff.id })
+        .update({ default_tariff_id: (baseTariff as any).id })
         .eq('name', 'Público General')
 
       await supabase
         .from('references')
-        .update({ default_tariff_id: referenceTariff.id })
+        .update({ default_tariff_id: (referenceTariff as any).id })
         .eq('name', 'Empresas')
 
       await supabase
         .from('references')
-        .update({ default_tariff_id: referenceTariff.id })
+        .update({ default_tariff_id: (referenceTariff as any).id })
         .eq('name', 'Médicos')
 
       // 8. Verificar resultados
@@ -319,8 +319,8 @@ export async function POST(request: NextRequest) {
         data: {
           analysesProcessed: analyses.length,
           pricesInserted: finalCount,
-          baseTariffId: baseTariff.id,
-          referenceTariffId: referenceTariff.id
+          baseTariffId: (baseTariff as any).id,
+          referenceTariffId: (referenceTariff as any).id
         }
       })
     }

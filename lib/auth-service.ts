@@ -239,7 +239,7 @@ export async function signUp(userData: SignUpData): Promise<AuthResponse> {
       }
     }
 
-    return { success: true, user: profile as User }
+    return { success: true, user: profile as unknown as User }
   } catch (err: any) {
     return { success: false, error: err?.message ?? String(err) }
   }
@@ -293,7 +293,7 @@ export async function signIn(
       references_count: profile.user_references?.length || 0
     })
 
-    return { success: true, user: profile as User }
+    return { success: true, user: profile as unknown as User }
   } catch {
     return { success: false, error: "Fallo inesperado en login" }
   }
@@ -335,7 +335,7 @@ export async function getCurrentUser(): Promise<User | null> {
     .eq("id", user.id)
     .single()
 
-  return data as User | null
+  return data as unknown as User | null
 }
 
 export async function updateUser(
@@ -353,6 +353,6 @@ export async function updateUser(
 
   return error || !data
     ? { success: false, error: error?.message ?? "No se pudo actualizar" }
-    : { success: true, user: data as User }
+    : { success: true, user: data as unknown as User }
 }
 

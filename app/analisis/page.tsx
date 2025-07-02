@@ -520,8 +520,9 @@ export default function AnalisisPage() {
     try {
       const response = await tariffsService.getAllReferences()
       if (response.success && response.data) {
-        setAvailableReferences(response.data)
-        console.log("✅ Referencias cargadas:", response.data)
+        const referencesArray = Array.isArray(response.data) ? response.data : [response.data]
+        setAvailableReferences(referencesArray)
+        console.log("✅ Referencias cargadas:", referencesArray)
       }
     } catch (error) {
       console.error("❌ Error al cargar referencias:", error)
@@ -784,8 +785,8 @@ export default function AnalisisPage() {
         if (newAnalysis.price_public && baseTariff) {
           pricePromises.push(
             tariffsService.createTariffPrice({
-              tariff_id: baseTariff.id,
-              exam_id: analysisResult.id,
+              tariff_id: baseTariff.id as string,
+              exam_id: (analysisResult as any).id as string,
               price: parseFloat(newAnalysis.price_public)
             })
           )
@@ -795,8 +796,8 @@ export default function AnalisisPage() {
         if (newAnalysis.price_business && referenceTariff) {
           pricePromises.push(
             tariffsService.createTariffPrice({
-              tariff_id: referenceTariff.id,
-              exam_id: analysisResult.id,
+              tariff_id: referenceTariff.id as string,
+              exam_id: (analysisResult as any).id as string,
               price: parseFloat(newAnalysis.price_business)
             })
           )
@@ -811,7 +812,7 @@ export default function AnalisisPage() {
             pricePromises.push(
               tariffsService.createTariffPrice({
                 tariff_id: tariffId,
-                exam_id: analysisResult.id,
+                exam_id: (analysisResult as any).id as string,
                 price: parseFloat(price)
               })
             )
