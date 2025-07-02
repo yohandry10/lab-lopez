@@ -234,7 +234,7 @@ export default function BibliotecaPage() {
   }
 
   return (
-    <div className="container px-4 py-12 md:py-24">
+    <div className="container px-4 pt-20 pb-12 sm:pt-24 sm:pb-16 md:pt-28 md:pb-24">
       <motion.div
         className="max-w-3xl mx-auto text-center mb-12"
         initial={{ opacity: 0, y: 20 }}
@@ -242,7 +242,7 @@ export default function BibliotecaPage() {
         transition={{ duration: 0.5 }}
       >
         <div className="flex items-center justify-center gap-4 mb-4">
-          <h1 className="text-4xl font-light tracking-tight sm:text-5xl md:text-6xl text-gray-900">
+          <h1 className="text-2xl font-light tracking-tight sm:text-3xl md:text-4xl lg:text-5xl text-gray-900">
             Promociones Disponibles
           </h1>
           {/* Botón de agregar artículo solo para admin */}
@@ -263,7 +263,7 @@ export default function BibliotecaPage() {
           )}
         </div>
         <p className="text-xl text-gray-500">
-          Explora nuestra colección de artículos sobre salud, bienestar y avances médicos
+          Explora nuestras promociones sobre control y prevención de enfermedades
         </p>
       </motion.div>
 
@@ -278,7 +278,7 @@ export default function BibliotecaPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
               type="text"
-              placeholder="Buscar artículos"
+              placeholder="Buscar promociones"
               className="pl-10 h-12"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -333,7 +333,7 @@ export default function BibliotecaPage() {
             <motion.div key={article.id} variants={item}>
               <Card className="flex flex-col h-full overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group">
                 <CardHeader className="p-0">
-                  <Link href={`/biblioteca/${article.slug}`} className="block overflow-hidden">
+                  <Link href={`/promociones/${article.slug}`} className="block overflow-hidden">
                     <Image
                       src={article.image}
                       alt={article.title}
@@ -345,7 +345,7 @@ export default function BibliotecaPage() {
                 </CardHeader>
                 <CardContent className="flex flex-col flex-grow p-6">
                   <h2 className="text-xl font-semibold mb-2 text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
-                    <Link href={`/biblioteca/${article.slug}`}>
+                    <Link href={`/promociones/${article.slug}`}>
                       {article.title}
                     </Link>
                   </h2>
@@ -357,7 +357,7 @@ export default function BibliotecaPage() {
                       S/. {article.price?.toFixed(2)}
                     </span>
                     <div className="flex items-center gap-2">
-                      <Link href={`/biblioteca/${article.slug}`} className="text-blue-500 font-semibold hover:underline">
+                      <Link href={`/promociones/${article.slug}`} className="text-blue-500 font-semibold hover:underline">
                         Ver más
                       </Link>
                       {user?.user_type === "admin" && (

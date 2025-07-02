@@ -25,6 +25,7 @@ export type SignUpData = {
   company_ruc?: string
   company_position?: string
   is_company_admin?: boolean
+  reference_id?: string
 }
 
 /* -------------------------------------------------------------------------- *
@@ -116,6 +117,31 @@ export async function adminCreateUser(userData: SignUpData): Promise<AuthRespons
       .single()
     
     console.log("🔍 VERIFICACIÓN INMEDIATA del usuario insertado:", { verifyData, verifyErr })
+
+    // 🆕 Si se especificó reference_id, crear la relación en user_references
+    if (userData.reference_id) {
+      console.log("🏢 Creando relación usuario-referencia:", {
+        user_id: authData.user.id,
+        reference_id: userData.reference_id
+      })
+
+      const { data: userRefData, error: userRefErr } = await supabase
+        .from("user_references")
+        .insert({
+          user_id: authData.user.id,
+          reference_id: userData.reference_id,
+          created_at: now
+        })
+        .select()
+
+      if (userRefErr) {
+        console.log("❌ Error al crear relación usuario-referencia:", userRefErr)
+        // No fallar todo el proceso por esto, solo loguear
+        console.log("⚠️ Usuario creado pero sin relación de referencia")
+      } else {
+        console.log("✅ Relación usuario-referencia creada exitosamente:", userRefData)
+      }
+    }
 
     // CRUCIAL: Restaurar la sesión del admin inmediatamente
     if (currentSession) {
@@ -236,15 +262,36 @@ export async function signIn(
       return { success: false, error: authErr?.message ?? "Credenciales inválidas" }
     }
 
+    // 🆕 Obtener perfil del usuario con sus referencias
     const { data: profile, error } = await supabase
       .from("users")
-      .select("*")
+      .select(`
+        *,
+        user_references (
+          id,
+          reference_id,
+          reference:references (
+            id,
+            name,
+            business_name,
+            default_tariff_id,
+            active
+          )
+        )
+      `)
       .eq("id", auth.user.id)
       .single()
 
     if (error || !profile) {
       return { success: false, error: error?.message ?? "Perfil no encontrado" }
     }
+
+    console.log("🔍 Usuario logueado con referencias:", {
+      user_id: profile.id,
+      email: profile.email,
+      user_type: profile.user_type,
+      references_count: profile.user_references?.length || 0
+    })
 
     return { success: true, user: profile as User }
   } catch {
@@ -268,9 +315,23 @@ export async function getCurrentUser(): Promise<User | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
+  // 🆕 Cargar usuario con sus referencias
   const { data } = await supabase
     .from("users")
-    .select("*")
+    .select(`
+      *,
+      user_references (
+        id,
+        reference_id,
+        reference:references (
+          id,
+          name,
+          business_name,
+          default_tariff_id,
+          active
+        )
+      )
+    `)
     .eq("id", user.id)
     .single()
 

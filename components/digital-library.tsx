@@ -496,7 +496,7 @@ export default function DigitalLibrary() {
   }
 
   return (
-    <section className="py-8 sm:py-12 md:py-16 lg:py-20 bg-gray-50">
+    <section className="pt-16 pb-8 sm:pt-20 sm:pb-12 md:pt-24 md:pb-16 lg:pt-28 lg:pb-20 bg-gray-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-6 sm:mb-8 md:mb-12">
           <div className="flex flex-col items-center gap-4 mb-4">
@@ -507,7 +507,7 @@ export default function DigitalLibrary() {
                     type="text"
                     value={sectionTitle}
                     onChange={(e) => setSectionTitle(e.target.value)}
-                    className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-gray-900 bg-transparent border-b-2 border-blue-500 outline-none text-center"
+                    className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-light text-gray-900 bg-transparent border-b-2 border-blue-500 outline-none text-center leading-tight"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         handleTitleEdit()
@@ -545,7 +545,7 @@ export default function DigitalLibrary() {
                 </div>
               ) : (
                 <>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-gray-900">
+                  <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-light tracking-tight text-gray-900 leading-tight">
                     {sectionTitle}
                   </h2>
                   
@@ -589,7 +589,7 @@ export default function DigitalLibrary() {
                   {showPrices ? "Ocultar Precios" : "Mostrar Precios"}
                 </Button>
                 
-                <Link href="/biblioteca" passHref>
+                <Link href="/promociones" passHref>
                   <Button className="bg-[#3da64a] hover:bg-[#3da64a]/90 text-white px-4 py-2 text-sm font-semibold shadow-lg transition-transform hover:scale-105">
                     VER MAS
                   </Button>
@@ -599,14 +599,14 @@ export default function DigitalLibrary() {
             
             {/* Solo mostrar VER MAS para usuarios no admin */}
             {(!user || user.user_type !== "admin") && (
-              <Link href="/biblioteca" passHref>
+              <Link href="/promociones" passHref>
                 <Button className="bg-[#3da64a] hover:bg-[#3da64a]/90 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg transition-transform hover:scale-105">
                   VER MAS
                 </Button>
               </Link>
             )}
           </div>
-          <p className="text-gray-500 text-base sm:text-lg text-center mt-4">Servicios diseñados para mejorar tu calidad de vida</p>
+          <p className="text-gray-500 text-base sm:text-lg text-center mt-4">Explora nuestras promociones sobre control y prevención de enfermedades</p>
         </div>
 
         <div className="relative">
@@ -660,7 +660,7 @@ export default function DigitalLibrary() {
                       <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed">{article.description}</p>
                       <div className="mt-4">
                         <Button asChild variant="outline" className="w-full">
-                          <Link href={`/biblioteca/${article.slug}`}>
+                          <Link href={`/promociones/${article.slug}`}>
                             Ver promoción
                           </Link>
                         </Button>

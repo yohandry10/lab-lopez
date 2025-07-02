@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { Search, ShoppingCart, Plus, Pencil, Trash2, AlertTriangle, Settings, Check, Syringe, Edit, Trash, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
@@ -29,6 +29,8 @@ import { getSupabaseClient } from "@/lib/supabase-client"
 import { SchedulingFlow } from "@/components/scheduling-flow"
 import { SuccessDialog } from "@/components/success-dialog"
 import { HeroSchedulingDialog } from "@/components/hero-scheduling-dialog"
+import { TariffsAdminPanel } from "@/components/tariffs-admin-panel"
+import { tariffsService } from "@/lib/tariffs-service"
 
 // Definir el tipo para los análisis
 type Analysis = {
@@ -65,6 +67,9 @@ export default function AnalisisPage() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list")
   const [localAnalysisData, setLocalAnalysisData] = useState<Analysis[]>([])
   const [categories, setCategories] = useState<string[]>([]) // Add state for categories
+  const [availableTariffs, setAvailableTariffs] = useState<any[]>([]) // Estado para tarifas disponibles
+  const [availableReferences, setAvailableReferences] = useState<any[]>([]) // Estado para referencias disponibles
+  const [userAnalysisIds, setUserAnalysisIds] = useState<Set<string>>(new Set()) // 🆕 IDs de análisis visibles para el usuario
   const { addItem } = useCart()
   const router = useRouter()
   const { user } = useAuth()
@@ -83,6 +88,9 @@ export default function AnalisisPage() {
   // State for hero scheduling dialog
   const [isHeroSchedulingOpen, setIsHeroSchedulingOpen] = useState(false)
 
+  // State for tariffs admin panel
+  const [isTariffsAdminOpen, setIsTariffsAdminOpen] = useState(false)
+
   const ITEMS_PER_PAGE = 10
 
   // Filtrar análisis por letra, término de búsqueda y categoría
@@ -91,26 +99,26 @@ export default function AnalisisPage() {
     const matchesLetter = selectedLetter ? analysis.name.charAt(0).toUpperCase() === selectedLetter : true
     const matchesCategory = selectedCategory ? analysis.category === selectedCategory : true
     
-    // LÓGICA DE SEGMENTACIÓN DE PRECIOS
+    // 🆕 LÓGICA COMPLETA DE VISIBILIDAD POR REFERENCIAS Y TARIFAS
     const isVisibleToUser = (() => {
       if (!user) {
         // Usuario NO logueado: solo ve análisis marcados como públicos
         return analysis.show_public === true
-      } else {
-        // Usuarios autenticados: lógica por rol
-        switch (user.user_type) {
-          case "admin":
-            return true // Admin ve todos
-          case "patient":
-            return true // Pacientes ven todos
-          case "doctor":
-          case "company":
-            // Médicos/Empresas NO ven análisis marcados como públicos (segmentación de precios)
-            return analysis.show_public !== true
-          default:
-            return true
-        }
       }
+
+      // Admin ve todos los análisis
+      if (user.user_type === "admin") {
+        return true
+      }
+
+      // Si es público, siempre se muestra (análisis con precios en tarifas Base y Referencial)
+      if (analysis.show_public === true) {
+        return true
+      }
+
+      // Para usuarios logueados con referencias, verificar si tienen acceso al análisis
+      // basándose en las tarifas configuradas para sus referencias
+      return userAnalysisIds.has(analysis.id.toString())
     })()
 
     return matchesSearch && matchesLetter && matchesCategory && isVisibleToUser
@@ -461,6 +469,23 @@ export default function AnalisisPage() {
     }
   }
 
+  // Función para cargar tarifas disponibles
+  const fetchTariffs = async () => {
+    try {
+      const response = await tariffsService.getAllTariffs()
+      if (response.success && Array.isArray(response.data)) {
+        setAvailableTariffs(response.data)
+        console.log("✅ Tarifas cargadas:", response.data)
+      } else {
+        console.error("❌ Error al cargar tarifas:", response.error)
+        setAvailableTariffs([])
+      }
+    } catch (err) {
+      console.error("❌ Error inesperado al cargar tarifas:", err)
+      setAvailableTariffs([])
+    }
+  }
+
   // Función para cargar categorías desde la base de datos
   const fetchCategories = async () => {
     try {
@@ -490,12 +515,92 @@ export default function AnalisisPage() {
     }
   }
 
+  // Función para cargar referencias disponibles
+  const fetchReferences = async () => {
+    try {
+      const response = await tariffsService.getAllReferences()
+      if (response.success && response.data) {
+        setAvailableReferences(response.data)
+        console.log("✅ Referencias cargadas:", response.data)
+      }
+    } catch (error) {
+      console.error("❌ Error al cargar referencias:", error)
+    }
+  }
+
+  // 🆕 Función para determinar qué análisis puede ver el usuario
+  const fetchUserVisibleAnalysis = async () => {
+    if (!user || user.user_type === "admin") {
+      // Admin ve todo, usuarios no logueados verán solo públicos
+      return
+    }
+
+    try {
+      console.log("🔍 Calculando análisis visibles para usuario:", user.email)
+      
+      // Obtener las referencias del usuario
+      const userReferences = user.user_references || []
+      
+      if (userReferences.length === 0) {
+        console.log("❌ Usuario sin referencias asignadas")
+        setUserAnalysisIds(new Set())
+        return
+      }
+
+      // Obtener las tarifas default de las referencias del usuario
+      const userTariffIds = userReferences
+        .map(ur => ur.reference?.default_tariff_id)
+        .filter(Boolean) as string[]
+
+      console.log("💰 Tarifas del usuario:", userTariffIds)
+
+      if (userTariffIds.length === 0) {
+        console.log("⚠️ Referencias del usuario no tienen tarifas configuradas")
+        setUserAnalysisIds(new Set())
+        return
+      }
+
+      // Consultar análisis que tienen precios para las tarifas del usuario
+      const response = await tariffsService.getAllTariffPrices()
+      if (!response.success || !response.data) {
+        console.error("❌ Error al obtener precios de tarifas:", response.error)
+        return
+      }
+
+      const allTariffPrices = Array.isArray(response.data) ? response.data : [response.data]
+      
+      // Filtrar precios que corresponden a las tarifas del usuario
+      const userTariffPrices = allTariffPrices.filter(tp => 
+        userTariffIds.includes(tp.tariff_id)
+      )
+
+      // Extraer IDs únicos de análisis
+      const visibleAnalysisIds = new Set(
+        userTariffPrices.map(tp => tp.exam_id.toString())
+      )
+
+      console.log("✅ Análisis visibles para usuario:", visibleAnalysisIds.size)
+      setUserAnalysisIds(visibleAnalysisIds)
+
+    } catch (error) {
+      console.error("❌ Error al calcular análisis visibles:", error)
+      setUserAnalysisIds(new Set())
+    }
+  }
+
   // Load data on component mount
   useEffect(() => {
     fetchAnalyses()
     fetchProfiles()
     fetchCategories() // Add categories loading
+    fetchTariffs() // Add tariffs loading
+    fetchReferences() // Add references loading
   }, [])
+
+  // 🆕 Ejecutar cuando cambie el usuario
+  useEffect(() => {
+    fetchUserVisibleAnalysis()
+  }, [user])
 
   // 1. Estado para el modal de agregar análisis
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -503,9 +608,8 @@ export default function AnalisisPage() {
   const [isCategoriasModalOpen, setIsCategoriasModalOpen] = useState(false)
   const [newAnalysis, setNewAnalysis] = useState({
     name: '',
-    price: '',
-    reference_price: '',
-    price_type: 'public', // "public" o "business"
+    price_public: '', // Precio para público general
+    price_business: '', // Precio para médicos y empresas
     show_public: false,
     conditions: '',
     sample: '',
@@ -514,11 +618,14 @@ export default function AnalisisPage() {
     comments: '',
     category: '',
     deliveryTime: '2-4 horas',
+    // Nuevos campos para sistema de referencias
+    visibility_type: 'public', // "public" o "references"
+    allowed_references: [] as string[], // Array de IDs de referencias
+    tariff_prices: {} as { [tariffId: string]: string } // Precios por tarifa específica
   } as {
     name: string;
-    price: string;
-    reference_price: string;
-    price_type: string;
+    price_public: string;
+    price_business: string;
     show_public: boolean;
     conditions: string;
     sample: string;
@@ -527,6 +634,9 @@ export default function AnalisisPage() {
     comments: string;
     category: string;
     deliveryTime: string;
+    visibility_type: string;
+    allowed_references: string[];
+    tariff_prices: { [tariffId: string]: string };
   });
   
   const [newProfile, setNewProfile] = useState({
@@ -541,9 +651,8 @@ export default function AnalisisPage() {
   const clearAnalysisForm = () => {
     setNewAnalysis({
       name: '',
-      price: '',
-      reference_price: '',
-      price_type: 'public',
+      price_public: '',
+      price_business: '',
       show_public: false,
       conditions: '',
       sample: '',
@@ -552,38 +661,84 @@ export default function AnalisisPage() {
       comments: '',
       category: '',
       deliveryTime: '2-4 horas',
+      visibility_type: 'public',
+      allowed_references: [],
+      tariff_prices: {}
     });
   };
 
-  // 2. Función para agregar análisis
+  // 2. Función para agregar análisis con sistema completo de referencias
   const handleAddAnalysis = async () => {
-    // Validar que todos los campos requeridos estén presentes
-    if (!newAnalysis.name || !newAnalysis.category || !newAnalysis.price) {
-      alert("Por favor completa al menos el nombre, categoría y precio")
+    console.log("🚀 INICIANDO CREACIÓN DE ANÁLISIS AVANZADO")
+    console.log("📊 Datos del formulario:", newAnalysis)
+    
+    // Validar campos básicos
+    if (!newAnalysis.name || !newAnalysis.category) {
+      alert("Por favor completa al menos el nombre y categoría")
       return
     }
 
-    const priceNumber = parseFloat(newAnalysis.price)
-    if (isNaN(priceNumber) || priceNumber < 0) {
-      alert("Por favor ingresa un precio válido")
-      return
-    }
-
-    // Validar precio de referencia si se proporciona
-    let referencePriceNumber = 0
-    if (newAnalysis.reference_price) {
-      referencePriceNumber = parseFloat(newAnalysis.reference_price)
-      if (isNaN(referencePriceNumber) || referencePriceNumber < 0) {
-        alert("Por favor ingresa un precio de referencia válido")
+    // Validar precios según el modo
+    if (newAnalysis.visibility_type === 'public') {
+      // Modo público: validar precios público/empresarial
+      if (!newAnalysis.price_public && !newAnalysis.price_business) {
+        alert("Por favor ingresa al menos el precio público o empresarial")
         return
+      }
+
+      const pricePublic = newAnalysis.price_public ? parseFloat(newAnalysis.price_public) : 0
+      const priceBusiness = newAnalysis.price_business ? parseFloat(newAnalysis.price_business) : 0
+
+      if ((newAnalysis.price_public && (isNaN(pricePublic) || pricePublic < 0)) ||
+          (newAnalysis.price_business && (isNaN(priceBusiness) || priceBusiness < 0))) {
+        alert("Por favor ingresa precios válidos")
+        return
+      }
+    } else {
+      // Modo referencias: validar referencia y precios por tarifa
+      if (newAnalysis.allowed_references.length === 0 || !newAnalysis.allowed_references[0]) {
+        alert("Por favor selecciona una referencia específica para este análisis")
+        return
+      }
+
+      const hasAnyPrice = Object.values(newAnalysis.tariff_prices).some(price => price && parseFloat(price) > 0)
+      if (!hasAnyPrice) {
+        alert("Por favor configura al menos un precio por tarifa")
+        return
+      }
+
+      // Validar que los precios por tarifa sean válidos
+      for (const [tariffId, price] of Object.entries(newAnalysis.tariff_prices)) {
+        if (price && (isNaN(parseFloat(price)) || parseFloat(price) < 0)) {
+          alert("Por favor ingresa precios válidos para todas las tarifas")
+          return
+        }
       }
     }
 
     try {
       const supabase = getSupabaseClient()
       
-      // Determinar qué precio usar según el tipo seleccionado
-      let insertData = {
+      console.log("💾 Guardando análisis en base de datos...")
+      
+      // Calcular precio principal para compatibilidad legacy
+      let mainPrice = 0
+      let referencePrice = 0
+      
+      if (newAnalysis.visibility_type === 'public') {
+        const pricePublic = newAnalysis.price_public ? parseFloat(newAnalysis.price_public) : 0
+        const priceBusiness = newAnalysis.price_business ? parseFloat(newAnalysis.price_business) : 0
+        mainPrice = pricePublic || priceBusiness
+        referencePrice = priceBusiness || pricePublic
+      } else {
+        // En modo referencias, usar el primer precio configurado como principal
+        const firstPrice = Object.values(newAnalysis.tariff_prices).find(p => p && parseFloat(p) > 0)
+        mainPrice = firstPrice ? parseFloat(firstPrice) : 0
+        referencePrice = mainPrice
+      }
+      
+      // Insertar análisis
+      const analysisData = {
         name: newAnalysis.name,
         category: newAnalysis.category,
         show_public: newAnalysis.show_public || false,
@@ -592,37 +747,103 @@ export default function AnalisisPage() {
         protocol: newAnalysis.protocol || "",
         suggestions: newAnalysis.suggestions || "",
         comments: newAnalysis.comments || "",
-        deliverytime: newAnalysis.deliveryTime || "2-4 horas"
-      } as any
-
-      if (newAnalysis.price_type === 'public') {
-        // Si es precio público, actualizar price
-        insertData.price = priceNumber
-        if (referencePriceNumber > 0) {
-          insertData.reference_price = referencePriceNumber
-        }
-      } else {
-        // Si es precio empresarial, actualizar reference_price
-        insertData.reference_price = priceNumber
-        // Mantener el precio público existente si no se especifica
-        if (newAnalysis.reference_price && parseFloat(newAnalysis.reference_price) > 0) {
-          insertData.price = parseFloat(newAnalysis.reference_price)
-        } else {
-          insertData.price = priceNumber // Como fallback
-        }
+        deliverytime: newAnalysis.deliveryTime || "2-4 horas",
+        // Compatibilidad legacy
+        price: mainPrice,
+        reference_price: referencePrice
       }
 
-      const { data, error } = await supabase
+      const { data: analysisResult, error: analysisError } = await supabase
         .from("analyses")
-        .insert([insertData])
+        .insert([analysisData])
+        .select()
+        .single()
 
-      if (error) {
-        console.error("❌ Error al insertar análisis:", error)
-        alert("Error al agregar análisis: " + error.message)
+      if (analysisError) {
+        console.error("❌ Error al insertar análisis:", analysisError)
+        alert("Error al agregar análisis: " + analysisError.message)
         return
       }
 
-      console.log("✅ Análisis agregado exitosamente:", data)
+      console.log("✅ Análisis creado:", analysisResult)
+
+      // Crear precios en sistema de tarifas
+      const pricePromises = []
+      let priceCreationSummary = ""
+
+      if (newAnalysis.visibility_type === 'public') {
+        // MODO PÚBLICO: Crear precios simplificados
+        const baseTariff = availableTariffs.find(t => t.name === 'Base' && t.type === 'sale')
+        const referenceTariff = availableTariffs.find(t => t.name === 'Referencial con IGV' && t.type === 'sale')
+        
+        if (!baseTariff || !referenceTariff) {
+          console.warn("⚠️ No se encontraron tarifas Base y Referencial")
+        }
+        
+        // Precio público
+        if (newAnalysis.price_public && baseTariff) {
+          pricePromises.push(
+            tariffsService.createTariffPrice({
+              tariff_id: baseTariff.id,
+              exam_id: analysisResult.id,
+              price: parseFloat(newAnalysis.price_public)
+            })
+          )
+        }
+        
+        // Precio empresarial
+        if (newAnalysis.price_business && referenceTariff) {
+          pricePromises.push(
+            tariffsService.createTariffPrice({
+              tariff_id: referenceTariff.id,
+              exam_id: analysisResult.id,
+              price: parseFloat(newAnalysis.price_business)
+            })
+          )
+        }
+        
+        priceCreationSummary = "Modo público: precios Base y Referencial"
+        
+      } else {
+        // MODO REFERENCIAS: Crear precios específicos por tarifa
+        for (const [tariffId, price] of Object.entries(newAnalysis.tariff_prices)) {
+          if (price && parseFloat(price) > 0) {
+            pricePromises.push(
+              tariffsService.createTariffPrice({
+                tariff_id: tariffId,
+                exam_id: analysisResult.id,
+                price: parseFloat(price)
+              })
+            )
+          }
+        }
+        
+        priceCreationSummary = `Modo referencias: ${pricePromises.length} precios por tarifa`
+      }
+
+      // Ejecutar creación de precios
+      if (pricePromises.length > 0) {
+        console.log(`💰 Creando ${pricePromises.length} precios...`)
+        const tariffResults = await Promise.all(pricePromises)
+        
+        let successCount = 0
+        tariffResults.forEach((result, index) => {
+          if (result.success) {
+            successCount++
+            console.log(`✅ Precio ${index + 1} creado exitosamente`)
+          } else {
+            console.error(`❌ Error creando precio ${index + 1}:`, result.error)
+          }
+        })
+        
+        console.log(`✅ ${successCount}/${pricePromises.length} precios creados`)
+      }
+
+      // En modo referencias, la visibilidad se maneja en el frontend basándose en las tarifas configuradas
+      if (newAnalysis.visibility_type === 'references') {
+        console.log("🔗 Análisis configurado para referencia específica")
+        console.log("📌 La visibilidad se manejará mediante lógica de frontend basada en tarifas")
+      }
       
       // Recargar datos
       await fetchAnalyses()
@@ -631,11 +852,19 @@ export default function AnalisisPage() {
       // Limpiar formulario y cerrar modal
       clearAnalysisForm()
       setIsAddModalOpen(false)
-      alert("✅ Análisis agregado exitosamente")
+      
+      // Mensaje de éxito
+      const selectedReference = availableReferences.find(ref => ref.id === newAnalysis.allowed_references[0])
+      const successMessage = newAnalysis.visibility_type === 'public' 
+        ? `✅ Análisis público agregado exitosamente`
+        : `✅ Análisis agregado para referencia: ${selectedReference?.name || 'Seleccionada'}`
+        
+      alert(successMessage)
+      console.log("🎉 PROCESO COMPLETADO EXITOSAMENTE")
       
     } catch (err) {
       console.error("❌ Error inesperado:", err)
-      alert("Error inesperado al agregar análisis")
+      alert("Error inesperado al agregar análisis: " + String(err))
     }
   }
 
@@ -755,7 +984,7 @@ export default function AnalisisPage() {
               onClick={() => setIsHeroSchedulingOpen(true)}
             >
               <Syringe className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-              Agenda tus análisis
+              PROGRAMADA TU RECOJO
             </Button>
           </div>
         </div>
@@ -931,6 +1160,12 @@ export default function AnalisisPage() {
                   onClick={() => setIsCategoriasModalOpen(true)}
                 >
                   📂 Gestionar categorías
+                </Button>
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 text-sm sm:text-base h-10 sm:h-12 rounded-xl px-6" 
+                  onClick={() => setIsTariffsAdminOpen(true)}
+                >
+                  💰 Sistema de Tarifas
                 </Button>
               </div>
             )}
@@ -1348,6 +1583,14 @@ export default function AnalisisPage() {
         user={user}
       />
 
+      {/* Sistema de Tarifas - Solo para administradores */}
+      {user && user.user_type === "admin" && (
+        <TariffsAdminPanel
+          isOpen={isTariffsAdminOpen}
+          onClose={() => setIsTariffsAdminOpen(false)}
+        />
+      )}
+
       {selectedTest && (
         <SchedulingFlow
           isOpen={isSchedulingOpen}
@@ -1620,102 +1863,289 @@ export default function AnalisisPage() {
 
       {/* Modal para agregar análisis */}
         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+          <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
             <DialogHeader>
-              <DialogTitle className="text-base sm:text-lg">Agregar nuevo análisis</DialogTitle>
+              <DialogTitle className="text-base sm:text-lg">🧪 Agregar nuevo análisis</DialogTitle>
+              <DialogDescription>
+                Configura el análisis y define su visibilidad según referencias de clientes
+              </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <Input placeholder="Nombre" value={newAnalysis.name} onChange={e => setNewAnalysis(a => ({ ...a, name: e.target.value }))} />
+            <div className="space-y-6 py-4">
               
-              {/* Selector de tipo de precio */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Tipo de precio a configurar</Label>
-                <Select value={newAnalysis.price_type} onValueChange={(value) => setNewAnalysis(a => ({ ...a, price_type: value }))}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="public">
+              {/* INFORMACIÓN BÁSICA */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">📋 Información Básica</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Nombre del Análisis *</Label>
+                    <Input 
+                      placeholder="Ej: Hemograma Completo" 
+                      value={newAnalysis.name} 
+                      onChange={e => setNewAnalysis(a => ({ ...a, name: e.target.value }))} 
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm font-medium">Categoría *</Label>
+                    <Select value={newAnalysis.category} onValueChange={(value) => setNewAnalysis(a => ({ ...a, category: value }))}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Seleccionar categoría" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Muestra</Label>
+                    <Input 
+                      placeholder="Ej: Sangre venosa" 
+                      value={newAnalysis.sample} 
+                      onChange={e => setNewAnalysis(a => ({ ...a, sample: e.target.value }))} 
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm font-medium">Condiciones</Label>
+                    <Input 
+                      placeholder="Ej: 8-12 horas de ayuno" 
+                      value={newAnalysis.conditions} 
+                      onChange={e => setNewAnalysis(a => ({ ...a, conditions: e.target.value }))} 
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm font-medium">Tiempo de entrega</Label>
+                    <Input 
+                      placeholder="Ej: 2-4 horas" 
+                      value={newAnalysis.deliveryTime} 
+                      onChange={e => setNewAnalysis(a => ({ ...a, deliveryTime: e.target.value }))} 
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* VISIBILIDAD Y REFERENCIAS */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">👥 Visibilidad del Análisis</h3>
+                
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">¿Quién puede ver este análisis?</Label>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
                       <div className="flex items-center space-x-2">
-                        <span>💰</span>
-                        <span>Precio Público (Pacientes)</span>
+                        <input
+                          type="radio"
+                          id="visibility_public"
+                          name="visibility"
+                          checked={newAnalysis.visibility_type === 'public'}
+                          onChange={() => setNewAnalysis(a => ({ ...a, visibility_type: 'public', allowed_references: [] }))}
+                          className="w-4 h-4"
+                        />
+                        <Label htmlFor="visibility_public" className="cursor-pointer">
+                          🌍 <strong>Público</strong> - Todos los usuarios
+                        </Label>
                       </div>
-                    </SelectItem>
-                    <SelectItem value="business">
+                    </div>
+                    
+                    <div className="flex items-center space-x-3">
                       <div className="flex items-center space-x-2">
-                        <span>🏢</span>
-                        <span>Precio Empresarial (Médicos y Empresas)</span>
+                        <input
+                          type="radio"
+                          id="visibility_references"
+                          name="visibility"
+                          checked={newAnalysis.visibility_type === 'references'}
+                          onChange={() => setNewAnalysis(a => ({ ...a, visibility_type: 'references' }))}
+                          className="w-4 h-4"
+                        />
+                        <Label htmlFor="visibility_references" className="cursor-pointer">
+                          🏢 <strong>Por Referencias Específicas</strong> - Solo clientes seleccionados
+                        </Label>
                       </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                    </div>
+                  </div>
+
+                  {/* SELECTOR DE REFERENCIA ESPECÍFICA */}
+                  {newAnalysis.visibility_type === 'references' && (
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 space-y-3">
+                      <Label className="text-sm font-medium text-blue-800">Selecciona la referencia específica para este análisis:</Label>
+                      <Select 
+                        value={newAnalysis.allowed_references[0] || ''} 
+                        onValueChange={(value) => setNewAnalysis(a => ({ ...a, allowed_references: [value] }))}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Seleccionar referencia específica" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableReferences.map((reference: any) => (
+                            <SelectItem key={reference.id} value={reference.id}>
+                              🏢 {reference.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-blue-600">
+                        💡 Solo los usuarios con esta referencia podrán ver este análisis
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Campo de precio dinámico */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">
-                  {newAnalysis.price_type === 'public' ? 'Precio Público' : 'Precio Empresarial'}
-                </Label>
-                <Input 
-                  placeholder={newAnalysis.price_type === 'public' ? 'Precio para pacientes' : 'Precio para médicos y empresas'} 
-                  type="number" 
-                  step="0.01"
-                  value={newAnalysis.price} 
-                  onChange={e => setNewAnalysis(a => ({ ...a, price: e.target.value }))} 
-                  className={newAnalysis.price_type === 'public' ? 'border-green-300' : 'border-blue-300'}
-                />
+              {/* PRECIOS POR TARIFA */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">💰 Configuración de Precios</h3>
+                
+                {newAnalysis.visibility_type === 'public' ? (
+                  /* MODO PÚBLICO - Precios simplificados */
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <span>💰</span> Precio Público
+                      </Label>
+                      <Input 
+                        placeholder="Precio para pacientes" 
+                        type="number" 
+                        step="0.01"
+                        value={newAnalysis.price_public} 
+                        onChange={e => setNewAnalysis(a => ({ ...a, price_public: e.target.value }))} 
+                        className="border-green-300"
+                      />
+                      <p className="text-xs text-gray-500">Para pacientes y público general</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <span>🏢</span> Precio Empresarial
+                      </Label>
+                      <Input 
+                        placeholder="Precio para médicos y empresas" 
+                        type="number" 
+                        step="0.01"
+                        value={newAnalysis.price_business} 
+                        onChange={e => setNewAnalysis(a => ({ ...a, price_business: e.target.value }))} 
+                        className="border-blue-300"
+                      />
+                      <p className="text-xs text-gray-500">Para médicos y empresas</p>
+                    </div>
+                  </div>
+                ) : (
+                  /* MODO REFERENCIAS - Precios por tarifa específica */
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 space-y-4">
+                    <p className="text-sm text-yellow-800">
+                      <strong>💡 Modo Avanzado:</strong> Configura precios específicos para cada tarifa
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {availableTariffs
+                        .filter(tariff => tariff.type === 'sale')
+                        .map((tariff: any) => (
+                          <div key={tariff.id} className="space-y-2">
+                            <Label className="text-sm font-medium">
+                              {tariff.name} {tariff.is_taxable ? '(con IGV)' : '(sin IGV)'}
+                            </Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              placeholder="0.00"
+                              value={newAnalysis.tariff_prices[tariff.id] || ''}
+                              onChange={e => setNewAnalysis(a => ({
+                                ...a,
+                                tariff_prices: {
+                                  ...a.tariff_prices,
+                                  [tariff.id]: e.target.value
+                                }
+                              }))}
+                            />
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Campo opcional para el otro precio */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-600">
-                  {newAnalysis.price_type === 'public' ? 'Precio Empresarial (Opcional)' : 'Precio Público (Opcional)'}
-                </Label>
-                <Input 
-                  placeholder={newAnalysis.price_type === 'public' ? 'Precio para médicos y empresas' : 'Precio para pacientes'} 
-                  type="number" 
-                  step="0.01"
-                  value={newAnalysis.reference_price} 
-                  onChange={e => setNewAnalysis(a => ({ ...a, reference_price: e.target.value }))} 
-                  className="border-gray-300"
-                />
+              {/* INFORMACIÓN ADICIONAL */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">📝 Información Adicional</h3>
+                
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Protocolo</Label>
+                    <Textarea 
+                      placeholder="Descripción del procedimiento..." 
+                      value={newAnalysis.protocol} 
+                      onChange={e => setNewAnalysis(a => ({ ...a, protocol: e.target.value }))} 
+                      className="mt-1 min-h-[80px]"
+                      rows={3}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Sugerencias</Label>
+                      <Textarea 
+                        placeholder="Recomendaciones para el paciente..." 
+                        value={newAnalysis.suggestions} 
+                        onChange={e => setNewAnalysis(a => ({ ...a, suggestions: e.target.value }))} 
+                        className="mt-1 min-h-[80px]"
+                        rows={3}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label className="text-sm font-medium">Comentarios</Label>
+                      <Textarea 
+                        placeholder="Notas internas..." 
+                        value={newAnalysis.comments} 
+                        onChange={e => setNewAnalysis(a => ({ ...a, comments: e.target.value }))} 
+                        className="mt-1 min-h-[80px]"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Checkbox para mostrar al público */}
+                <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                  <Checkbox
+                    id="show_public_new"
+                    checked={newAnalysis.show_public || false}
+                    onCheckedChange={(checked) => setNewAnalysis(a => ({ ...a, show_public: checked as boolean }))}
+                  />
+                  <Label htmlFor="show_public_new" className="text-sm font-medium">
+                    🌐 Mostrar al público (visible para usuarios no registrados)
+                  </Label>
+                </div>
               </div>
 
-              <Input placeholder="Condiciones" value={newAnalysis.conditions} onChange={e => setNewAnalysis(a => ({ ...a, conditions: e.target.value }))} />
-              <Input placeholder="Muestra" value={newAnalysis.sample} onChange={e => setNewAnalysis(a => ({ ...a, sample: e.target.value }))} />
-              <Input placeholder="Protocolo" value={newAnalysis.protocol} onChange={e => setNewAnalysis(a => ({ ...a, protocol: e.target.value }))} />
-              <Input placeholder="Sugerencias" value={newAnalysis.suggestions} onChange={e => setNewAnalysis(a => ({ ...a, suggestions: e.target.value }))} />
-              <Input placeholder="Comentarios" value={newAnalysis.comments} onChange={e => setNewAnalysis(a => ({ ...a, comments: e.target.value }))} />
-              
-              {/* Select para categorías */}
-              <Select value={newAnalysis.category} onValueChange={(value) => setNewAnalysis(a => ({ ...a, category: value }))}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccionar categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              <Input placeholder="Tiempo de entrega (ej: 2-4 horas)" value={newAnalysis.deliveryTime} onChange={e => setNewAnalysis(a => ({ ...a, deliveryTime: e.target.value }))} />
-              
-              {/* Checkbox para mostrar al público */}
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="show_public_new"
-                  checked={newAnalysis.show_public || false}
-                  onCheckedChange={(checked) => setNewAnalysis(a => ({ ...a, show_public: checked as boolean }))}
-                />
-                <Label htmlFor="show_public_new" className="text-sm font-medium">
-                  Mostrar al público (visible para usuarios no registrados)
-                </Label>
+              {/* BOTONES DE ACCIÓN */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white" 
+                  onClick={handleAddAnalysis}
+                >
+                  💾 Guardar Análisis
+                </Button>
               </div>
-              
-              <Button className="w-full bg-green-600 hover:bg-green-700 text-white mt-6" onClick={handleAddAnalysis}>Guardar</Button>
             </div>
           </DialogContent>
         </Dialog>

@@ -242,7 +242,7 @@ export default function AnalysisPage() {
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-[#1E5FAD] hover:bg-[#3DA64A] text-white">
-                  Agendar este análisis
+                  PROGRAMADA TU RECOJO
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[600px]">

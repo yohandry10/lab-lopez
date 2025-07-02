@@ -96,7 +96,7 @@ export default function ArticlePage() {
 
       if (!foundArticle) {
         console.log("❌ Artículo no encontrado")
-        router.push("/biblioteca")
+        router.push("/promociones")
         return
       }
 
@@ -283,7 +283,7 @@ export default function ArticlePage() {
                               <h3 className="text-lg font-bold mb-2">{relatedArticle.title}</h3>
                               <p className="text-gray-500 text-sm mb-4 line-clamp-2">{relatedArticle.description}</p>
                               <Button asChild variant="outline" size="sm">
-                                <Link href={`/biblioteca/${relatedArticle.slug}`}>Ver promoción</Link>
+                                <Link href={`/promociones/${relatedArticle.slug}`}>Ver promoción</Link>
                               </Button>
                             </CardContent>
                           </div>

@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { SchedulingFlow } from "./scheduling-flow"
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
+import { useDynamicPricing } from "@/hooks/use-dynamic-pricing"
 import { SuccessDialog } from "./success-dialog"
 import { Home, Search } from "lucide-react"
 import { getSupabaseClient } from "@/lib/supabase-client"
@@ -58,26 +59,47 @@ interface PatientFormData {
 export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogProps) {
   const [step, setStep] = useState(1)
   const [serviceType, setServiceType] = useState("sede")
+  const [programmingType, setProgrammingType] = useState("horario")
   const [selectedTest, setSelectedTest] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [allAnalyses, setAllAnalyses] = useState<Analysis[]>([])
   const [filteredAnalyses, setFilteredAnalyses] = useState<Analysis[]>([])
-  const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null)
+  const [selectedAnalyses, setSelectedAnalyses] = useState<Analysis[]>([])
   const [isSchedulingOpen, setIsSchedulingOpen] = useState(false)
   const [isSuccessOpen, setIsSuccessOpen] = useState(false)
   const [patientName, setPatientName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [analysisPrices, setAnalysisPrices] = useState<Record<string, { price: number; tariff_name: string }>>({})
   const { addItem } = useCart()
   const { user } = useAuth()
+  const { getExamPrice, formatPrice, canSeePrice } = useDynamicPricing()
 
-  // Cargar análisis desde Supabase al abrir el modal
   useEffect(() => {
     if (isOpen) {
       fetchAnalyses()
     }
   }, [isOpen])
 
-  // Filtrar análisis basado en la búsqueda
+  const loadAnalysisPrices = async (analyses: Analysis[]) => {
+    const pricesMap: Record<string, { price: number; tariff_name: string }> = {}
+    
+    for (const analysis of analyses.slice(0, 20)) {
+      try {
+        const priceInfo = await getExamPrice(analysis.id.toString())
+        if (priceInfo) {
+          pricesMap[analysis.id.toString()] = {
+            price: priceInfo.price,
+            tariff_name: priceInfo.tariff_name
+          }
+        }
+      } catch (error) {
+        console.error(`Error loading price for analysis ${analysis.id}:`, error)
+      }
+    }
+    
+    setAnalysisPrices(pricesMap)
+  }
+
   useEffect(() => {
     console.log("🔍 Filtrado:", { searchTerm, allAnalysesCount: allAnalyses.length })
     
@@ -98,7 +120,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
         firstResults: filtered.slice(0, 3).map(a => a.name)
       })
       
-      setFilteredAnalyses(filtered.slice(0, 10)) // Limitar a 10 resultados
+      setFilteredAnalyses(filtered.slice(0, 10))
     }
   }, [searchTerm, allAnalyses])
 
@@ -134,21 +156,17 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
           category: String(item.category || '').trim()
         }))
         
-        // Aplicar segmentación de precios según rol de usuario
         const filteredByRole = mappedAnalyses.filter(analysis => {
           if (!user) {
-            // Usuario NO logueado: solo ve análisis públicos
             return analysis.show_public === true
           } else {
-            // Usuarios autenticados: lógica por rol
             switch (user.user_type) {
               case "admin":
-                return true // Admin ve todos
+                return true
               case "patient":
-                return true // Pacientes ven todos
+                return true
               case "doctor":
               case "company":
-                // Médicos/Empresas NO ven análisis marcados como públicos
                 return analysis.show_public !== true
               default:
                 return true
@@ -158,6 +176,8 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
         
         setAllAnalyses(filteredByRole)
         console.log("📋 Primeros 3 análisis:", mappedAnalyses.slice(0, 3))
+        
+        loadAnalysisPrices(filteredByRole)
       } else {
         console.log("⚠️ No hay datos en la base de datos")
         setAllAnalyses([])
@@ -171,7 +191,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
   }
 
   const handleNext = () => {
-    if (selectedAnalysis) {
+    if (selectedAnalyses.length > 0) {
       onClose()
       setIsSchedulingOpen(true)
     }
@@ -180,43 +200,56 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
   const handleScheduleComplete = (data: PatientFormData) => {
     setIsSchedulingOpen(false)
 
-    // Extract patient name from form data
     const fullName = `${data.firstName} ${data.lastName}`
     setPatientName(fullName)
 
-    // Add item to cart with correct price based on user role
-    if (selectedAnalysis) {
-      let priceToUse = selectedAnalysis.price // Default to public price
-      
-      // Determine price based on user role
-      if (user && (user.user_type === "doctor" || user.user_type === "company")) {
-        priceToUse = selectedAnalysis.reference_price || selectedAnalysis.price * 0.8
-      }
+    selectedAnalyses.forEach(analysis => {
+      const dynamicPrice = analysisPrices[analysis.id.toString()]
+      const finalPrice = dynamicPrice ? dynamicPrice.price : analysis.price
       
       addItem({
-        id: selectedAnalysis.id,
-        name: selectedAnalysis.name,
-        price: priceToUse,
+        id: analysis.id,
+        name: analysis.name,
+        price: finalPrice,
         patientDetails: data,
       })
-    }
+    })
 
-    // Show success dialog
     setIsSuccessOpen(true)
   }
 
   const handleSuccessClose = () => {
     setIsSuccessOpen(false)
-    setSelectedAnalysis(null)
+    setSelectedAnalyses([])
     setSearchTerm("")
     setServiceType("sede")
+    setProgrammingType("horario")
   }
 
   const handleSelectAnalysis = (analysis: Analysis) => {
     console.log("✅ Análisis seleccionado:", analysis)
-    setSelectedAnalysis(analysis)
+    const isAlreadySelected = selectedAnalyses.some(selected => selected.id === analysis.id)
+    
+    if (isAlreadySelected) {
+      setSelectedAnalyses(selectedAnalyses.filter(selected => selected.id !== analysis.id))
+    } else {
+      setSelectedAnalyses([...selectedAnalyses, analysis])
+    }
+    
     setSearchTerm("")
     setFilteredAnalyses([])
+  }
+
+  const handleRemoveAnalysis = (analysisId: number) => {
+    setSelectedAnalyses(selectedAnalyses.filter(analysis => analysis.id !== analysisId))
+  }
+
+  const calculateTotal = () => {
+    return selectedAnalyses.reduce((total, analysis) => {
+      const dynamicPrice = analysisPrices[analysis.id.toString()]
+      const finalPrice = dynamicPrice ? dynamicPrice.price : analysis.price
+      return total + finalPrice
+    }, 0)
   }
 
   return (
@@ -224,8 +257,8 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Agenda tu análisis</DialogTitle>
-            <DialogDescription>Busca y selecciona el análisis que necesitas</DialogDescription>
+            <DialogTitle>PROGRAMADA TU RECOJO</DialogTitle>
+            <DialogDescription>Busca y selecciona los análisis para programar el recojo de muestras</DialogDescription>
           </DialogHeader>
 
           <div className="py-4 space-y-6">
@@ -241,7 +274,6 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
                 />
               </div>
               
-              {/* Información de estado */}
               {isLoading && (
                 <div className="mt-1 text-xs text-blue-600">
                   🔄 Cargando análisis desde base de datos...
@@ -260,75 +292,117 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
                 </div>
               )}
               
-              {/* Resultados de búsqueda */}
               {filteredAnalyses.length > 0 && (
                 <div className="mt-2 max-h-48 overflow-y-auto border rounded-md bg-white shadow-lg">
-                  {filteredAnalyses.map((analysis) => (
-                    <button
-                      key={analysis.id}
-                      className="w-full px-4 py-3 text-left hover:bg-gray-100 border-b last:border-b-0 focus:outline-none focus:bg-gray-100"
-                      onClick={() => handleSelectAnalysis(analysis)}
-                    >
-                      <div className="font-medium text-gray-900">{analysis.name}</div>
-                      <div className="text-sm text-gray-600 flex justify-between">
-                        <span>{analysis.category}</span>
-                        {/* Mostrar precio según rol de usuario */}
-                        {!user && analysis.show_public && (
-                          <span className="font-medium text-green-600">S/. {analysis.price.toFixed(2)}</span>
-                        )}
-                        {user && (user.user_type === "doctor" || user.user_type === "company") && (
-                          <span className="font-medium text-blue-600">S/. {(analysis.reference_price || analysis.price * 0.8).toFixed(2)}</span>
-                        )}
-                        {user && (user.user_type === "patient" || user.user_type === "admin") && (
-                          <span className="font-medium text-green-600">S/. {analysis.price.toFixed(2)}</span>
-                        )}
-                      </div>
-                    </button>
-                  ))}
+                  {filteredAnalyses.map((analysis) => {
+                    const isSelected = selectedAnalyses.some(selected => selected.id === analysis.id)
+                    return (
+                      <button
+                        key={analysis.id}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-100 border-b last:border-b-0 focus:outline-none focus:bg-gray-100 ${
+                          isSelected ? 'bg-blue-50 border-blue-200' : ''
+                        }`}
+                        onClick={() => handleSelectAnalysis(analysis)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="font-medium text-gray-900 flex items-center gap-2">
+                              {analysis.name}
+                              {isSelected && <span className="text-blue-600 text-sm">✓ Seleccionado</span>}
+                            </div>
+                            <div className="text-sm text-gray-600">{analysis.category}</div>
+                          </div>
+                          {canSeePrice() && (
+                            <span className="font-medium text-blue-600">
+                              {analysisPrices[analysis.id.toString()] 
+                                ? formatPrice(analysisPrices[analysis.id.toString()].price)
+                                : `S/. ${analysis.price.toFixed(2)}`
+                              }
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
               )}
               
-              {/* Mensaje cuando no hay resultados pero sí hay búsqueda */}
-              {searchTerm && filteredAnalyses.length === 0 && allAnalyses.length > 0 && !selectedAnalysis && (
+              {searchTerm && filteredAnalyses.length === 0 && allAnalyses.length > 0 && (
                 <div className="mt-2 p-3 text-center text-gray-500 text-sm border rounded-md">
                   No se encontraron análisis que coincidan con "{searchTerm}"
                 </div>
               )}
               
-              {/* Análisis seleccionado */}
-              {selectedAnalysis && (
-                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                  <div className="font-medium text-blue-900">{selectedAnalysis.name}</div>
-                  <div className="text-sm text-blue-700 flex justify-between">
-                    <span>{selectedAnalysis.category}</span>
-                    {/* Mostrar precio según rol de usuario */}
-                    {!user && selectedAnalysis.show_public && (
-                      <span className="font-medium">S/. {selectedAnalysis.price.toFixed(2)}</span>
-                    )}
-                    {user && (user.user_type === "doctor" || user.user_type === "company") && (
-                      <span className="font-medium">S/. {(selectedAnalysis.reference_price || selectedAnalysis.price * 0.8).toFixed(2)}</span>
-                    )}
-                    {user && (user.user_type === "patient" || user.user_type === "admin") && (
-                    <span className="font-medium">S/. {selectedAnalysis.price.toFixed(2)}</span>
-                    )}
-                  </div>
+              {selectedAnalyses.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <Label className="font-medium">Análisis seleccionados:</Label>
+                  {selectedAnalyses.map((analysis) => (
+                    <div key={analysis.id} className="flex justify-between items-center p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <div>
+                        <div className="font-medium text-blue-900">{analysis.name}</div>
+                        <div className="text-sm text-blue-700">{analysis.category}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {canSeePrice() && (
+                          <span className="font-medium text-blue-600">
+                            {analysisPrices[analysis.id.toString()] 
+                              ? formatPrice(analysisPrices[analysis.id.toString()].price)
+                              : `S/. ${analysis.price.toFixed(2)}`
+                            }
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleRemoveAnalysis(analysis.id)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {canSeePrice() && (
+                    <div className="p-3 bg-purple-100 border border-purple-200 rounded-md">
+                      <div className="font-bold text-purple-900 text-lg">
+                        TOTAL: {selectedAnalyses.length} {selectedAnalyses.length === 1 ? 'ANÁLISIS' : 'ANÁLISIS'} - S/. {calculateTotal().toFixed(2)}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
             <div>
-              <Label className="font-medium">Tipo de atención</Label>
+              <Label className="font-medium">Tipo de programaciones *</Label>
+              <RadioGroup value={programmingType} onValueChange={setProgrammingType} className="mt-2 flex flex-col space-y-2">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="horario" id="hero-horario" />
+                  <Label htmlFor="hero-horario" className="flex items-center gap-2">
+                    📅 Según horario <span className="text-sm text-gray-600">(10:00 y 13:00 horas)</span>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="urgente" id="hero-urgente" />
+                  <Label htmlFor="hero-urgente" className="flex items-center gap-2">
+                    ⚡ Urgente <span className="text-sm text-orange-600">(cuando la referencia lo necesita)</span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div>
+              <Label className="font-medium">Lugar del recojo *</Label>
               <RadioGroup value={serviceType} onValueChange={setServiceType} className="mt-2 flex flex-col space-y-2">
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="sede" id="hero-sede" />
                   <Label htmlFor="hero-sede" className="flex items-center gap-2">
-                    Atención en sede
+                    🏥 Recojo en sede
                   </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="domicilio" id="hero-domicilio" />
                   <Label htmlFor="hero-domicilio" className="flex items-center gap-2">
-                    Atención a domicilio <Home className="h-4 w-4" />
+                    🏠 Recojo a domicilio <Home className="h-4 w-4" />
                   </Label>
                 </div>
               </RadioGroup>
@@ -339,27 +413,32 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
             <Button variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button onClick={handleNext} disabled={!selectedAnalysis} className="bg-[#1E5FAD] hover:bg-[#3DA64A]">
+            <Button 
+              onClick={handleNext} 
+              disabled={selectedAnalyses.length === 0} 
+              className="bg-[#1E5FAD] hover:bg-[#3DA64A]"
+            >
               Continuar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {selectedAnalysis && (
+      {selectedAnalyses.length > 0 && (
         <SchedulingFlow
           isOpen={isSchedulingOpen}
           onClose={() => setIsSchedulingOpen(false)}
           onComplete={handleScheduleComplete}
-          testName={selectedAnalysis.name}
+          testName={selectedAnalyses.map(analysis => analysis.name).join(', ')}
           initialServiceType={serviceType}
+          programmingType={programmingType}
         />
       )}
 
       <SuccessDialog
         isOpen={isSuccessOpen}
         onClose={handleSuccessClose}
-        testName={selectedAnalysis?.name || ""}
+        testName={selectedAnalyses.map(analysis => analysis.name).join(', ')}
         patientName={patientName}
         onContinueShopping={handleSuccessClose}
         onNewPatient={handleSuccessClose}

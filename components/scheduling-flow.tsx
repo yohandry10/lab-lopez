@@ -24,6 +24,7 @@ interface SchedulingFlowProps {
   onComplete: (data: any) => void
   testName: string
   initialServiceType?: string
+  programmingType?: string
 }
 
 interface SedeInfo {
@@ -59,11 +60,13 @@ export function SchedulingFlow({
   onComplete,
   testName,
   initialServiceType = "sede",
+  programmingType = "horario",
 }: SchedulingFlowProps) {
   const [step, setStep] = useState(1)
   const [selectedSedeInfo, setSelectedSedeInfo] = useState<SedeInfo | null>(null)
   const [formData, setFormData] = useState({
     serviceType: initialServiceType,
+    programmingType: programmingType,
     date: undefined as Date | undefined,
     timeSlot: "",
     location: "",
@@ -84,13 +87,14 @@ export function SchedulingFlow({
     gender: "",
   })
 
-  // Actualizar el tipo de servicio cuando cambia initialServiceType
+  // Actualizar el tipo de servicio y programación cuando cambian
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
       serviceType: initialServiceType,
+      programmingType: programmingType,
     }))
-  }, [initialServiceType])
+  }, [initialServiceType, programmingType])
 
   const locations = [
     "Sede San Juan de Miraflores (dentro la Clínica Sagrada Familia del Sur)",
@@ -109,41 +113,51 @@ export function SchedulingFlow({
     "La Molina",
   ]
 
-  const timeSlots = [
-    "07:00",
-    "07:30",
-    "08:00",
-    "08:15",
-    "08:30",
-    "08:45",
-    "09:00",
-    "09:15",
-    "09:30",
-    "09:45",
-    "10:00",
-    "10:15",
-    "10:30",
-    "10:45",
-    "11:00",
-    "11:15",
-    "11:30",
-    "11:45",
-    "12:00",
-    "12:30",
-    "13:30",
-    "14:15",
-    "14:30",
-    "14:45",
-    "15:00",
-    "15:15",
-    "15:45",
-    "16:00",
-    "16:15",
-    "16:30",
-    "16:45",
-    "17:00",
-    "17:15",
-  ]
+  // Horarios según el tipo de programación
+  const getTimeSlots = () => {
+    if (formData.programmingType === "horario") {
+      // Según horario: solo 10:00 y 13:00
+      return ["10:00", "13:00"]
+    } else {
+      // Urgente: horarios ampliados
+      return [
+        "07:00",
+        "07:30",
+        "08:00",
+        "08:15",
+        "08:30",
+        "08:45",
+        "09:00",
+        "09:15",
+        "09:30",
+        "09:45",
+        "10:00",
+        "10:15",
+        "10:30",
+        "10:45",
+        "11:00",
+        "11:15",
+        "11:30",
+        "11:45",
+        "12:00",
+        "12:30",
+        "13:00",
+        "13:30",
+        "14:15",
+        "14:30",
+        "14:45",
+        "15:00",
+        "15:15",
+        "15:45",
+        "16:00",
+        "16:15",
+        "16:30",
+        "16:45",
+        "17:00",
+        "17:15",
+      ]
+    }
+  }
 
   // Manejar el cambio de sede seleccionada
   const handleSedeChange = (value: string) => {
@@ -172,12 +186,14 @@ export function SchedulingFlow({
   const isStep1Valid = () => {
     if (formData.serviceType === "sede") {
       return (
+        formData.programmingType &&
         formData.date &&
         formData.timeSlot &&
         formData.location
       )
     } else {
       return (
+        formData.programmingType &&
         formData.date &&
         formData.timeSlot &&
         formData.district &&
@@ -218,6 +234,34 @@ export function SchedulingFlow({
           address: formData.address,
         } : undefined
       }
+
+      // Guardar datos en localStorage para usar en el carrito con EmailJS
+      const schedulingData = {
+        programmingType: formData.programmingType,
+        selectedDate: formData.date?.toLocaleDateString('es-PE') || new Date().toLocaleDateString('es-PE'),
+        selectedTime: formData.timeSlot,
+        serviceType: formData.serviceType,
+        address: formData.serviceType === "domicilio" ? formData.address : (formData.location || 'Sede'),
+        clientReference: 'Público General' // Por defecto, se puede modificar según el usuario
+      }
+      
+      const patientDataForEmail = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        documentType: formData.documentType,
+        documentNumber: formData.documentNumber,
+        phone: formData.phone,
+        email: formData.email,
+        birthDate: formData.birthDate
+      }
+      
+      // Guardar en localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('scheduling-data', JSON.stringify(schedulingData))
+        localStorage.setItem('patient-data', JSON.stringify(patientDataForEmail))
+        console.log("📦 Datos guardados en localStorage para EmailJS:", { schedulingData, patientDataForEmail })
+      }
+
       onComplete(patientData)
     }
   }
@@ -235,9 +279,36 @@ export function SchedulingFlow({
         {step === 1 && (
           <div className="py-4">
             <div className="space-y-6">
+              {/* TIPO DE PROGRAMACIONES */}
+              <div>
+                <Label htmlFor="programmingType" className="font-medium">
+                  Tipo de programaciones *
+                </Label>
+                <RadioGroup
+                  id="programmingType"
+                  value={formData.programmingType}
+                  onValueChange={(value) => setFormData({ ...formData, programmingType: value })}
+                  className="mt-2 flex flex-wrap gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="horario" id="horario" />
+                    <Label htmlFor="horario" className="flex items-center gap-2">
+                      📅 Según horario <span className="text-sm text-gray-600">(10:00 y 13:00 horas)</span>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="urgente" id="urgente" />
+                    <Label htmlFor="urgente" className="flex items-center gap-2">
+                      ⚡ Urgente <span className="text-sm text-orange-600">(cuando la referencia lo necesita)</span>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {/* TIPO DE SERVICIO */}
               <div>
                 <Label htmlFor="serviceType" className="font-medium">
-                  Escoge el tipo de atención *
+                  Lugar del recojo *
                 </Label>
                 <RadioGroup
                   id="serviceType"
@@ -247,12 +318,12 @@ export function SchedulingFlow({
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="sede" id="sede" />
-                    <Label htmlFor="sede">Atención en sede</Label>
+                    <Label htmlFor="sede">🏥 Recojo en sede</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="domicilio" id="domicilio" />
                     <Label htmlFor="domicilio" className="flex items-center gap-2">
-                      Atención a domicilio <Home className="h-4 w-4" />
+                      🏠 Recojo a domicilio <Home className="h-4 w-4" />
                     </Label>
                   </div>
                 </RadioGroup>
@@ -269,7 +340,13 @@ export function SchedulingFlow({
                       selected={formData.date}
                       onSelect={handleDateChange}
                       locale={es}
-                      disabled={(date) => date < new Date()}
+                      disabled={(date) => {
+                        const today = new Date()
+                        const yesterday = new Date(today)
+                        yesterday.setDate(yesterday.getDate() - 1)
+                        // Permitir seleccionar desde hoy en adelante (incluyendo el mismo día)
+                        return date < yesterday
+                      }}
                       className="mx-auto"
                       weekStartsOn={1}
                       showOutsideDays={false}
@@ -280,18 +357,32 @@ export function SchedulingFlow({
 
                 <div>
                   <Label htmlFor="timeSlot" className="font-medium">
-                    Elige un turno *
+                    Elige un turno * 
+                    {formData.programmingType === "horario" && (
+                      <span className="text-sm text-gray-600 block mt-1">
+                        Horarios de programaciones según horario
+                      </span>
+                    )}
+                    {formData.programmingType === "urgente" && (
+                      <span className="text-sm text-orange-600 block mt-1">
+                        Horarios urgentes disponibles
+                      </span>
+                    )}
                   </Label>
                   <div className="mt-2 grid grid-cols-4 sm:grid-cols-6 gap-2">
-                    {timeSlots.map((time) => (
+                    {getTimeSlots().map((time) => (
                       <Button
                         key={time}
                         type="button"
                         variant={formData.timeSlot === time ? "default" : "outline"}
                         className={`text-sm ${
                           formData.timeSlot === time 
-                            ? "bg-[#1e5fad] text-white hover:bg-[#1e5fad]/90" 
-                            : "bg-[#EBF5FF] text-[#1e5fad] border-[#1e5fad] hover:bg-[#1e5fad]/10"
+                            ? formData.programmingType === "urgente"
+                              ? "bg-orange-600 text-white hover:bg-orange-600/90"
+                              : "bg-[#1e5fad] text-white hover:bg-[#1e5fad]/90"
+                            : formData.programmingType === "urgente"
+                              ? "bg-orange-50 text-orange-600 border-orange-300 hover:bg-orange-100"
+                              : "bg-[#EBF5FF] text-[#1e5fad] border-[#1e5fad] hover:bg-[#1e5fad]/10"
                         }`}
                         onClick={() => setFormData({ ...formData, timeSlot: time })}
                       >
@@ -299,6 +390,16 @@ export function SchedulingFlow({
                       </Button>
                     ))}
                   </div>
+                  {formData.programmingType === "horario" && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      Solo disponible en horarios de 10:00 y 13:00 horas
+                    </div>
+                  )}
+                  {formData.programmingType === "urgente" && (
+                    <div className="mt-2 text-xs text-orange-600">
+                      Horarios urgentes cuando la referencia lo necesita
+                    </div>
+                  )}
                 </div>
               </div>
 

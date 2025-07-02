@@ -9,6 +9,7 @@ import { useState, useEffect } from "react"
 import { useCart } from "@/contexts/cart-context"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/contexts/auth-context"
+import { useDynamicPricing } from "@/hooks/use-dynamic-pricing"
 
 // Función para obtener tiempo de entrega según categoría
 const getDeliveryTimeByCategory = (category: string, analysisName?: string): string => {
@@ -60,7 +61,9 @@ interface AnalysisDialogProps {
 
 export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDialogProps) {
   const { addItem } = useCart()
+  const { getExamPrice, formatPrice, canSeePrice } = useDynamicPricing()
   const [mounted, setMounted] = useState(false)
+  const [currentPrice, setCurrentPrice] = useState<{ price: number; tariff_name: string } | null>(null)
   const [formData, setFormData] = useState({
     patientName: "",
     patientAge: "",
@@ -115,6 +118,22 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
     }
   }, [isOpen, analysis?.id, user?.id]) // Use stable identifiers instead of full objects
 
+  // Cargar precio dinámico cuando se abra el modal
+  useEffect(() => {
+    if (isOpen && analysis?.id) {
+      const loadPrice = async () => {
+        try {
+          const priceInfo = await getExamPrice(analysis.id.toString())
+          setCurrentPrice(priceInfo)
+        } catch (error) {
+          console.error('Error loading dynamic price:', error)
+          setCurrentPrice(null)
+        }
+      }
+      loadPrice()
+    }
+  }, [isOpen, analysis?.id, getExamPrice])
+
   if (!mounted || !analysis) return null
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -128,10 +147,14 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
 
   const handleSubmit = () => {
     if (!user) return;
+    
+    // Usar precio dinámico si está disponible, sino usar precio legacy
+    const finalPrice = currentPrice ? currentPrice.price : analysis.price
+    
     addItem({
       id: analysis.id,
       name: analysis.name,
-      price: analysis.price,
+      price: finalPrice,
       patientDetails: formData,
     })
     onClose()
@@ -144,74 +167,66 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
           <DialogTitle className="text-lg font-medium">{analysis.name}</DialogTitle>
         </DialogHeader>
         
-        {/* Mostrar precio según segmentación de roles */}
-        {(user || analysis.show_public) && (
-        <div className="bg-blue-50 -mx-6 px-6 py-2 text-right text-sm">
-            {/* Precio para usuarios NO logueados (público) */}
-            {!user && analysis.show_public && (
+        {/* Mostrar precio usando sistema dinámico de tarifas */}
+        {canSeePrice() && (
+          <div className="bg-blue-50 -mx-6 px-6 py-2 text-right text-sm">
+            {currentPrice ? (
               <>
-                <span className="font-medium">Precio: S/. {analysis.price.toFixed(2)}</span>
+                <span className="font-medium">
+                  Precio: {formatPrice(currentPrice.price)}
+                </span>
                 <span className="text-gray-600"> (incluido IGV)</span>
+                {currentPrice.tariff_name && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    Tarifa: {currentPrice.tariff_name}
+                  </div>
+                )}
               </>
-            )}
-            
-            {/* Precio para médicos/empresas (solo análisis NO públicos) */}
-            {user && (user.user_type === "doctor" || user.user_type === "company") && (
+            ) : (
+              // Fallback a precio legacy si no se puede cargar precio dinámico
               <>
-                <span className="font-medium">Precio: S/. {(analysis.reference_price || analysis.price * 0.8).toFixed(2)}</span>
-                <span className="text-gray-600"> (incluido IGV) - Precio referencial</span>
-              </>
-            )}
-            
-            {/* Precio para pacientes autenticados */}
-            {user && user.user_type === "patient" && (
-              <>
-                <span className="font-medium">Precio: S/. {analysis.price.toFixed(2)}</span>
+                <span className="font-medium">
+                  Precio: S/. {analysis.price.toFixed(2)}
+                </span>
                 <span className="text-gray-600"> (incluido IGV)</span>
+                <div className="text-xs text-gray-500 mt-1">
+                  Precio base
+                </div>
               </>
             )}
-            
-            {/* Precio para admin */}
-            {user && user.user_type === "admin" && (
-              <>
-                <span className="font-medium">Precio: S/. {analysis.price.toFixed(2)}</span>
-                <span className="text-gray-600"> (incluido IGV)</span>
-              </>
-            )}
-        </div>
+          </div>
         )}
         
         <div className="space-y-4 pt-2">
+          {/* 1. CONDICIONES PREANALÍTICAS */}
           <div>
-            <h4 className="font-medium mb-1">Condiciones (ayunas)</h4>
+            <h4 className="font-medium mb-1">Condiciones</h4>
             <p className="text-gray-600 text-sm">{analysis.conditions}</p>
           </div>
-          <div>
-            <h4 className="font-medium mb-1">Muestra preferida</h4>
-            <p className="text-gray-600 text-sm">{analysis.sample}</p>
-          </div>
+          
+          {/* 2. CONTENEDOR */}
           <div>
             <h4 className="font-medium mb-1">Protocolo toma muestra</h4>
             <p className="text-gray-600 text-sm">{analysis.protocol}</p>
           </div>
-          {analysis.deliveryTime && (
-            <div>
-              <h4 className="font-medium mb-1">⏱️ Tiempo de entrega</h4>
-              <p className="text-green-600 text-sm font-medium">{analysis.deliveryTime}</p>
-            </div>
-          )}
-          {analysis.suggestions && (
-            <div>
-              <h4 className="font-medium mb-1">Análisis sugeridos</h4>
-              <p className="text-gray-600 text-sm">{analysis.suggestions}</p>
-            </div>
-          )}
-          {analysis.comments && (
+          
+          {/* 3. MUESTRA REQUERIDA */}
+          <div>
+            <h4 className="font-medium mb-1">Muestra preferida</h4>
+            <p className="text-gray-600 text-sm">{analysis.sample}</p>
+          </div>
+          
+          {/* 4. CANTIDAD DE MUESTRA */}
           <div>
             <h4 className="font-medium mb-1">Comentarios</h4>
-              <p className="text-gray-600 text-sm">{analysis.comments || "(ninguno)"}</p>
+            <p className="text-gray-600 text-sm">{analysis.comments}</p>
           </div>
-          )}
+          
+          {/* 5. TIEMPO DE ENTREGA */}
+          <div>
+            <h4 className="font-medium mb-1">⏱️ Tiempo de entrega</h4>
+            <p className="text-green-600 text-sm font-medium">{analysis.deliveryTime}</p>
+          </div>
         </div>
         <DialogFooter className="mt-6">
           <Button variant="outline" onClick={onClose}>

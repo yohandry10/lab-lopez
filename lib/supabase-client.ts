@@ -17,6 +17,18 @@ export type User = {
   company_ruc?: string
   company_position?: string
   is_company_admin?: boolean
+  // 🆕 Referencias del usuario (relación many-to-many)
+  user_references?: Array<{
+    id: string
+    reference_id: string
+    reference?: {
+      id: string
+      name: string
+      business_name?: string
+      default_tariff_id?: string
+      active: boolean
+    }
+  }>
 }
 
 export type Patient = {

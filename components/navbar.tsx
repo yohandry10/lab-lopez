@@ -266,16 +266,18 @@ export function Navbar() {
                           </div>
                           {/* Botones (Pacientes, Médicos, Empresas) */}
                           <div className="md:col-span-4 flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6">
-                            {/* Pacientes */}
-                            <Link
-                              href="/resultados?type=patient"
-                              className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-full sm:w-56"
-                            >
-                              <div className="w-10 h-10 rounded-full bg-[#1e5fad] flex items-center justify-center flex-shrink-0">
-                                <User className="h-5 w-5 text-white" />
-                              </div>
-                              <span className="text-lg font-medium">Pacientes</span>
-                            </Link>
+                            {/* Pacientes - Solo visible si NO es médico o empresa logueado */}
+                            {!(user && (user.user_type === "doctor" || user.user_type === "company")) && (
+                              <Link
+                                href="/resultados?type=patient"
+                                className="flex items-center gap-3 px-6 py-4 bg-white hover:bg-blue-50 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md w-full sm:w-56"
+                              >
+                                <div className="w-10 h-10 rounded-full bg-[#1e5fad] flex items-center justify-center flex-shrink-0">
+                                  <User className="h-5 w-5 text-white" />
+                                </div>
+                                <span className="text-lg font-medium">Pacientes</span>
+                              </Link>
+                            )}
                             {/* Médicos - Siempre visible */}
                             <Link
                               href="/resultados?type=doctor"
@@ -408,14 +410,17 @@ export function Navbar() {
                                 </button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="start" className="w-[calc(100%-2rem)] max-w-xs mt-2 p-2">
-                                <DropdownMenuItem asChild>
-                                  <SheetClose asChild>
-                                    <Link href="/resultados?type=patient" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
-                                      <User className="h-5 w-5 text-blue-500" />
-                                      <span>Pacientes</span>
-                                    </Link>
-                                  </SheetClose>
-                                </DropdownMenuItem>
+                                {/* Pacientes - Solo visible si NO es médico o empresa logueado */}
+                                {!(user && (user.user_type === "doctor" || user.user_type === "company")) && (
+                                  <DropdownMenuItem asChild>
+                                    <SheetClose asChild>
+                                      <Link href="/resultados?type=patient" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">
+                                        <User className="h-5 w-5 text-blue-500" />
+                                        <span>Pacientes</span>
+                                      </Link>
+                                    </SheetClose>
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem asChild>
                                   <SheetClose asChild>
                                     <Link href="/resultados?type=doctor" className="flex items-center gap-3 p-3 text-base text-gray-700 hover:bg-gray-100 rounded-md">

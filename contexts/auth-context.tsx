@@ -18,6 +18,7 @@ type RegisterData = {
   company_ruc?: string
   company_position?: string
   is_company_admin?: boolean
+  reference_id?: string // 🆕 Agregado para referencias
 }
 
 type AuthContextType = {

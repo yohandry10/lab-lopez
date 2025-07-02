@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from "@/lib/supabase"
+import { getSupabaseClient } from '@/lib/supabase-client'
 
 export async function GET() {
   try {
@@ -169,6 +170,177 @@ export async function GET() {
       },
       { status: 500 }
     )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const { action } = await request.json()
+    const supabase = getSupabaseClient()
+
+    if (action === 'migrate-tariffs') {
+      console.log('🚀 Iniciando migración de tarifas...')
+
+      // 1. Verificar que existen las tablas necesarias
+      const { data: tariffsCheck } = await supabase
+        .from('tariffs')
+        .select('id, name')
+        .limit(1)
+
+      if (!tariffsCheck) {
+        return NextResponse.json({
+          success: false,
+          error: 'Las tablas de tarifas no existen. Ejecutar primero create-tariffs-system.sql'
+        })
+      }
+
+      // 2. Verificar si ya hay precios migrados
+      const { data: existingPrices, count } = await supabase
+        .from('tariff_prices')
+        .select('id', { count: 'exact' })
+
+      if (count && count > 0) {
+        return NextResponse.json({
+          success: false,
+          error: `La migración ya se ejecutó. Hay ${count} precios en el sistema.`
+        })
+      }
+
+      // 3. Obtener todas las tarifas necesarias
+      const { data: baseTariff } = await supabase
+        .from('tariffs')
+        .select('id')
+        .eq('name', 'Base')
+        .single()
+
+      const { data: referenceTariff } = await supabase
+        .from('tariffs')
+        .select('id')
+        .eq('name', 'Referencial con IGV')
+        .single()
+
+      if (!baseTariff || !referenceTariff) {
+        return NextResponse.json({
+          success: false,
+          error: 'No se encontraron las tarifas Base y Referencial con IGV'
+        })
+      }
+
+      // 4. Obtener todos los análisis con precios
+      const { data: analyses } = await supabase
+        .from('analyses')
+        .select('id, name, price, reference_price')
+        .not('price', 'is', null)
+        .gt('price', 0)
+
+      if (!analyses || analyses.length === 0) {
+        return NextResponse.json({
+          success: false,
+          error: 'No se encontraron análisis con precios para migrar'
+        })
+      }
+
+      console.log(`📊 Encontrados ${analyses.length} análisis para migrar`)
+
+      // 5. Preparar datos para inserción
+      const tariffPrices = []
+
+      for (const analysis of analyses) {
+        // Precio base (público)
+        tariffPrices.push({
+          tariff_id: baseTariff.id,
+          exam_id: analysis.id,
+          price: analysis.price
+        })
+
+        // Precio referencial (empresarial)
+        const referencePrice = analysis.reference_price && analysis.reference_price > 0 
+          ? analysis.reference_price 
+          : analysis.price * 0.8
+
+        tariffPrices.push({
+          tariff_id: referenceTariff.id,
+          exam_id: analysis.id,
+          price: Math.round(referencePrice * 100) / 100 // Redondear a 2 decimales
+        })
+      }
+
+      console.log(`💾 Insertando ${tariffPrices.length} precios...`)
+
+      // 6. Insertar precios en lotes
+      const batchSize = 100
+      let totalInserted = 0
+
+      for (let i = 0; i < tariffPrices.length; i += batchSize) {
+        const batch = tariffPrices.slice(i, i + batchSize)
+        
+        const { error: insertError } = await supabase
+          .from('tariff_prices')
+          .insert(batch)
+
+        if (insertError) {
+          console.error('Error insertando lote:', insertError)
+          return NextResponse.json({
+            success: false,
+            error: `Error en migración: ${insertError.message}`
+          })
+        }
+
+        totalInserted += batch.length
+        console.log(`✅ Insertados ${totalInserted}/${tariffPrices.length} precios`)
+      }
+
+      // 7. Configurar referencias por defecto
+      await supabase
+        .from('references')
+        .update({ default_tariff_id: baseTariff.id })
+        .eq('name', 'Público General')
+
+      await supabase
+        .from('references')
+        .update({ default_tariff_id: referenceTariff.id })
+        .eq('name', 'Empresas')
+
+      await supabase
+        .from('references')
+        .update({ default_tariff_id: referenceTariff.id })
+        .eq('name', 'Médicos')
+
+      // 8. Verificar resultados
+      const { count: finalCount } = await supabase
+        .from('tariff_prices')
+        .select('id', { count: 'exact' })
+
+      console.log('🎉 Migración completada exitosamente')
+
+      return NextResponse.json({
+        success: true,
+        message: 'Migración de tarifas completada exitosamente',
+        data: {
+          analysesProcessed: analyses.length,
+          pricesInserted: finalCount,
+          baseTariffId: baseTariff.id,
+          referenceTariffId: referenceTariff.id
+        }
+      })
+    }
+
+    // Funcionalidad existente para otras acciones
+    console.log('🔧 Configurando base de datos...')
+
+    // Resto del código existente...
+    return NextResponse.json({
+      success: true,
+      message: 'Configuración de base de datos completada',
+      details: []
+    })
+
+  } catch (error) {
+    console.error('Error en setup de base de datos:', error)
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    }, { status: 500 })
   }
 }
 

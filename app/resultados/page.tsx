@@ -55,23 +55,19 @@ export default function ResultadosPage() {
   // Manejar redireccionamientos según el tipo de usuario
   useEffect(() => {
     if (type === "doctor") {
-      // Médicos pueden consultar resultados como pacientes (redireccionar a patient)
-      router.replace("/resultados?type=patient");
+      // Médicos van al portal externo de Orion Lab
+      window.open("https://laboratoriolopez.orion-labs.com/portal/login", "_blank");
+      // Redirigir a la página de inicio
+      router.push("/");
       return;
     }
     
     if (type === "company") {
-      if (!user) {
-        // Si no está logueado y quiere acceder a resultados de empresa, redirigir a login
-        router.push("/login");
-        return;
-      } else if (user.user_type === "company") {
-        // Solo las empresas van al portal externo de Orions Lab
-        window.open("https://laboratoriolopez.orion-labs.com/portal/login", "_blank");
-        // Redirigir a la página de inicio
-        router.push("/");
-        return;
-      }
+      // Empresas van al portal externo de Orion Lab
+      window.open("https://laboratoriolopez.orion-labs.com/portal/login", "_blank");
+      // Redirigir a la página de inicio
+      router.push("/");
+      return;
     }
   }, [user, type, router]);
 

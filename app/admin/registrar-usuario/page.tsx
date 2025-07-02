@@ -8,8 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Loader2, Check, Eye, EyeOff, UserPlus } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Loader2, Check, Eye, EyeOff, UserPlus, Building2 } from "lucide-react"
 import Link from "next/link"
+import { tariffsService } from "@/lib/tariffs-service"
+import type { Reference } from "@/lib/tariffs.types"
 
 type FormData = {
   first_name: string
@@ -25,6 +28,7 @@ type FormData = {
   is_company_admin?: boolean
   accepted_terms: boolean
   accepted_marketing: boolean
+  reference_id?: string
 }
 
 type FormErrors = {
@@ -38,6 +42,8 @@ export default function AdminRegisterPage() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [references, setReferences] = useState<Reference[]>([])
+  const [loadingReferences, setLoadingReferences] = useState(true)
 
   const [formData, setFormData] = useState<FormData>({
     first_name: "",
@@ -53,9 +59,30 @@ export default function AdminRegisterPage() {
     is_company_admin: false,
     accepted_terms: true,
     accepted_marketing: false,
+    reference_id: "",
   })
 
   const [errors, setErrors] = useState<FormErrors>({})
+
+  useEffect(() => {
+    async function loadReferences() {
+      try {
+        setLoadingReferences(true)
+        const response = await tariffsService.getAllReferences()
+        if (response.success && response.data) {
+          const refsArray = Array.isArray(response.data) ? response.data : [response.data]
+          setReferences(refsArray.filter(ref => ref.active))
+          console.log("📋 Referencias cargadas:", refsArray.length)
+        }
+      } catch (error) {
+        console.error("❌ Error al cargar referencias:", error)
+      } finally {
+        setLoadingReferences(false)
+      }
+    }
+
+    loadReferences()
+  }, [])
 
   useEffect(() => {
     // Verificar si el usuario es admin
@@ -73,9 +100,30 @@ export default function AdminRegisterPage() {
   }
 
   const handleUserTypeChange = (value: "doctor" | "company") => {
-    setFormData((prev) => ({ ...prev, user_type: value }))
+    setFormData((prev) => ({ 
+      ...prev, 
+      user_type: value,
+      reference_id: prev.reference_id || getDefaultReferenceForUserType(value)
+    }))
     if (errors.user_type) {
       setErrors((prev) => ({ ...prev, user_type: undefined }))
+    }
+  }
+
+  const getDefaultReferenceForUserType = (userType: string) => {
+    const doctorRef = references.find(ref => ref.name.toLowerCase().includes('médico'))
+    const companyRef = references.find(ref => ref.name.toLowerCase().includes('empresa'))
+    
+    if (userType === 'doctor' && doctorRef) return doctorRef.id
+    if (userType === 'company' && companyRef) return companyRef.id
+    
+    return ""
+  }
+
+  const handleReferenceChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, reference_id: value }))
+    if (errors.reference_id) {
+      setErrors((prev) => ({ ...prev, reference_id: undefined }))
     }
   }
 
@@ -114,7 +162,10 @@ export default function AdminRegisterPage() {
       newErrors.confirmPassword = "Las contraseñas no coinciden"
     }
 
-    // Validaciones específicas por tipo de usuario
+    if (!formData.reference_id) {
+      newErrors.reference_id = "Debes seleccionar una referencia para el usuario"
+    }
+
     if (formData.user_type === "company") {
       if (!formData.company_name || formData.company_name.trim() === "") {
         newErrors.company_name = "El nombre de la empresa es requerido"
@@ -151,6 +202,7 @@ export default function AdminRegisterPage() {
 
       console.log("Enviando datos de registro:", registerData)
       console.log("🔍 USER_TYPE QUE SE ESTÁ ENVIANDO:", registerData.user_type)
+      console.log("🏢 REFERENCE_ID QUE SE ESTÁ ENVIANDO:", registerData.reference_id)
 
       const result = await adminRegister(registerData)
 
@@ -159,7 +211,6 @@ export default function AdminRegisterPage() {
       } else if (result.error) {
         console.error("Error en el registro:", result.error)
         
-        // Manejo específico de errores comunes
         let errorMessage = result.error
         
         if (result.error.includes("users_username_key")) {
@@ -197,7 +248,6 @@ export default function AdminRegisterPage() {
   }
 
   const handleContinue = () => {
-    // Reiniciar el formulario para registrar otro usuario
     setFormData({
       first_name: "",
       last_name: "",
@@ -212,6 +262,7 @@ export default function AdminRegisterPage() {
       is_company_admin: false,
       accepted_terms: true,
       accepted_marketing: false,
+      reference_id: "",
     })
     setIsSuccess(false)
   }
@@ -228,7 +279,6 @@ export default function AdminRegisterPage() {
     setShowConfirmPassword(!showConfirmPassword)
   }
 
-  // Si está cargando la autenticación, mostrar spinner
   if (authLoading) {
     return (
       <div className="container flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] py-12">
@@ -240,7 +290,6 @@ export default function AdminRegisterPage() {
     )
   }
 
-  // Si el usuario ya se registró exitosamente
   if (isSuccess) {
     return (
       <div className="container flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] py-12">
@@ -414,6 +463,43 @@ export default function AdminRegisterPage() {
                       <Label htmlFor="company">Empresa</Label>
                     </div>
                   </RadioGroup>
+                </div>
+
+                <div className="mt-4">
+                  <Label htmlFor="reference_id">
+                    <Building2 className="inline w-4 h-4 mr-2" />
+                    Referencia del usuario *
+                  </Label>
+                  <p className="text-sm text-gray-500 mb-2">
+                    Selecciona a qué grupo/referencia pertenecerá este usuario para mostrarle los análisis correspondientes
+                  </p>
+                  
+                  {loadingReferences ? (
+                    <div className="flex items-center space-x-2 p-3 border rounded-md">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm text-gray-500">Cargando referencias...</span>
+                    </div>
+                  ) : (
+                    <Select value={formData.reference_id} onValueChange={handleReferenceChange}>
+                      <SelectTrigger className={errors.reference_id ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Selecciona una referencia..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {references.map((reference) => (
+                          <SelectItem key={reference.id} value={reference.id}>
+                            <div className="flex items-center space-x-2">
+                              <Building2 className="w-4 h-4 text-blue-600" />
+                              <span>{reference.name}</span>
+                              {reference.business_name && (
+                                <span className="text-sm text-gray-500">({reference.business_name})</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {errors.reference_id && <p className="text-sm text-red-500 mt-1">{errors.reference_id}</p>}
                 </div>
 
                 {/* Campos específicos para médicos */}
