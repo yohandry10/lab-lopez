@@ -1678,6 +1678,7 @@ export default function AnalisisPage() {
           onClose={() => setIsSchedulingOpen(false)}
           onComplete={handleScheduleComplete}
           testName={selectedTest.name}
+          initialSelectedAnalyses={[{ ...selectedTest, quantity: 1 }]}
         />
       )}
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Calendar } from "@/components/ui/calendar"
 import {
   Dialog,
@@ -16,7 +16,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { es } from "date-fns/locale"
-import { Home, MapPin } from "lucide-react"
+import { Home, MapPin, Search } from "lucide-react"
+import { getSupabaseClient } from "@/lib/supabase-client"
+import { useDynamicPricing } from "@/hooks/use-dynamic-pricing"
 import { useAuth } from "@/contexts/auth-context"
 
 interface SchedulingFlowProps {
@@ -26,6 +28,22 @@ interface SchedulingFlowProps {
   testName: string
   initialServiceType?: string
   programmingType?: string
+  initialSelectedAnalyses?: SelectedAnalysis[]
+  onAnalysesChange?: (analyses: SelectedAnalysis[]) => void
+}
+
+// Tipos para análisis
+interface Analysis {
+  id: number
+  name: string
+  price: number
+  reference_price?: number
+  show_public?: boolean
+  category?: string
+}
+
+interface SelectedAnalysis extends Analysis {
+  quantity: number
 }
 
 interface SedeInfo {
@@ -62,6 +80,8 @@ export function SchedulingFlow({
   testName,
   initialServiceType = "sede",
   programmingType = "horario",
+  initialSelectedAnalyses = [],
+  onAnalysesChange,
 }: SchedulingFlowProps) {
   const [step, setStep] = useState(1)
   const [selectedSedeInfo, setSelectedSedeInfo] = useState<SedeInfo | null>(null)
@@ -93,6 +113,172 @@ export function SchedulingFlow({
   const { user } = useAuth()
   const skipPatientForm = !!user // Logged-in users do not need to fill patient form
 
+  // --- Estados para selección de análisis ---
+  const [searchTerm, setSearchTerm] = useState("")
+  const [allAnalyses, setAllAnalyses] = useState<Analysis[]>([])
+  const [filteredAnalyses, setFilteredAnalyses] = useState<Analysis[]>([])
+  const [showAvailable, setShowAvailable] = useState(false)
+  const [selectedAnalyses, setSelectedAnalyses] = useState<SelectedAnalysis[]>(initialSelectedAnalyses)
+  const [isLoadingAnalyses, setIsLoadingAnalyses] = useState(false)
+  const [analysisPrices, setAnalysisPrices] = useState<Record<string, { price: number; tariff_name: string }>>({})
+
+  const { getExamPrice, formatPrice, canSeePrice } = useDynamicPricing()
+
+  // Price helper
+  function PriceDisplay({ analysisId }: { analysisId: number }) {
+    const [priceInfo, setPriceInfo] = useState<{ price: number; tariff_name: string } | null>(null)
+    useEffect(() => {
+      if (!canSeePrice() || !analysisId) return
+      getExamPrice(analysisId).then(setPriceInfo)
+    }, [analysisId])
+    if (!canSeePrice()) return null
+    if (!priceInfo) return <span className="text-xs text-gray-500">No disponible</span>
+    return <span className="font-medium text-blue-600">{formatPrice(priceInfo.price)}</span>
+  }
+
+  // Cargar análisis al abrir modal
+  useEffect(() => {
+    if (isOpen) fetchAnalyses()
+  }, [isOpen])
+
+  const loadAnalysisPrices = async (analyses: Analysis[]) => {
+    const pricesMap: Record<string, { price: number; tariff_name: string }> = {}
+    for (const analysis of analyses) {
+      try {
+        const priceInfo = await getExamPrice(analysis.id.toString())
+        if (priceInfo) {
+          pricesMap[analysis.id.toString()] = {
+            price: priceInfo.price,
+            tariff_name: priceInfo.tariff_name,
+          }
+        }
+      } catch (error) {
+        console.error(`Error loading price for analysis ${analysis.id}:`, error)
+      }
+    }
+    setAnalysisPrices(pricesMap)
+  }
+
+  // Cargar (o actualizar) el precio de un solo análisis
+  const loadSingleAnalysisPrice = async (analysis: Analysis) => {
+    try {
+      const priceInfo = await getExamPrice(analysis.id.toString())
+      if (priceInfo) {
+        setAnalysisPrices((prev) => ({
+          ...prev,
+          [analysis.id.toString()]: {
+            price: priceInfo.price,
+            tariff_name: priceInfo.tariff_name,
+          },
+        }))
+      }
+    } catch (error) {
+      console.error(`Error loading price for analysis ${analysis.id}:`, error)
+    }
+  }
+
+  const fetchAnalyses = async () => {
+    setIsLoadingAnalyses(true)
+    try {
+      const supabase = getSupabaseClient()
+      const { data, error } = await supabase
+        .from("analyses")
+        .select("id, name, price, reference_price, show_public, category")
+        .order("name", { ascending: true })
+      if (error) {
+        console.error("Error fetching analyses:", error)
+        setAllAnalyses([])
+        return
+      }
+      if (data && Array.isArray(data) && data.length > 0) {
+        const mapped: Analysis[] = data.map((item: any) => ({
+          id: Number(item.id),
+          name: String(item.name || "").trim(),
+          price: Number(item.price || 0),
+          reference_price: item.reference_price ? Number(item.reference_price) : undefined,
+          show_public: Boolean(item.show_public),
+          category: String(item.category || "").trim(),
+        }))
+        const filteredByRole = mapped.filter((a) => {
+          if (!user) return a.show_public === true
+          switch (user.user_type) {
+            case "admin":
+              return true
+            case "patient":
+              return true
+            case "doctor":
+            case "company":
+              return a.show_public !== true
+            default:
+              return true
+          }
+        })
+        setAllAnalyses(filteredByRole)
+        loadAnalysisPrices(filteredByRole)
+      }
+    } catch (err) {
+      console.error(err)
+      setAllAnalyses([])
+    } finally {
+      setIsLoadingAnalyses(false)
+    }
+  }
+
+  // Filtrado según término de búsqueda
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredAnalyses([])
+    } else {
+      const filtered = allAnalyses.filter((analysis) => {
+        const nameMatch = analysis.name.toLowerCase().includes(searchTerm.toLowerCase())
+        const categoryMatch = analysis.category && analysis.category.toLowerCase().includes(searchTerm.toLowerCase())
+        return nameMatch || categoryMatch
+      })
+      setFilteredAnalyses(filtered.slice(0, 10))
+    }
+  }, [searchTerm, allAnalyses])
+
+  // Restablecer listado cuando se escriba en búsqueda
+  useEffect(() => {
+    if (searchTerm.trim() !== "") {
+      setShowAvailable(false)
+    }
+  }, [searchTerm])
+
+  // Actualizar cantidad total y propagar cambios
+  useEffect(() => {
+    setQuantity(selectedAnalyses.reduce((s, a) => s + a.quantity, 0))
+    if (onAnalysesChange) onAnalysesChange(selectedAnalyses)
+  }, [selectedAnalyses])
+
+  const handleSelectAnalysis = (analysis: Analysis) => {
+    const existing = selectedAnalyses.find((a) => a.id === analysis.id)
+    if (existing) {
+      setSelectedAnalyses(
+        selectedAnalyses.map((a) => (a.id === analysis.id ? { ...a, quantity: a.quantity + 1 } : a))
+      )
+    } else {
+      setSelectedAnalyses([...selectedAnalyses, { ...analysis, quantity: 1 }])
+    }
+    // Intentar cargar/actualizar el precio del análisis recién seleccionado
+    loadSingleAnalysisPrice(analysis)
+
+    setSearchTerm("")
+    setFilteredAnalyses([])
+  }
+
+  const handleRemoveAnalysis = (analysisId: number) => {
+    setSelectedAnalyses(selectedAnalyses.filter((a) => a.id !== analysisId))
+  }
+
+  const calculateTotal = () => {
+    return selectedAnalyses.reduce((total, analysis) => {
+      const dynamicPrice = analysisPrices[analysis.id.toString()]
+      const finalPrice = dynamicPrice ? dynamicPrice.price : analysis.price
+      return total + finalPrice * analysis.quantity
+    }, 0)
+  }
+
   // Actualizar el tipo de servicio y programación cuando cambian
   useEffect(() => {
     setFormData((prev) => ({
@@ -121,48 +307,49 @@ export function SchedulingFlow({
 
   // Horarios según el tipo de programación
   const getTimeSlots = () => {
-    if (formData.programmingType === "horario") {
-      // Según horario: solo 10:00 y 13:00
+    // Ahora "urgente" solo muestra los turnos limitados y "horario" muestra todos
+    if (formData.programmingType === "urgente") {
+      // Urgente: solo 10:00 y 13:00
       return ["10:00", "13:00"]
-    } else {
-      // Urgente: horarios ampliados
-      return [
-        "07:00",
-        "07:30",
-        "08:00",
-        "08:15",
-        "08:30",
-        "08:45",
-        "09:00",
-        "09:15",
-        "09:30",
-        "09:45",
-        "10:00",
-        "10:15",
-        "10:30",
-        "10:45",
-        "11:00",
-        "11:15",
-        "11:30",
-        "11:45",
-        "12:00",
-        "12:30",
-        "13:00",
-        "13:30",
-        "14:15",
-        "14:30",
-        "14:45",
-        "15:00",
-        "15:15",
-        "15:45",
-        "16:00",
-        "16:15",
-        "16:30",
-        "16:45",
-        "17:00",
-        "17:15",
-      ]
     }
+
+    // Según horario: horarios ampliados
+    return [
+      "07:00",
+      "07:30",
+      "08:00",
+      "08:15",
+      "08:30",
+      "08:45",
+      "09:00",
+      "09:15",
+      "09:30",
+      "09:45",
+      "10:00",
+      "10:15",
+      "10:30",
+      "10:45",
+      "11:00",
+      "11:15",
+      "11:30",
+      "11:45",
+      "12:00",
+      "12:30",
+      "13:00",
+      "13:30",
+      "14:15",
+      "14:30",
+      "14:45",
+      "15:00",
+      "15:15",
+      "15:45",
+      "16:00",
+      "16:15",
+      "16:30",
+      "16:45",
+      "17:00",
+      "17:15",
+    ]
   }
 
   // Manejar el cambio de sede seleccionada
@@ -307,6 +494,22 @@ export function SchedulingFlow({
     }
   }
 
+  const groupedAnalyses = useMemo(() => {
+    const groups: Record<string, Analysis[]> = {}
+    allAnalyses.forEach((a) => {
+      const key = a.category || "Otros"
+      if (!groups[key]) groups[key] = []
+      groups[key].push(a)
+    })
+    // Ordenar claves alfabéticamente
+    return Object.keys(groups)
+      .sort()
+      .reduce((obj: Record<string, Analysis[]>, key) => {
+        obj[key] = groups[key]
+        return obj
+      }, {})
+  }, [allAnalyses])
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
@@ -321,22 +524,110 @@ export function SchedulingFlow({
           <DialogDescription>{testName}</DialogDescription>
         </DialogHeader>
 
-        {/* Selector de cantidad */}
-        <div className="mt-4 flex items-center gap-2">
-          <Label>Cantidad:</Label>
-          <input
-            type="number"
-            min={1}
-            value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-            className="w-24 border rounded px-2 py-1 text-center"
-          />
-        </div>
+        {/* El selector de cantidad se eliminó: siempre se asume 1 por programación */}
 
         {step === 1 && (
           <div className="py-4">
             <div className="space-y-6">
-              {/* TIPO DE PROGRAMACIONES */}
+              {/* SELECCIONAR ANÁLISIS */}
+              <div>
+                <div className="flex justify-between items-center">
+                  <Label className="font-medium text-base">Análisis</Label>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowAvailable(!showAvailable)}
+                  >
+                    {showAvailable ? "Volver" : "Análisis disponibles"}
+                  </Button>
+                </div>
+
+                {isLoadingAnalyses && (
+                  <div className="mt-2 text-xs text-blue-600">🔄 Cargando análisis...</div>
+                )}
+
+                {showAvailable ? (
+                  <div className="mt-2 max-h-48 overflow-y-auto border rounded-md bg-white shadow-lg divide-y">
+                    {Object.entries(groupedAnalyses).map(([cat, list]) => (
+                      <div key={cat}>
+                        <div className="sticky top-0 bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-700 uppercase z-10">
+                          {cat}
+                        </div>
+                        {list.map((analysis) => {
+                          const isSelected = selectedAnalyses.some((s) => s.id === analysis.id)
+                          return (
+                            <button
+                              key={analysis.id}
+                              className={`w-full px-4 py-3 text-left hover:bg-gray-50 border-b last:border-b-0 focus:outline-none ${
+                                isSelected ? "bg-blue-50" : "bg-white"
+                              }`}
+                              onClick={() => handleSelectAnalysis(analysis)}
+                            >
+                              <div className="flex justify-between items-start">
+                                <span className="font-medium text-gray-900 truncate max-w-[60%]">{analysis.name}</span>
+                                {canSeePrice() && <PriceDisplay analysisId={analysis.id} />}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  null /* sin buscador ni resultados filtrados */
+                )}
+
+                {selectedAnalyses.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <Label className="font-medium">Análisis seleccionados:</Label>
+                    {selectedAnalyses.map((analysis) => {
+                      const dynamicPrice = analysisPrices[analysis.id.toString()]
+                      const finalPrice = dynamicPrice ? dynamicPrice.price : analysis.price
+                      return (
+                        <div
+                          key={analysis.id}
+                          className="flex justify-between items-center p-3 bg-blue-50 border border-blue-200 rounded-md"
+                        >
+                          <div className="font-medium text-blue-900 truncate max-w-[140px] sm:max-w-none">
+                            {analysis.name}
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {canSeePrice() && (
+                              <span className="text-blue-900 text-sm font-medium">S/. {(finalPrice * analysis.quantity).toFixed(2)}</span>
+                            )}
+                            <button
+                              onClick={() => handleSelectAnalysis(analysis)}
+                              className="text-green-600 hover:text-green-800 text-lg leading-none"
+                              title="Agregar uno más"
+                            >
+                              +
+                            </button>
+                            <button
+                              onClick={() => handleRemoveAnalysis(analysis.id)}
+                              className="text-red-600 hover:text-red-800 text-xs underline"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    {canSeePrice() && (
+                      <div className="p-3 bg-purple-100 border border-purple-200 rounded-md">
+                        <div className="font-bold text-purple-900 text-sm sm:text-lg">
+                          TOTAL: {selectedAnalyses.reduce((s, a) => s + a.quantity, 0)} ANÁLISIS - S/. {calculateTotal().toFixed(2)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* CAMPOS DE PROGRAMACIÓN Y SERVICIO */}
+              {!showAvailable && (
+              <>
               <div>
                 <Label htmlFor="programmingType" className="font-medium">
                   Tipo de programaciones *
@@ -385,8 +676,11 @@ export function SchedulingFlow({
                   </div>
                 </RadioGroup>
               </div>
+              </>
+              )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {!showAvailable && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Label htmlFor="date" className="font-medium">
                     Elige una fecha *
@@ -447,112 +741,17 @@ export function SchedulingFlow({
                       </Button>
                     ))}
                   </div>
-                  {formData.programmingType === "horario" && (
+                  {formData.programmingType === "urgente" && (
                     <div className="mt-2 text-xs text-gray-500">
                       Solo disponible en horarios de 10:00 y 13:00 horas
                     </div>
                   )}
-                  {formData.programmingType === "urgente" && (
+                  {formData.programmingType === "horario" && (
                     <div className="mt-2 text-xs text-orange-600">
-                      Horarios urgentes cuando la referencia lo necesita
+                      Horarios disponibles según programación
                     </div>
                   )}
                 </div>
-              </div>
-
-              {formData.serviceType === "sede" ? (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="location" className="font-medium">
-                      Escoge la sede para la cita *
-                    </Label>
-                    <Select
-                      value={formData.location}
-                      onValueChange={handleSedeChange}
-                    >
-                      <SelectTrigger id="location" className="mt-2">
-                        <SelectValue placeholder="Selecciona una sede" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {locations.map((location) => (
-                          <SelectItem key={location} value={location}>
-                            {location}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {selectedSedeInfo && (
-                    <div className="space-y-4">
-                      <div className="bg-gray-50 p-4 rounded-lg flex items-start gap-3">
-                        <MapPin className="h-5 w-5 text-[#1e5fad] mt-1" />
-                        <div>
-                          <h4 className="font-medium text-gray-900">{selectedSedeInfo.name}</h4>
-                          <p className="text-sm text-gray-600">{selectedSedeInfo.address}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="address">Dirección completa *</Label>
-                    <Input
-                      id="address"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      placeholder="Ingrese su dirección completa"
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="district">Distrito *</Label>
-                      <Select
-                        value={formData.district}
-                        onValueChange={(value) => setFormData({ ...formData, district: value })}
-                      >
-                        <SelectTrigger id="district" className="mt-1">
-                          <SelectValue placeholder="Selecciona un distrito" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {districts.map((district) => (
-                            <SelectItem key={district} value={district}>
-                              {district}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="addressDetails">Detalles de la dirección</Label>
-                      <Input
-                        id="addressDetails"
-                        name="addressDetails"
-                        value={formData.addressDetails}
-                        onChange={handleInputChange}
-                        placeholder="Piso, departamento, etc."
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="reference">Referencia</Label>
-                    <Input
-                      id="reference"
-                      name="reference"
-                      value={formData.reference}
-                      onChange={handleInputChange}
-                      placeholder="Cerca a..."
-                      className="mt-1"
-                    />
-                  </div>
                 </div>
               )}
             </div>

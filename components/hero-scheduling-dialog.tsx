@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,10 @@ interface Analysis {
   reference_price?: number
   show_public?: boolean
   category?: string
+}
+
+interface SelectedAnalysis extends Analysis {
+  quantity: number
 }
 
 interface PatientFormData {
@@ -76,8 +80,10 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
   const [searchTerm, setSearchTerm] = useState("")
   const [allAnalyses, setAllAnalyses] = useState<Analysis[]>([])
   const [filteredAnalyses, setFilteredAnalyses] = useState<Analysis[]>([])
-  const [selectedAnalyses, setSelectedAnalyses] = useState<Analysis[]>([])
+  const [selectedAnalyses, setSelectedAnalyses] = useState<SelectedAnalysis[]>([])
   const [isSchedulingOpen, setIsSchedulingOpen] = useState(false)
+  // Si ya se escogió programación una vez, no la volvemos a pedir
+  const [hasScheduled, setHasScheduled] = useState<boolean>(false)
   const [isSuccessOpen, setIsSuccessOpen] = useState(false)
   const [patientName, setPatientName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -203,7 +209,12 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
   }
 
   const handleNext = () => {
-    if (selectedAnalyses.length > 0) {
+    if (selectedAnalyses.length === 0) return
+
+    // Si ya existe programación previa, saltamos el modal de horarios
+    if (typeof window !== 'undefined' && localStorage.getItem('scheduling-data')) {
+      addAnalysesDirectlyToCart()
+    } else {
       onClose()
       setIsSchedulingOpen(true)
     }
@@ -211,6 +222,9 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
 
   const handleScheduleComplete = (data: PatientFormData) => {
     setIsSchedulingOpen(false)
+
+    // Marcamos que ya se programó al menos una vez
+    setHasScheduled(true)
 
     const fullName = `${data.firstName} ${data.lastName}`
     setPatientName(fullName)
@@ -230,44 +244,82 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
     setIsSuccessOpen(true)
   }
 
+  // Utilidad para agregar análisis seleccionados al carrito sin volver a preguntar horarios
+  const addAnalysesDirectlyToCart = () => {
+    if (selectedAnalyses.length === 0) return
+
+    // Intentar recuperar datos de paciente y nombre previamente guardados
+    let storedPatient: any = null
+    if (typeof window !== 'undefined') {
+      try {
+        storedPatient = JSON.parse(localStorage.getItem('patient-data') || 'null')
+      } catch {}
+    }
+
+    const fullName = storedPatient ? `${storedPatient.firstName || ''} ${storedPatient.lastName || ''}`.trim() : patientName
+    if (fullName) setPatientName(fullName)
+
+    selectedAnalyses.forEach((analysis) => {
+      const dynamicPrice = analysisPrices[analysis.id.toString()]
+      const finalPrice = dynamicPrice ? dynamicPrice.price : analysis.price
+
+      addItem({
+        id: analysis.id,
+        name: analysis.name,
+        price: finalPrice,
+        patientDetails: storedPatient || {},
+        quantity: analysis.quantity,
+      })
+    })
+
+    setIsSuccessOpen(true)
+  }
+
   const handleSuccessClose = () => {
     setIsSuccessOpen(false)
     setSelectedAnalyses([])
     setSearchTerm("")
-    setServiceType("sede")
-    setProgrammingType("horario")
   }
 
   const handleSelectAnalysis = (analysis: Analysis) => {
     console.log("✅ Análisis seleccionado:", analysis)
-    const isAlreadySelected = selectedAnalyses.some(selected => selected.id === analysis.id)
-    
-    if (isAlreadySelected) {
-      setSelectedAnalyses(selectedAnalyses.filter(selected => selected.id !== analysis.id))
+    const existing = selectedAnalyses.find(item => item.id === analysis.id)
+
+    if (existing) {
+      // increment quantity
+      setSelectedAnalyses(selectedAnalyses.map(item => item.id === analysis.id ? {...item, quantity: item.quantity + 1} : item))
     } else {
-      setSelectedAnalyses([...selectedAnalyses, analysis])
+      setSelectedAnalyses([...selectedAnalyses, {...analysis, quantity: 1}])
     }
-    
+
     setSearchTerm("")
     setFilteredAnalyses([])
   }
 
   const handleRemoveAnalysis = (analysisId: number) => {
-    setSelectedAnalyses(selectedAnalyses.filter(analysis => analysis.id !== analysisId))
+    const existing = selectedAnalyses.find(a => a.id === analysisId)
+    if (!existing) return
+    if (existing.quantity === 1) {
+      // remove item
+      setSelectedAnalyses(selectedAnalyses.filter(a => a.id !== analysisId))
+    } else {
+      // decrement
+      setSelectedAnalyses(selectedAnalyses.map(a => a.id === analysisId ? {...a, quantity: a.quantity - 1} : a))
+    }
   }
 
   const calculateTotal = () => {
     return selectedAnalyses.reduce((total, analysis) => {
       const dynamicPrice = analysisPrices[analysis.id.toString()]
       const finalPrice = dynamicPrice ? dynamicPrice.price : analysis.price
-      return total + finalPrice
+      return total + finalPrice * analysis.quantity
     }, 0)
   }
 
   const quotationItems = selectedAnalyses.map((analysis) => {
     const dynamicPrice = analysisPrices[analysis.id.toString()]
     const finalPrice = dynamicPrice ? dynamicPrice.price : analysis.price
-    return { name: analysis.name, price: canSeePrice() ? finalPrice : undefined }
+    return { name: `${analysis.name} x${analysis.quantity}`, price: canSeePrice() ? finalPrice * analysis.quantity : undefined }
   })
 
   return (
@@ -349,28 +401,41 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
               {selectedAnalyses.length > 0 && (
                 <div className="mt-4 space-y-2">
                   <Label className="font-medium">Análisis seleccionados:</Label>
-                  {selectedAnalyses.map((analysis) => (
-                    <div key={analysis.id} className="flex justify-between items-center p-3 bg-blue-50 border border-blue-200 rounded-md">
-                      <div>
-                        <div className="font-medium text-blue-900">{analysis.name}</div>
-                        <div className="text-sm text-blue-700">{analysis.category}</div>
+                  {selectedAnalyses.map((analysis) => {
+                    const dynamicPrice = analysisPrices[analysis.id.toString()]
+                    const finalPrice = dynamicPrice ? dynamicPrice.price : analysis.price
+                    return (
+                      <div key={analysis.id} className="flex justify-between items-center p-3 bg-blue-50 border border-blue-200 rounded-md">
+                        <div>
+                          <div className="font-medium text-blue-900 truncate max-w-[140px] sm:max-w-none">{analysis.name}</div>
+                          <div className="text-sm text-blue-700">{analysis.category}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {canSeePrice() && (
+                            <span className="text-blue-900 text-sm font-medium">S/. {(finalPrice * analysis.quantity).toFixed(2)}</span>
+                          )}
+                          <button
+                            onClick={() => handleSelectAnalysis(analysis)}
+                            className="text-green-600 hover:text-green-800 text-lg leading-none px-1"
+                            title="Agregar uno más"
+                          >
+                            +
+                          </button>
+                          <button
+                            onClick={() => setSelectedAnalyses(selectedAnalyses.filter(a => a.id !== analysis.id))}
+                            className="text-red-600 hover:text-red-800 text-xs underline"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <PriceDisplay analysisId={analysis.id} />
-                        <button
-                          onClick={() => handleRemoveAnalysis(analysis.id)}
-                          className="text-red-600 hover:text-red-800 text-sm"
-                        >
-                          Remover
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                   
                   {canSeePrice() && (
                     <div className="p-3 bg-purple-100 border border-purple-200 rounded-md">
                       <div className="font-bold text-purple-900 text-lg">
-                        TOTAL: {selectedAnalyses.length} {selectedAnalyses.length === 1 ? 'ANÁLISIS' : 'ANÁLISIS'} - S/. {calculateTotal().toFixed(2)}
+                        TOTAL: {selectedAnalyses.reduce((s,a)=>s+a.quantity,0)} {selectedAnalyses.reduce((s,a)=>s+a.quantity,0) === 1 ? 'ANÁLISIS' : 'ANÁLISIS'} - S/. {calculateTotal().toFixed(2)}
                       </div>
                     </div>
                   )}
@@ -438,6 +503,8 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
           testName={selectedAnalyses.map(analysis => analysis.name).join(', ')}
           initialServiceType={serviceType}
           programmingType={programmingType}
+          initialSelectedAnalyses={selectedAnalyses}
+          onAnalysesChange={(analyses) => setSelectedAnalyses(analyses)}
         />
       )}
 
