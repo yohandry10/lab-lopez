@@ -245,7 +245,7 @@ export default function AnalisisPage() {
     setIsSchedulingOpen(true)
   }
 
-  const handleScheduleComplete = (data: { firstName: string; lastName: string }) => {
+  const handleScheduleComplete = (data: { firstName: string; lastName: string }, qty: number) => {
     setIsSchedulingOpen(false)
 
     // Extract patient name from form data
@@ -258,6 +258,7 @@ export default function AnalisisPage() {
         id: selectedTest.id,
         name: selectedTest.name,
         price: selectedTest.price,
+        quantity: qty,
         patientDetails: data,
       })
     }

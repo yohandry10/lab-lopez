@@ -3,11 +3,8 @@
 import { X } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { useState, useEffect } from "react"
 import { useCart } from "@/contexts/cart-context"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/contexts/auth-context"
 import { useDynamicPricing } from "@/hooks/use-dynamic-pricing"
 
@@ -65,7 +62,6 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
   const { getExamPrice, formatPrice, canSeePrice } = useDynamicPricing()
   const [mounted, setMounted] = useState(false)
   const [currentPrice, setCurrentPrice] = useState<{ price: number; tariff_name: string } | null>(null)
-  const [quantity, setQuantity] = useState<number>(1)
   const [formData, setFormData] = useState({
     patientName: "",
     patientAge: "",
@@ -152,13 +148,12 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
     
     // Usar precio dinámico si está disponible, sino usar precio legacy
     const finalPrice = currentPrice ? currentPrice.price : analysis.price
-    const qty = Math.max(1, quantity)
-    
+ 
     addItem({
       id: analysis.id,
       name: analysis.name,
       price: finalPrice,
-      quantity: qty,
+      // quantity se manejará desde el flujo de programación o el carrito
       patientDetails: formData,
     })
     onClose()
@@ -237,17 +232,7 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
             <h4 className="font-medium mb-1">COMENTARIOS</h4>
             <p className="text-gray-600 text-sm">{analysis.comments}</p>
           </div>
-          {/* Selector de cantidad */}
-          <div className="flex items-center gap-2 pt-4">
-            <span className="font-medium">Cantidad:</span>
-            <input
-              type="number"
-              min={1}
-              value={quantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-              className="w-20 border rounded px-2 py-1 text-center"
-            />
-          </div>
+          {/* Puede agregarse cantidad en el flujo de programación; aquí no aplica */}
         </div>
         <DialogFooter className="mt-6">
           <Button variant="outline" onClick={onClose}>

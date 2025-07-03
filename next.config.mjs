@@ -11,7 +11,6 @@ const nextConfig = {
   experimental: {
     // Deshabilitado temporalmente por error de compilación
     optimizeCss: false,
-    optimizePackageImports: [],
   },
   images: {
     domains: ['v0.dev', 'localhost'],

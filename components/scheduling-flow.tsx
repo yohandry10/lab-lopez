@@ -22,7 +22,7 @@ import { useAuth } from "@/contexts/auth-context"
 interface SchedulingFlowProps {
   isOpen: boolean
   onClose: () => void
-  onComplete: (data: any) => void
+  onComplete: (data: any, quantity: number) => void
   testName: string
   initialServiceType?: string
   programmingType?: string
@@ -87,6 +87,8 @@ export function SchedulingFlow({
     birthDate: "",
     gender: "",
   })
+
+  const [quantity, setQuantity] = useState<number>(1)
 
   const { user } = useAuth()
   const skipPatientForm = !!user // Logged-in users do not need to fill patient form
@@ -246,7 +248,7 @@ export function SchedulingFlow({
           console.log("📦 Datos guardados en localStorage para EmailJS (usuario logeado):", { schedulingData, patientData })
         }
 
-        onComplete(patientData)
+        onComplete(patientData, quantity)
       }
       return
     }
@@ -301,7 +303,7 @@ export function SchedulingFlow({
         console.log("📦 Datos guardados en localStorage para EmailJS:", { schedulingData, patientDataForEmail })
       }
 
-      onComplete(patientData)
+      onComplete(patientData, quantity)
     }
   }
 
@@ -318,6 +320,18 @@ export function SchedulingFlow({
           </DialogTitle>
           <DialogDescription>{testName}</DialogDescription>
         </DialogHeader>
+
+        {/* Selector de cantidad */}
+        <div className="mt-4 flex items-center gap-2">
+          <Label>Cantidad:</Label>
+          <input
+            type="number"
+            min={1}
+            value={quantity}
+            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+            className="w-24 border rounded px-2 py-1 text-center"
+          />
+        </div>
 
         {step === 1 && (
           <div className="py-4">
