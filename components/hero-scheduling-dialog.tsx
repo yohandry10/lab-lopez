@@ -56,6 +56,18 @@ interface PatientFormData {
   }
 }
 
+function PriceDisplay({ analysisId }: { analysisId: number }) {
+  const { getExamPrice, formatPrice, canSeePrice } = useDynamicPricing()
+  const [priceInfo, setPriceInfo] = useState<{ price: number; tariff_name: string } | null>(null)
+  useEffect(() => {
+    if (!canSeePrice() || !analysisId) return
+    getExamPrice(analysisId).then(setPriceInfo)
+  }, [analysisId, getExamPrice, canSeePrice])
+  if (!canSeePrice()) return null
+  if (!priceInfo) return <span className="text-xs text-gray-500">No disponible</span>
+  return <span className="font-medium text-blue-600">{formatPrice(priceInfo.price)}</span>
+}
+
 export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogProps) {
   const [step, setStep] = useState(1)
   const [serviceType, setServiceType] = useState("sede")
@@ -252,12 +264,18 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
     }, 0)
   }
 
+  const quotationItems = selectedAnalyses.map((analysis) => {
+    const dynamicPrice = analysisPrices[analysis.id.toString()]
+    const finalPrice = dynamicPrice ? dynamicPrice.price : analysis.price
+    return { name: analysis.name, price: canSeePrice() ? finalPrice : undefined }
+  })
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>PROGRAMADA TU RECOJO</DialogTitle>
+            <DialogTitle>{user ? "PROGRAMA TU RECOJO" : "AGENDA TU ANÁLISIS"}</DialogTitle>
             <DialogDescription>Busca y selecciona los análisis para programar el recojo de muestras</DialogDescription>
           </DialogHeader>
 
@@ -313,12 +331,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
                             <div className="text-sm text-gray-600">{analysis.category}</div>
                           </div>
                           {canSeePrice() && (
-                            <span className="font-medium text-blue-600">
-                              {analysisPrices[analysis.id.toString()] 
-                                ? formatPrice(analysisPrices[analysis.id.toString()].price)
-                                : `S/. ${analysis.price.toFixed(2)}`
-                              }
-                            </span>
+                            <PriceDisplay analysisId={analysis.id} />
                           )}
                         </div>
                       </button>
@@ -343,14 +356,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
                         <div className="text-sm text-blue-700">{analysis.category}</div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {canSeePrice() && (
-                          <span className="font-medium text-blue-600">
-                            {analysisPrices[analysis.id.toString()] 
-                              ? formatPrice(analysisPrices[analysis.id.toString()].price)
-                              : `S/. ${analysis.price.toFixed(2)}`
-                            }
-                          </span>
-                        )}
+                        <PriceDisplay analysisId={analysis.id} />
                         <button
                           onClick={() => handleRemoveAnalysis(analysis.id)}
                           className="text-red-600 hover:text-red-800 text-sm"
@@ -438,7 +444,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
       <SuccessDialog
         isOpen={isSuccessOpen}
         onClose={handleSuccessClose}
-        testName={selectedAnalyses.map(analysis => analysis.name).join(', ')}
+        testName={selectedAnalyses.map((a) => a.name).join(', ')}
         patientName={patientName}
         onContinueShopping={handleSuccessClose}
         onNewPatient={handleSuccessClose}
@@ -446,6 +452,8 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
           handleSuccessClose()
           window.location.href = "/carrito"
         }}
+        items={quotationItems}
+        showWhatsAppButton={!user}
       />
     </>
   )

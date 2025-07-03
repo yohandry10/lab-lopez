@@ -31,6 +31,54 @@ import { SuccessDialog } from "@/components/success-dialog"
 import { HeroSchedulingDialog } from "@/components/hero-scheduling-dialog"
 import { TariffsAdminPanel } from "@/components/tariffs-admin-panel"
 import { tariffsService } from "@/lib/tariffs-service"
+import { useDynamicPricing } from "@/hooks/use-dynamic-pricing"
+
+// Componente para mostrar precios dinámicos en la tabla
+function PriceDisplay({ analysisId }: { analysisId: number }) {
+  const { getExamPrice, formatPrice, canSeePrice } = useDynamicPricing()
+  const [priceInfo, setPriceInfo] = useState<{ price: number; tariff_name: string } | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (!canSeePrice() || !analysisId) return
+
+    const loadPrice = async () => {
+      setIsLoading(true)
+      try {
+        const price = await getExamPrice(analysisId)
+        setPriceInfo(price)
+      } catch (error) {
+        console.error('Error loading price:', error)
+        setPriceInfo(null)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadPrice()
+  }, [analysisId, getExamPrice, canSeePrice])
+
+  if (!canSeePrice()) return null
+
+  if (isLoading) {
+    return <div className="text-xs text-gray-500">Cargando...</div>
+  }
+
+  if (!priceInfo) {
+    return <div className="text-xs text-gray-500">No disponible</div>
+  }
+
+  return (
+    <div className="text-sm">
+      <div className="font-medium text-green-600">
+        {formatPrice(priceInfo.price)}
+      </div>
+      <div className="text-xs text-gray-500">
+        {priceInfo.tariff_name}
+      </div>
+    </div>
+  )
+}
 
 // Definir el tipo para los análisis
 type Analysis = {
@@ -46,6 +94,7 @@ type Analysis = {
   comments?: string;
   category: string;
   deliveryTime?: string;
+  sample_quantity?: string;
 }
 
 // Definir el tipo para los perfiles
@@ -422,6 +471,7 @@ export default function AnalisisPage() {
           comments: item.comments?.toString() || '',
           category: item.category?.toString() || '',
           deliveryTime: item.deliverytime?.toString() || '2-4 horas', // Use deliverytime from DB
+          sample_quantity: item.sample_quantity?.toString() || '5 mL', // Add sample_quantity field with fallback
         };
       });
       setLocalAnalysisData(mappedData);
@@ -614,6 +664,7 @@ export default function AnalisisPage() {
     show_public: false,
     conditions: '',
     sample: '',
+    sample_quantity: '5 mL', // Cantidad de muestra por defecto
     protocol: '',
     suggestions: '',
     comments: '',
@@ -630,6 +681,7 @@ export default function AnalisisPage() {
     show_public: boolean;
     conditions: string;
     sample: string;
+    sample_quantity: string;
     protocol: string;
     suggestions: string;
     comments: string;
@@ -657,6 +709,7 @@ export default function AnalisisPage() {
       show_public: false,
       conditions: '',
       sample: '',
+      sample_quantity: '5 mL',
       protocol: '',
       suggestions: '',
       comments: '',
@@ -745,6 +798,7 @@ export default function AnalisisPage() {
         show_public: newAnalysis.show_public || false,
         conditions: newAnalysis.conditions || "",
         sample: newAnalysis.sample || "",
+        sample_quantity: newAnalysis.sample_quantity || "5 mL",
         protocol: newAnalysis.protocol || "",
         suggestions: newAnalysis.suggestions || "",
         comments: newAnalysis.comments || "",
@@ -985,7 +1039,7 @@ export default function AnalisisPage() {
               onClick={() => setIsHeroSchedulingOpen(true)}
             >
               <Syringe className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-              PROGRAMADA TU RECOJO
+              {user ? "PROGRAMA TU RECOJO" : "AGENDA TU ANÁLISIS"}
             </Button>
           </div>
         </div>
@@ -1198,7 +1252,9 @@ export default function AnalisisPage() {
                         </div>
                         
                         <div className="flex justify-between items-center">
-                          {/* Precios removidos de la vista móvil - solo se mostrarán en el detalle */}
+                          {user && (
+                            <PriceDisplay analysisId={analysis.id} />
+                          )}
                         </div>
                         
                         <div className="flex flex-col sm:flex-row gap-2">
@@ -1257,6 +1313,11 @@ export default function AnalisisPage() {
                           <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                             Categoría
                           </th>
+                          {user && (
+                            <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                              Precio
+                            </th>
+                          )}
                           <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
                             Detalle
                           </th>
@@ -1283,6 +1344,11 @@ export default function AnalisisPage() {
                                 {analysis.category}
                               </span>
                             </td>
+                            {user && (
+                              <td className="px-6 py-4">
+                                <PriceDisplay analysisId={analysis.id} />
+                              </td>
+                            )}
                             <td className="px-6 py-4 text-sm font-medium">
                               <Button
                                 variant="outline"
@@ -1609,6 +1675,8 @@ export default function AnalisisPage() {
         onContinueShopping={handleContinueShopping}
         onNewPatient={handleNewPatient}
         onViewCart={handleViewCart}
+        items={selectedTest ? [{ name: selectedTest.name, price: selectedTest.price }] : []}
+        showWhatsAppButton={!user}
       />
 
       <HeroSchedulingDialog isOpen={isHeroSchedulingOpen} onClose={() => setIsHeroSchedulingOpen(false)} />
@@ -1633,6 +1701,7 @@ export default function AnalisisPage() {
                   category: formData.get('category') as string,
                   conditions: formData.get('conditions') as string,
                   sample: formData.get('sample') as string,
+                  sample_quantity: formData.get('sample_quantity') as string,
                   protocol: formData.get('protocol') as string,
                   suggestions: formData.get('suggestions') as string,
                   comments: formData.get('comments') as string,
@@ -1701,6 +1770,16 @@ export default function AnalisisPage() {
                       name="sample"
                       defaultValue={editingAnalysis.sample}
                       className="sm:col-span-3 h-8 text-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-1 sm:gap-4">
+                    <Label htmlFor="sample_quantity" className="text-left sm:text-right font-medium text-sm">Cantidad de muestra</Label>
+                    <Input
+                      id="sample_quantity"
+                      name="sample_quantity"
+                      defaultValue={editingAnalysis.sample_quantity}
+                      className="sm:col-span-3 h-8 text-sm"
+                      placeholder="Ej: 5 mL, 10 mL"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-1 sm:gap-4">
@@ -1905,13 +1984,23 @@ export default function AnalisisPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <Label className="text-sm font-medium">Muestra</Label>
                     <Input 
                       placeholder="Ej: Sangre venosa" 
                       value={newAnalysis.sample} 
                       onChange={e => setNewAnalysis(a => ({ ...a, sample: e.target.value }))} 
+                      className="mt-1"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label className="text-sm font-medium">Cantidad de muestra</Label>
+                    <Input 
+                      placeholder="Ej: 5 mL, 10 mL" 
+                      value={newAnalysis.sample_quantity} 
+                      onChange={e => setNewAnalysis(a => ({ ...a, sample_quantity: e.target.value }))} 
                       className="mt-1"
                     />
                   </div>

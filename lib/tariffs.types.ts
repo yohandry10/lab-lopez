@@ -11,13 +11,13 @@ export interface Tariff {
 export interface TariffPrice {
   id: string
   tariff_id: string
-  exam_id: string
+  exam_id: number  // ← CORREGIDO: integer en vez de string
   price: number
   updated_at: string
   // Relaciones populadas
   tariff?: Tariff
   exam?: {
-    id: string
+    id: number     // ← CORREGIDO: integer en vez de string
     name: string
     category: string
   }
@@ -65,7 +65,7 @@ export interface UpdateTariffData extends Partial<CreateTariffData> {
 
 export interface CreateTariffPriceData {
   tariff_id: string
-  exam_id: string
+  exam_id: number  // ← CORREGIDO: integer en vez de string
   price: number
 }
 

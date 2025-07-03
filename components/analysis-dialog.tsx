@@ -55,6 +55,7 @@ interface AnalysisDialogProps {
     comments?: string
     category: string
     deliveryTime?: string
+    sample_quantity?: string
   } | null
   user: any
 }
@@ -200,32 +201,38 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
         <div className="space-y-4 pt-2">
           {/* 1. CONDICIONES PREANALÍTICAS */}
           <div>
-            <h4 className="font-medium mb-1">Condiciones</h4>
+            <h4 className="font-medium mb-1">CONDICIONES PREANALÍTICAS</h4>
             <p className="text-gray-600 text-sm">{analysis.conditions}</p>
           </div>
           
           {/* 2. CONTENEDOR */}
           <div>
-            <h4 className="font-medium mb-1">Protocolo toma muestra</h4>
+            <h4 className="font-medium mb-1">CONTENEDOR</h4>
             <p className="text-gray-600 text-sm">{analysis.protocol}</p>
           </div>
           
           {/* 3. MUESTRA REQUERIDA */}
           <div>
-            <h4 className="font-medium mb-1">Muestra preferida</h4>
+            <h4 className="font-medium mb-1">MUESTRA REQUERIDA</h4>
             <p className="text-gray-600 text-sm">{analysis.sample}</p>
           </div>
           
           {/* 4. CANTIDAD DE MUESTRA */}
           <div>
-            <h4 className="font-medium mb-1">Comentarios</h4>
-            <p className="text-gray-600 text-sm">{analysis.comments}</p>
+            <h4 className="font-medium mb-1">CANTIDAD DE MUESTRA</h4>
+            <p className="text-gray-600 text-sm">{analysis.sample_quantity || 'No especificado'}</p>
           </div>
           
           {/* 5. TIEMPO DE ENTREGA */}
           <div>
-            <h4 className="font-medium mb-1">⏱️ Tiempo de entrega</h4>
+            <h4 className="font-medium mb-1">⏱️ TIEMPO DE ENTREGA</h4>
             <p className="text-green-600 text-sm font-medium">{analysis.deliveryTime}</p>
+          </div>
+          
+          {/* 6. COMENTARIOS */}
+          <div>
+            <h4 className="font-medium mb-1">COMENTARIOS</h4>
+            <p className="text-gray-600 text-sm">{analysis.comments}</p>
           </div>
         </div>
         <DialogFooter className="mt-6">

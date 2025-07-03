@@ -24,7 +24,7 @@ interface UseDynamicPricingReturn {
   hasSpecialPricing: boolean
   
   // Funciones de precios
-  getExamPrice: (examId: string) => Promise<PriceInfo | null>
+  getExamPrice: (examId: string | number) => Promise<PriceInfo | null>
   formatPrice: (price: number) => string
   
   // Estados
@@ -97,7 +97,7 @@ export function useDynamicPricing(): UseDynamicPricingReturn {
   }, [loadUserTariffContext])
 
   // Función para obtener precio de un examen
-  const getExamPrice = useCallback(async (examId: string): Promise<PriceInfo | null> => {
+  const getExamPrice = useCallback(async (examId: string | number): Promise<PriceInfo | null> => {
     try {
       const priceData = await tariffsService.getExamPrice(examId, user?.id)
       
@@ -134,28 +134,29 @@ export function useDynamicPricing(): UseDynamicPricingReturn {
 
   // Función para verificar si el usuario puede ver precios
   const canSeePrice = useCallback((examId?: string): boolean => {
-    // Si no hay usuario, aplicar reglas de público general
+    // ✅ CORREGIDO: Si no hay usuario (público), NO mostrar precios
     if (!user) {
-      return true // Los precios públicos se pueden mostrar
+      return false // Público general NO ve precios
     }
 
-    // Si hay usuario, depende de su tipo y configuración
+    // ✅ Si hay usuario logueado, SÍ mostrar precios según su tipo
     switch (user.user_type) {
       case 'admin':
         return true // Admins siempre ven precios
       
       case 'patient':
-        return true // Pacientes ven precios públicos
+        return true // Pacientes logueados SÍ ven precios
       
       case 'doctor':
+        return true // Médicos logueados SÍ ven precios (con sus tarifas especiales)
+      
       case 'company':
-        // Médicos y empresas ven sus precios especiales
-        return hasSpecialPricing
+        return true // Empresas logueadas SÍ ven precios (con sus tarifas especiales)
       
       default:
-        return true
+        return true // Cualquier usuario logueado ve precios por defecto
     }
-  }, [user, hasSpecialPricing])
+  }, [user])
 
   return {
     // Contexto del usuario

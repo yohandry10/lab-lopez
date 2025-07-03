@@ -257,16 +257,17 @@ export class TariffsService {
   }
 
   // FUNCIÓN UPSERT: Crear o Actualizar precio según exista
-  async upsertTariffPrice(tariffId: string, examId: string, price: number): Promise<TariffPriceResponse> {
+  async upsertTariffPrice(tariffId: string, examId: string | number, price: number): Promise<TariffPriceResponse> {
     try {
       console.log("🔍 UPSERT: Verificando precio existente para tarifa:", tariffId, "examen:", examId)
       
       // 1. Buscar si ya existe un precio para esta combinación tarifa-examen
+      const examIdNumber = typeof examId === 'string' ? parseInt(examId) : examId
       const { data: existingPrice, error: searchError } = await this.supabase
         .from('tariff_prices')
         .select('id, price')
         .eq('tariff_id', tariffId)
-        .eq('exam_id', examId)
+        .eq('exam_id', examIdNumber)
         .maybeSingle() // maybeSingle permite que no haya resultados sin error
 
       if (searchError) {
@@ -304,7 +305,7 @@ export class TariffsService {
           .from('tariff_prices')
           .insert({
             tariff_id: tariffId,
-            exam_id: examId,
+            exam_id: examIdNumber,
             price: price
           } as any)
           .select(`
@@ -563,7 +564,8 @@ export class TariffsService {
 
   async getPublicReference(): Promise<Reference | null> {
     try {
-      const { data, error } = await this.supabase
+      // Primero intentar buscar "Público General"
+      let { data, error } = await this.supabase
         .from('references')
         .select(`
           *,
@@ -573,9 +575,26 @@ export class TariffsService {
         .eq('active', true)
         .single()
 
-      if (error) {
-        console.error('Error fetching public reference:', error)
-        return null
+      // Si no existe "Público General", buscar cualquier referencia activa como fallback
+      if (error || !data) {
+        console.warn('No se encontró referencia "Público General", buscando fallback...')
+        
+        const { data: fallbackData, error: fallbackError } = await this.supabase
+          .from('references')
+          .select(`
+            *,
+            default_tariff:tariffs(*)
+          `)
+          .eq('active', true)
+          .limit(1)
+          .single()
+
+        if (fallbackError || !fallbackData) {
+          console.warn('No hay referencias activas disponibles')
+          return null
+        }
+
+        data = fallbackData
       }
 
       return data as unknown as ReferenceWithTariff
@@ -585,7 +604,7 @@ export class TariffsService {
     }
   }
 
-  async getExamPrice(examId: string, userId?: string): Promise<{ price: number; tariff_name: string } | null> {
+  async getExamPrice(examId: string | number, userId?: string): Promise<{ price: number; tariff_name: string } | null> {
     try {
       let tariffId: string | undefined
 
@@ -602,11 +621,43 @@ export class TariffsService {
       }
 
       if (!tariffId) {
-        console.error('No tariff found for exam pricing')
+        // Fallback: buscar tarifa "Base" directamente
+        console.warn('No se encontró tarifa de referencia, buscando tarifa Base...')
+        const { data: baseTariff, error: baseTariffError } = await this.supabase
+          .from('tariffs')
+          .select('id')
+          .eq('name', 'Base')
+          .eq('type', 'sale')
+          .maybeSingle()
+
+        if (!baseTariffError && baseTariff) {
+          tariffId = baseTariff.id
+        }
+      }
+
+      if (!tariffId) {
+        // Nuevo fallback: si no hay tarifa, intentemos usar la primera tarifa asociada al examen
+        console.warn('[Tariffs] No se encontró tarifa por referencia/Base, buscando cualquier precio existente...')
+        const { data: anyPriceRow, error: anyPriceError } = await this.supabase
+          .from('tariff_prices')
+          .select('tariff_id')
+          .eq('exam_id', typeof examId === 'string' ? parseInt(examId) : examId)
+          .limit(1)
+          .maybeSingle()
+
+        if (!anyPriceError && anyPriceRow) {
+          tariffId = (anyPriceRow as any).tariff_id
+          console.info('[Tariffs] Usando tarifa encontrada en tariff_prices:', tariffId)
+        }
+      }
+
+      if (!tariffId) {
+        console.error('No tariff found for exam pricing - no hay tarifas configuradas')
         return null
       }
 
       // Obtener el precio del examen para la tarifa específica
+      const examIdNumber = typeof examId === 'string' ? parseInt(examId) : examId
       const { data, error } = await this.supabase
         .from('tariff_prices')
         .select(`
@@ -614,11 +665,27 @@ export class TariffsService {
           tariff:tariffs(name)
         `)
         .eq('tariff_id', tariffId)
-        .eq('exam_id', examId)
+        .eq('exam_id', examIdNumber)
         .single()
 
       if (error) {
         console.error('Error fetching exam price:', error)
+        
+        // Último fallback: usar precio legacy de la tabla analyses
+        console.warn('Intentando usar precio legacy de analyses...')
+        const { data: legacyPrice, error: legacyError } = await this.supabase
+          .from('analyses')
+          .select('price')
+          .eq('id', examIdNumber)
+          .single()
+
+        if (!legacyError && legacyPrice && legacyPrice.price > 0) {
+          return {
+            price: legacyPrice.price,
+            tariff_name: 'Precio base (legacy)'
+          }
+        }
+
         return null
       }
 
@@ -698,7 +765,7 @@ export class TariffsService {
   // OPERACIONES EN LOTE
   // ===========================================
 
-  async updateMultiplePrices(updates: Array<{ exam_id: string; tariff_id: string; price: number }>): Promise<TariffPriceResponse> {
+  async updateMultiplePrices(updates: Array<{ exam_id: number; tariff_id: string; price: number }>): Promise<TariffPriceResponse> {
     try {
       const operations = updates.map(update => ({
         ...update,

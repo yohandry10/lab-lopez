@@ -14,6 +14,7 @@ import { Baby, Dna, Search, TestTube, Microscope, Beaker } from "lucide-react"
 import { useRouter, useParams, useSearchParams } from "next/navigation"
 import type { Analysis } from "@/components/digital-library"
 import { getSupabaseClient } from "@/lib/supabase-client"
+import { useAuth } from "@/contexts/auth-context"
 
 // Cargar el formulario de manera dinámica
 const AnalysisForm = dynamic(() => import("@/components/analysis-form"), {
@@ -111,6 +112,7 @@ const ExpandableSection = ({ section, index, expandedSection, setExpandedSection
 
 export default function AnalysisPage() {
   const router = useRouter()
+  const { user } = useAuth()
   const params = useParams()
   const searchParams = useSearchParams()
   const [expandedSection, setExpandedSection] = useState<number | null>(null)
@@ -242,7 +244,7 @@ export default function AnalysisPage() {
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-[#1E5FAD] hover:bg-[#3DA64A] text-white">
-                  PROGRAMADA TU RECOJO
+                  {user ? "PROGRAMA TU RECOJO" : "AGENDA TU ANÁLISIS"}
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[600px]">

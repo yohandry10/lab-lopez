@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { es } from "date-fns/locale"
 import { Home, MapPin } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
 
 interface SchedulingFlowProps {
   isOpen: boolean
@@ -86,6 +87,9 @@ export function SchedulingFlow({
     birthDate: "",
     gender: "",
   })
+
+  const { user } = useAuth()
+  const skipPatientForm = !!user // Logged-in users do not need to fill patient form
 
   // Actualizar el tipo de servicio y programación cuando cambian
   useEffect(() => {
@@ -213,6 +217,41 @@ export function SchedulingFlow({
   }
 
   const handleNext = () => {
+    // 👉 Paso Único para usuarios logeados (sin formulario de paciente)
+    if (skipPatientForm) {
+      if (isStep1Valid()) {
+        // Construir datos mínimos de paciente usando la sesión
+        const patientData = {
+          firstName: user?.first_name || "",
+          lastName: user?.last_name || "",
+          documentType: "",
+          documentNumber: "",
+          phone: "",
+          email: user?.email || "",
+        }
+
+        // Guardar datos en localStorage para EmailJS (mantener mismo formato)
+        const schedulingData = {
+          programmingType: formData.programmingType,
+          selectedDate: formData.date?.toLocaleDateString('es-PE') || new Date().toLocaleDateString('es-PE'),
+          selectedTime: formData.timeSlot,
+          serviceType: formData.serviceType,
+          address: formData.serviceType === "domicilio" ? formData.address : (formData.location || 'Sede'),
+          clientReference: `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Usuario Logeado'
+        }
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('scheduling-data', JSON.stringify(schedulingData))
+          localStorage.setItem('patient-data', JSON.stringify(patientData))
+          console.log("📦 Datos guardados en localStorage para EmailJS (usuario logeado):", { schedulingData, patientData })
+        }
+
+        onComplete(patientData)
+      }
+      return
+    }
+
+    // 👉 Flujo original para usuarios no logeados
     if (step === 1 && isStep1Valid()) {
       setStep(2)
     } else if (step === 2 && isStep2Valid()) {
@@ -271,7 +310,11 @@ export function SchedulingFlow({
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {step === 1 ? "Paso 1 de 2: Reserva la cita" : "Paso 2 de 2: Ingresa los datos del paciente"}
+            {skipPatientForm
+              ? "Reserva la cita"
+              : step === 1
+                ? "Paso 1 de 2: Reserva la cita"
+                : "Paso 2 de 2: Ingresa los datos del paciente"}
           </DialogTitle>
           <DialogDescription>{testName}</DialogDescription>
         </DialogHeader>
@@ -627,7 +670,11 @@ export function SchedulingFlow({
             onClick={handleNext}
             disabled={step === 1 ? !isStep1Valid() : !isStep2Valid()}
           >
-            {step === 1 ? "Siguiente" : "Completar"}
+            {skipPatientForm
+              ? "Completar"
+              : step === 1
+                ? "Siguiente"
+                : "Completar"}
           </Button>
         </DialogFooter>
       </DialogContent>
