@@ -19,7 +19,7 @@ interface SuccessDialogProps {
   onContinueShopping: () => void
   onNewPatient: () => void
   onViewCart: () => void
-  items?: Array<{ name: string; price?: number }>
+  items?: Array<{ name: string; price?: number; quantity?: number }>
   showWhatsAppButton?: boolean
   whatsappNumber?: string
 }
@@ -38,12 +38,19 @@ export function SuccessDialog({
 }: SuccessDialogProps) {
 
   const totalPrice = useMemo(() => {
-    return items.reduce((sum, item) => sum + (item.price || 0), 0)
+    return items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity ?? 1), 0)
   }, [items])
 
   const whatsappMessage = useMemo(() => {
     if (!showWhatsAppButton) return ""
-    const list = items.map((it) => `• ${it.name}${it.price ? ` - S/. ${it.price.toFixed(2)}` : ""}`).join("%0A")
+    const list = items
+      .map((it) => {
+        const qty = it.quantity ?? 1
+        const label = qty > 1 ? `${it.name} × ${qty}` : it.name
+        const linePrice = it.price ? ` - S/. ${(it.price * qty).toFixed(2)}` : ""
+        return `• ${label}${linePrice}`
+      })
+      .join("%0A")
     const totalLine = totalPrice ? `%0A%0ATotal: S/. ${totalPrice.toFixed(2)}` : ""
     return encodeURIComponent(
       `Hola, quisiera solicitar el recojo de las siguientes pruebas:%0A${list}${totalLine}`
@@ -79,9 +86,9 @@ export function SuccessDialog({
               <ul className="text-sm space-y-1">
                 {items.map((item, idx) => (
                   <li key={idx} className="flex justify-between">
-                    <span>{item.name}</span>
+                    <span>{item.name}{item.quantity && item.quantity > 1 ? ` × ${item.quantity}` : ""}</span>
                     {item.price !== undefined && (
-                      <span className="font-medium">S/. {item.price.toFixed(2)}</span>
+                      <span className="font-medium">S/. {(item.price * (item.quantity ?? 1)).toFixed(2)}</span>
                     )}
                   </li>
                 ))}

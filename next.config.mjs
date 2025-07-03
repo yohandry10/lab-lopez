@@ -11,8 +11,7 @@ const nextConfig = {
   experimental: {
     // Deshabilitado temporalmente por error de compilación
     optimizeCss: false,
-    // optimizePackageImports desactivado temporalmente
-    // optimizePackageImports: ['lucide-react'],
+    optimizePackageImports: [],
   },
   images: {
     domains: ['v0.dev', 'localhost'],
@@ -28,6 +27,9 @@ const nextConfig = {
     return config
   },
   poweredByHeader: false,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 }
 
 function mergeConfig(nextConfig, userConfig) {

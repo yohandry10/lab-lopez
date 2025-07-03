@@ -65,6 +65,7 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
   const { getExamPrice, formatPrice, canSeePrice } = useDynamicPricing()
   const [mounted, setMounted] = useState(false)
   const [currentPrice, setCurrentPrice] = useState<{ price: number; tariff_name: string } | null>(null)
+  const [quantity, setQuantity] = useState<number>(1)
   const [formData, setFormData] = useState({
     patientName: "",
     patientAge: "",
@@ -151,11 +152,13 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
     
     // Usar precio dinámico si está disponible, sino usar precio legacy
     const finalPrice = currentPrice ? currentPrice.price : analysis.price
+    const qty = Math.max(1, quantity)
     
     addItem({
       id: analysis.id,
       name: analysis.name,
       price: finalPrice,
+      quantity: qty,
       patientDetails: formData,
     })
     onClose()
@@ -233,6 +236,17 @@ export function AnalysisDialog({ isOpen, onClose, analysis, user }: AnalysisDial
           <div>
             <h4 className="font-medium mb-1">COMENTARIOS</h4>
             <p className="text-gray-600 text-sm">{analysis.comments}</p>
+          </div>
+          {/* Selector de cantidad */}
+          <div className="flex items-center gap-2 pt-4">
+            <span className="font-medium">Cantidad:</span>
+            <input
+              type="number"
+              min={1}
+              value={quantity}
+              onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+              className="w-20 border rounded px-2 py-1 text-center"
+            />
           </div>
         </div>
         <DialogFooter className="mt-6">

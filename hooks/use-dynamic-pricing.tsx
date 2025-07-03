@@ -134,9 +134,9 @@ export function useDynamicPricing(): UseDynamicPricingReturn {
 
   // Función para verificar si el usuario puede ver precios
   const canSeePrice = useCallback((examId?: string): boolean => {
-    // ✅ CORREGIDO: Si no hay usuario (público), NO mostrar precios
+    // Público sin sesión también puede ver precios
     if (!user) {
-      return false // Público general NO ve precios
+      return true
     }
 
     // ✅ Si hay usuario logueado, SÍ mostrar precios según su tipo

@@ -950,6 +950,19 @@ export default function AnalisisPage() {
   const handleDeleteAnalysis = async (analysis: Analysis) => {
     if (!window.confirm('¿Estás seguro de que deseas eliminar este análisis?')) return;
     const supabase = getSupabaseClient();
+
+    // Eliminar primero los precios relacionados para evitar violar FK
+    const { error: priceError } = await supabase
+      .from("tariff_prices")
+      .delete()
+      .eq("exam_id", analysis.id)
+
+    if (priceError) {
+      alert("Error al eliminar precios asociados: " + priceError.message);
+      return;
+    }
+
+    // Ahora eliminar el análisis
     const { error } = await supabase.from("analyses").delete().eq("id", analysis.id);
     if (error) {
       alert("Error al eliminar análisis: " + error.message);
@@ -1675,8 +1688,8 @@ export default function AnalisisPage() {
         onContinueShopping={handleContinueShopping}
         onNewPatient={handleNewPatient}
         onViewCart={handleViewCart}
-        items={selectedTest ? [{ name: selectedTest.name, price: selectedTest.price }] : []}
-        showWhatsAppButton={!user}
+        items={selectedTest ? [{ name: selectedTest.name, price: selectedTest.price, quantity: 1 }] : []}
+        showWhatsAppButton={true}
       />
 
       <HeroSchedulingDialog isOpen={isHeroSchedulingOpen} onClose={() => setIsHeroSchedulingOpen(false)} />

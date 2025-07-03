@@ -45,7 +45,14 @@ const loadCartFromStorage = (): CartItem[] => {
 
   try {
     const savedCart = localStorage.getItem("cart")
-    return savedCart ? JSON.parse(savedCart) : []
+    if (!savedCart) return []
+    try {
+      const parsed: any[] = JSON.parse(savedCart)
+      return parsed.map((it) => ({ ...it, quantity: it.quantity ?? 1 }))
+    } catch(e) {
+      console.error("Error parse cart storage:", e)
+      return []
+    }
   } catch (error) {
     console.error("Error loading cart from localStorage:", error)
     return []
