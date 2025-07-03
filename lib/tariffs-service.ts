@@ -669,7 +669,7 @@ export class TariffsService {
         .single()
 
       if (error) {
-        console.error('Error fetching exam price:', error)
+        console.warn('Error fetching exam price:', error)
         
         // Último fallback: usar precio legacy de la tabla analyses
         console.warn('Intentando usar precio legacy de analyses...')
