@@ -631,7 +631,7 @@ export class TariffsService {
           .maybeSingle()
 
         if (!baseTariffError && baseTariff) {
-          tariffId = baseTariff.id
+          tariffId = (baseTariff as any).id as string
         }
       }
 
@@ -679,9 +679,9 @@ export class TariffsService {
           .eq('id', examIdNumber)
           .single()
 
-        if (!legacyError && legacyPrice && legacyPrice.price > 0) {
+        if (!legacyError && legacyPrice && (legacyPrice as any).price > 0) {
           return {
-            price: legacyPrice.price,
+            price: (legacyPrice as any).price,
             tariff_name: 'Precio base (legacy)'
           }
         }

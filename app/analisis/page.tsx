@@ -840,7 +840,7 @@ export default function AnalisisPage() {
           pricePromises.push(
             tariffsService.createTariffPrice({
               tariff_id: baseTariff.id as string,
-              exam_id: (analysisResult as any).id as string,
+              exam_id: Number((analysisResult as any).id),
               price: parseFloat(newAnalysis.price_public)
             })
           )
@@ -851,7 +851,7 @@ export default function AnalisisPage() {
           pricePromises.push(
             tariffsService.createTariffPrice({
               tariff_id: referenceTariff.id as string,
-              exam_id: (analysisResult as any).id as string,
+              exam_id: Number((analysisResult as any).id),
               price: parseFloat(newAnalysis.price_business)
             })
           )
@@ -866,7 +866,7 @@ export default function AnalisisPage() {
             pricePromises.push(
               tariffsService.createTariffPrice({
                 tariff_id: tariffId,
-                exam_id: (analysisResult as any).id as string,
+                exam_id: Number((analysisResult as any).id),
                 price: parseFloat(price)
               })
             )

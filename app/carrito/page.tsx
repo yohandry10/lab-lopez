@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Trash2, ArrowLeft, Calendar, Copy, Check, Smartphone, AlertCircle } from "lucide-react"
+import { Trash2, ArrowLeft, Calendar, Copy, Check, Smartphone, AlertCircle, Minus, Plus } from "lucide-react"
 import { useCart } from "@/contexts/cart-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,10 +21,9 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { sendPickupNotification, EmailData } from "@/lib/emailjs-service"
 
 export default function CarritoPage() {
-  const { items, removeItem, clearCart, itemCount } = useCart()
+  const { items, removeItem, clearCart, itemCount, updateQuantity } = useCart()
   const { toast } = useToast()
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("yape")
@@ -33,9 +32,11 @@ export default function CarritoPage() {
 
   // Constantes de pago
   const YAPE_PLIN_NUMBER = "979 670 032"
+  // Número oficial de WhatsApp del laboratorio (prefijo 51 para Perú)
+  const WHATSAPP_NUMBER = "51900649599"
 
   // Calcular el total
-  const total = items.reduce((sum, item) => sum + item.price, 0)
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
   // Copiar número al portapapeles
   const copyToClipboard = async () => {
@@ -70,6 +71,25 @@ export default function CarritoPage() {
     return `plin://transfer?phone=${YAPE_PLIN_NUMBER.replace(/\s/g, '')}&amount=${amount}&message=${encodeURIComponent(message)}`
   }
 
+  // Generar mensaje de WhatsApp con la cotización actual
+  const generateWhatsappMessage = () => {
+    const testsList = items
+      .map((item) => `• ${item.name} - S/. ${item.price.toFixed(2)}`)
+      .join("\n")
+
+    const amountLine = `Total: S/. ${total.toFixed(2)}`
+
+    return encodeURIComponent(
+      `Hola, quisiera solicitar el recojo de las siguientes pruebas:\n${testsList}\n\n${amountLine}`
+    )
+  }
+
+  // Abrir conversación de WhatsApp con el laboratorio
+  const sendWhatsAppNotification = () => {
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${generateWhatsappMessage()}`
+    window.open(whatsappUrl, "_blank")
+  }
+
   // Obtener datos del localStorage (guardados desde el formulario de programación)
   const getFormDataFromStorage = () => {
     if (typeof window === 'undefined') return null
@@ -88,86 +108,21 @@ export default function CarritoPage() {
     }
   }
 
-  // Enviar información por EmailJS
-  const sendEmailNotification = async (): Promise<boolean> => {
-    try {
-      const storageData = getFormDataFromStorage()
-      
-      // Preparar datos para el email
-      const emailData: EmailData = {
-        // Información del paciente (del localStorage o datos de ejemplo)
-        patient_name: storageData?.patientData?.firstName || 'Cliente',
-        patient_lastname: storageData?.patientData?.lastName || 'Lab López',
-        document_type: storageData?.patientData?.documentType || 'DNI',
-        document_number: storageData?.patientData?.documentNumber || '00000000',
-        patient_phone: storageData?.patientData?.phone || '979670032',
-        patient_email: storageData?.patientData?.email || 'cliente@laboratorio.com',
-        birth_date: storageData?.patientData?.birthDate || '1990-01-01',
-        
-        // Detalles del recojo (del localStorage o datos por defecto)
-        programming_type: storageData?.schedulingData?.programmingType === 'urgente' ? 'Urgente' : 'Según horario (10:00 y 13:00 horas)',
-        pickup_date: storageData?.schedulingData?.selectedDate || new Date().toLocaleDateString('es-PE'),
-        pickup_time: storageData?.schedulingData?.selectedTime || '10:00',
-        pickup_address: storageData?.schedulingData?.serviceType === 'domicilio' 
-          ? (storageData?.schedulingData?.address || 'Dirección a confirmar')
-          : 'Recojo en sede',
-        
-        // Análisis solicitados
-        selected_tests: items.map(item => `• ${item.name} - S/. ${item.price.toFixed(2)}`).join('\n'),
-        total_amount: total.toFixed(2),
-        payment_method: selectedPaymentMethod.toUpperCase(),
-        
-        // Información del cliente
-        client_reference: storageData?.schedulingData?.clientReference || 'Público General',
-        applied_tariff: 'Base',
-        
-        // Datos de la solicitud
-        request_date: new Date().toLocaleDateString('es-PE'),
-        request_time: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
-      }
-
-      console.log('📧 Enviando datos por EmailJS:', emailData)
-      
-      const success = await sendPickupNotification(emailData)
-      
-      if (success) {
-        console.log('✅ Email enviado exitosamente')
-        return true
-      } else {
-        console.error('❌ Error al enviar email')
-        return false
-      }
-      
-    } catch (error) {
-      console.error('❌ Error al preparar email:', error)
-      return false
-    }
-  }
+  // Ya no usamos EmailJS; conservamos la función para no romper dependencias futuras (opcional)
 
   // Manejar el checkout
   const handleCheckout = async () => {
     setIsProcessingPayment(true)
 
     try {
-      // Enviar notificación por email
-      const emailSent = await sendEmailNotification()
+      // Enviar notificación por WhatsApp
+      sendWhatsAppNotification()
 
-      if (!emailSent) {
-        toast({
-          title: "Error al enviar notificación",
-          description: "Hubo un problema al enviar la notificación por email.",
-          variant: "destructive",
-        })
-        setIsProcessingPayment(false)
-        return
-      }
-
+      // Abrir app de pago correspondiente
       if (selectedPaymentMethod === "yape") {
-        // Abrir Yape
-        window.open(generateYapeLink(), '_blank')
+        window.open(generateYapeLink(), "_blank")
       } else if (selectedPaymentMethod === "plin") {
-        // Abrir Plin
-        window.open(generatePlinLink(), '_blank')
+        window.open(generatePlinLink(), "_blank")
       }
 
       // Mostrar mensaje de éxito y instrucciones
@@ -245,9 +200,28 @@ export default function CarritoPage() {
                     <div>
                       <h3 className="font-medium">{item.name}</h3>
                       <p className="text-sm text-gray-500">Código: {item.id}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                          className="h-6 w-6"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="px-2 text-sm font-medium">{item.quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="h-6 w-6"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <p className="font-medium">S/. {item.price.toFixed(2)}</p>
+                      <p className="font-medium">S/. {(item.price * item.quantity).toFixed(2)}</p>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -380,8 +354,8 @@ export default function CarritoPage() {
                         <div className="space-y-2">
                           {items.map((item) => (
                             <div key={item.id} className="flex justify-between text-sm">
-                              <span>{item.name}</span>
-                              <span className="font-medium">S/. {item.price.toFixed(2)}</span>
+                              <span>{item.name} × {item.quantity}</span>
+                              <span className="font-medium">S/. {(item.price * item.quantity).toFixed(2)}</span>
                             </div>
                           ))}
                         </div>

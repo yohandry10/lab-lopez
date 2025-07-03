@@ -147,7 +147,7 @@ export default function MigrateTariffsPage() {
             // Precio base
             await tariffsService.createTariffPrice({
               tariff_id: baseTariff.id as string,
-              exam_id: analysis.id as string,
+              exam_id: Number(analysis.id),
               price: analysis.price as number
             })
             
@@ -155,7 +155,7 @@ export default function MigrateTariffsPage() {
             const referencePrice = analysis.reference_price || (analysis.price * 0.8)
             await tariffsService.createTariffPrice({
               tariff_id: referenceTariff.id as string,
-              exam_id: analysis.id as string,
+              exam_id: Number(analysis.id),
               price: referencePrice
             })
             

@@ -9,8 +9,10 @@ try {
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
-    optimizeCss: true,
-    optimizePackageImports: ['lucide-react'],
+    // Deshabilitado temporalmente por error de compilación
+    optimizeCss: false,
+    // optimizePackageImports desactivado temporalmente
+    // optimizePackageImports: ['lucide-react'],
   },
   images: {
     domains: ['v0.dev', 'localhost'],
@@ -19,6 +21,11 @@ const nextConfig = {
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
+  },
+  webpack: (config) => {
+    // Evitar WebAssembly md4 hash que falla en Node 20.10
+    config.output.hashFunction = 'xxhash64'
+    return config
   },
   poweredByHeader: false,
 }

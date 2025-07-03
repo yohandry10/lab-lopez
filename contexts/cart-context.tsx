@@ -6,7 +6,8 @@ import { useToast } from "@/components/ui/use-toast"
 interface CartItem {
   id: number
   name: string
-  price: number
+  price: number // precio por unidad
+  quantity: number
   patientDetails?: {
     firstName?: string
     lastName?: string
@@ -20,8 +21,9 @@ interface CartItem {
 
 interface CartContextType {
   items: CartItem[]
-  addItem: (item: CartItem) => void
+  addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void
   removeItem: (id: number) => void
+  updateQuantity: (id: number, quantity: number) => void
   clearCart: () => void
   itemCount: number
   total: number
@@ -31,6 +33,7 @@ const CartContext = createContext<CartContextType>({
   items: [],
   addItem: () => {},
   removeItem: () => {},
+  updateQuantity: () => {},
   clearCart: () => {},
   itemCount: 0,
   total: 0,
@@ -66,24 +69,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [items])
 
   const addItem = useCallback(
-    (item: CartItem) => {
+    (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
       setItems((prev) => {
         // Verificar si el item ya existe
-        const exists = prev.some((i) => i.id === item.id)
-        if (exists) {
+        const existing = prev.find((i) => i.id === item.id)
+        if (existing) {
+          // Si ya existe, incrementar cantidad
+          const updated = prev.map((i) =>
+            i.id === item.id ? { ...i, quantity: i.quantity + (item.quantity ?? 1) } : i
+          )
           toast({
-            title: "Análisis ya agregado",
-            description: "Este análisis ya se encuentra en tu carrito",
-            variant: "destructive",
+            title: "Cantidad actualizada",
+            description: `Ahora tienes ${updated.find(i=>i.id===item.id)?.quantity} × ${item.name}`,
           })
-          return prev
+          return updated
         }
 
         toast({
           title: "Análisis agregado", 
           description: "Se agregó el análisis a tu carrito"
         })
-        return [...prev, item]
+        return [...prev, { ...item, quantity: item.quantity ?? 1 }]
       })
     },
     [toast]
@@ -100,6 +106,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [toast]
   )
 
+  const updateQuantity = useCallback((id: number, quantity: number) => {
+    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, quantity } : item)))
+  }, [])
+
   const clearCart = useCallback(() => {
     setItems([])
     toast({
@@ -109,7 +119,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [toast])
 
   // Calcular el total
-  const total = items.reduce((sum, item) => sum + item.price, 0)
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
   return (
     <CartContext.Provider
@@ -117,8 +127,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         items,
         addItem,
         removeItem,
+        updateQuantity,
         clearCart,
-        itemCount: items.length,
+        itemCount: items.reduce((acc, item) => acc + item.quantity, 0),
         total,
       }}
     >

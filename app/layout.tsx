@@ -45,9 +45,9 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-    maxSnippet: 160,
-    maxImagePreview: "large",
-    maxVideoPreview: -1,
+    "max-snippet": 160,
+    "max-image-preview": "large",
+    "max-video-preview": -1,
   },
   alternates: { canonical: baseUrl },
   icons: {
