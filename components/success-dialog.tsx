@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/contexts/auth-context"
 import { Check } from "lucide-react"
 import { useMemo } from "react"
 
@@ -38,11 +39,11 @@ export function SuccessDialog({
 }: SuccessDialogProps) {
 
   const totalPrice = useMemo(() => {
-    return items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity ?? 1), 0)
+    return (items || []).reduce((sum, item) => sum + (item.price || 0) * (item.quantity ?? 1), 0)
   }, [items])
 
   const whatsappMessage = useMemo(() => {
-    if (!showWhatsAppButton) return ""
+    if (!showWhatsAppButton || !items?.length) return ""
     const list = items
       .map((it) => {
         const qty = it.quantity ?? 1
@@ -56,6 +57,11 @@ export function SuccessDialog({
       `Hola, quisiera solicitar el recojo de las siguientes pruebas:%0A${list}${totalLine}`
     )
   }, [items, totalPrice, showWhatsAppButton])
+
+  const { user } = useAuth()
+  const whatsappLabel = user ? "Enviar solicitud de recojo" : "Solicitar servicio a domicilio"
+  const showName = user && user.user_type === 'patient' && patientName
+  const continueLabel = showName ? `Seguir agregando para ${patientName}` : 'Seguir agregando'
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -73,7 +79,7 @@ export function SuccessDialog({
           <h3 className="text-xl font-semibold mb-2">Listo,</h3>
           <p className="text-gray-600 mb-4">
             Hemos agregado a tu carrito de compras <span className="text-[#1e5fad]">{testName}</span>{" "}
-            {patientName && (
+            {showName && (
               <>
                 para <span className="font-medium">{patientName}</span>
               </>
@@ -104,7 +110,7 @@ export function SuccessDialog({
 
           <div className="flex flex-col gap-3">
             <Button onClick={onContinueShopping} className="w-full bg-[#1e5fad] hover:bg-[#3DA64A]">
-              {`Seguir agregando${patientName ? ` para ${patientName}` : ""}`}
+              {continueLabel}
             </Button>
             {showWhatsAppButton && (
               <Button
@@ -116,7 +122,7 @@ export function SuccessDialog({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Enviar solicitud de recojo
+                  {whatsappLabel}
                 </a>
               </Button>
             )}

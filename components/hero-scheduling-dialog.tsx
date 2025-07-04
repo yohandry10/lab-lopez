@@ -60,16 +60,21 @@ interface PatientFormData {
   }
 }
 
-function PriceDisplay({ analysisId }: { analysisId: number }) {
+function PriceDisplay({ analysis }: { analysis: Analysis }) {
+  const { user } = useAuth()
   const { getExamPrice, formatPrice, canSeePrice } = useDynamicPricing()
   const [priceInfo, setPriceInfo] = useState<{ price: number; tariff_name: string } | null>(null)
+
   useEffect(() => {
-    if (!canSeePrice() || !analysisId) return
-    getExamPrice(analysisId).then(setPriceInfo)
-  }, [analysisId, getExamPrice, canSeePrice])
+    if (!user || !user.id) return // público: usamos precio base y evitamos llamada
+    if (!canSeePrice() || !analysis?.id) return
+    getExamPrice(analysis.id).then(setPriceInfo)
+  }, [analysis?.id, user?.id, canSeePrice])
+
   if (!canSeePrice()) return null
-  if (!priceInfo) return <span className="text-xs text-gray-500">No disponible</span>
-  return <span className="font-medium text-blue-600">{formatPrice(priceInfo.price)}</span>
+
+  const finalPrice = priceInfo ? priceInfo.price : analysis.price
+  return <span className="font-medium text-blue-600">{formatPrice(finalPrice)}</span>
 }
 
 export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogProps) {
@@ -99,6 +104,9 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
   }, [isOpen])
 
   const loadAnalysisPrices = async (analyses: Analysis[]) => {
+    if (!user || !analyses?.length) {
+      return
+    }
     const pricesMap: Record<string, { price: number; tariff_name: string }> = {}
     
     for (const analysis of analyses.slice(0, 20)) {
@@ -185,7 +193,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
                 return true
               case "doctor":
               case "company":
-                return analysis.show_public !== true
+                return true
               default:
                 return true
             }
@@ -209,7 +217,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
   }
 
   const handleNext = () => {
-    if (selectedAnalyses.length === 0) return
+    if (!selectedAnalyses?.length) return
 
     // Si ya existe programación previa, saltamos el modal de horarios
     if (typeof window !== 'undefined' && localStorage.getItem('scheduling-data')) {
@@ -226,16 +234,19 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
     // Marcamos que ya se programó al menos una vez
     setHasScheduled(true)
 
-    const fullName = `${data.firstName} ${data.lastName}`
+    const fullName = `${data.firstName || ''} ${data.lastName || ''}`
     setPatientName(fullName)
 
+    if (!selectedAnalyses?.length) return
+
     selectedAnalyses.forEach(analysis => {
+      if (!analysis?.id) return
       const dynamicPrice = analysisPrices[analysis.id.toString()]
-      const finalPrice = dynamicPrice ? dynamicPrice.price : analysis.price
+      const finalPrice = dynamicPrice ? dynamicPrice.price : (analysis.price || 0)
       
       addItem({
         id: analysis.id,
-        name: analysis.name,
+        name: analysis.name || '',
         price: finalPrice,
         patientDetails: data,
       })
@@ -246,33 +257,34 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
 
   // Utilidad para agregar análisis seleccionados al carrito sin volver a preguntar horarios
   const addAnalysesDirectlyToCart = () => {
-    if (selectedAnalyses.length === 0) return
+    if (!selectedAnalyses?.length) return
 
-    // Intentar recuperar datos de paciente y nombre previamente guardados
-    let storedPatient: any = null
-    if (typeof window !== 'undefined') {
-      try {
-        storedPatient = JSON.parse(localStorage.getItem('patient-data') || 'null')
-      } catch {}
-    }
+    // Recuperar datos de programación guardados
+    const savedData = localStorage.getItem('scheduling-data')
+    if (!savedData) return
 
-    const fullName = storedPatient ? `${storedPatient.firstName || ''} ${storedPatient.lastName || ''}`.trim() : patientName
-    if (fullName) setPatientName(fullName)
+    try {
+      const patientData = JSON.parse(savedData) as PatientFormData
+      const fullName = `${patientData.firstName || ''} ${patientData.lastName || ''}`
+      setPatientName(fullName)
 
-    selectedAnalyses.forEach((analysis) => {
-      const dynamicPrice = analysisPrices[analysis.id.toString()]
-      const finalPrice = dynamicPrice ? dynamicPrice.price : analysis.price
-
-      addItem({
-        id: analysis.id,
-        name: analysis.name,
-        price: finalPrice,
-        patientDetails: storedPatient || {},
-        quantity: analysis.quantity,
+      selectedAnalyses.forEach(analysis => {
+        if (!analysis?.id) return
+        const dynamicPrice = analysisPrices[analysis.id.toString()]
+        const finalPrice = dynamicPrice ? dynamicPrice.price : (analysis.price || 0)
+        
+        addItem({
+          id: analysis.id,
+          name: analysis.name || '',
+          price: finalPrice,
+          patientDetails: patientData,
+        })
       })
-    })
 
-    setIsSuccessOpen(true)
+      setIsSuccessOpen(true)
+    } catch (error) {
+      console.error('Error parsing saved scheduling data:', error)
+    }
   }
 
   const handleSuccessClose = () => {
@@ -282,37 +294,29 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
   }
 
   const handleSelectAnalysis = (analysis: Analysis) => {
-    console.log("✅ Análisis seleccionado:", analysis)
-    const existing = selectedAnalyses.find(item => item.id === analysis.id)
-
-    if (existing) {
-      // increment quantity
-      setSelectedAnalyses(selectedAnalyses.map(item => item.id === analysis.id ? {...item, quantity: item.quantity + 1} : item))
-    } else {
-      setSelectedAnalyses([...selectedAnalyses, {...analysis, quantity: 1}])
-    }
-
+    if (!analysis?.id) return
+    setSelectedAnalyses((prev) => {
+      const existing = (prev || []).find((a) => a.id === analysis.id)
+      if (existing) {
+        return (prev || []).map((a) =>
+          a.id === analysis.id ? { ...a, quantity: (a.quantity || 0) + 1 } : a
+        )
+      }
+      return [...(prev || []), { ...analysis, quantity: 1 }]
+    })
     setSearchTerm("")
-    setFilteredAnalyses([])
   }
 
   const handleRemoveAnalysis = (analysisId: number) => {
-    const existing = selectedAnalyses.find(a => a.id === analysisId)
-    if (!existing) return
-    if (existing.quantity === 1) {
-      // remove item
-      setSelectedAnalyses(selectedAnalyses.filter(a => a.id !== analysisId))
-    } else {
-      // decrement
-      setSelectedAnalyses(selectedAnalyses.map(a => a.id === analysisId ? {...a, quantity: a.quantity - 1} : a))
-    }
+    if (!analysisId) return
+    setSelectedAnalyses((prev) => (prev || []).filter((a) => a.id !== analysisId))
   }
 
   const calculateTotal = () => {
-    return selectedAnalyses.reduce((total, analysis) => {
+    return (selectedAnalyses || []).reduce((total, analysis) => {
       const dynamicPrice = analysisPrices[analysis.id.toString()]
-      const finalPrice = dynamicPrice ? dynamicPrice.price : analysis.price
-      return total + finalPrice * analysis.quantity
+      const price = dynamicPrice ? dynamicPrice.price : (analysis.price || 0)
+      return total + price * (analysis.quantity || 1)
     }, 0)
   }
 
@@ -325,7 +329,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{user ? "PROGRAMA TU RECOJO" : "AGENDA TU ANÁLISIS"}</DialogTitle>
             <DialogDescription>Busca y selecciona los análisis para programar el recojo de muestras</DialogDescription>
@@ -383,7 +387,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
                             <div className="text-sm text-gray-600">{analysis.category}</div>
                           </div>
                           {canSeePrice() && (
-                            <PriceDisplay analysisId={analysis.id} />
+                            <PriceDisplay analysis={analysis} />
                           )}
                         </div>
                       </button>
@@ -422,7 +426,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
                             +
                           </button>
                           <button
-                            onClick={() => setSelectedAnalyses(selectedAnalyses.filter(a => a.id !== analysis.id))}
+                            onClick={() => handleRemoveAnalysis(analysis.id)}
                             className="text-red-600 hover:text-red-800 text-xs underline"
                           >
                             Remove
@@ -520,7 +524,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
           window.location.href = "/carrito"
         }}
         items={quotationItems}
-        showWhatsAppButton={!user}
+        showWhatsAppButton={!user || user?.user_type === 'patient'}
       />
     </>
   )

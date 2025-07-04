@@ -125,15 +125,15 @@ export function SchedulingFlow({
   const { getExamPrice, formatPrice, canSeePrice } = useDynamicPricing()
 
   // Price helper
-  function PriceDisplay({ analysisId }: { analysisId: number }) {
+  function PriceDisplay({ analysis }: { analysis: Analysis }) {
     const [priceInfo, setPriceInfo] = useState<{ price: number; tariff_name: string } | null>(null)
     useEffect(() => {
-      if (!canSeePrice() || !analysisId) return
-      getExamPrice(analysisId).then(setPriceInfo)
-    }, [analysisId])
+      if (!canSeePrice() || !analysis?.id) return
+      getExamPrice(analysis.id).then(setPriceInfo)
+    }, [analysis?.id])
     if (!canSeePrice()) return null
-    if (!priceInfo) return <span className="text-xs text-gray-500">No disponible</span>
-    return <span className="font-medium text-blue-600">{formatPrice(priceInfo.price)}</span>
+    const finalPrice = priceInfo ? priceInfo.price : analysis.price
+    return <span className="font-medium text-blue-600">{formatPrice(finalPrice)}</span>
   }
 
   // Cargar análisis al abrir modal
@@ -142,6 +142,7 @@ export function SchedulingFlow({
   }, [isOpen])
 
   const loadAnalysisPrices = async (analyses: Analysis[]) => {
+    if (!user) return
     const pricesMap: Record<string, { price: number; tariff_name: string }> = {}
     for (const analysis of analyses) {
       try {
@@ -203,12 +204,10 @@ export function SchedulingFlow({
           if (!user) return a.show_public === true
           switch (user.user_type) {
             case "admin":
-              return true
             case "patient":
-              return true
             case "doctor":
             case "company":
-              return a.show_public !== true
+              return true
             default:
               return true
           }
@@ -537,7 +536,7 @@ export function SchedulingFlow({
                     type="button"
                     variant="secondary"
                     size="sm"
-                    onClick={() => setShowAvailable(!showAvailable)}
+                    onClick={() => setShowAvailable((prev) => !prev)}
                   >
                     {showAvailable ? "Volver" : "Análisis disponibles"}
                   </Button>
@@ -566,7 +565,7 @@ export function SchedulingFlow({
                             >
                               <div className="flex justify-between items-start">
                                 <span className="font-medium text-gray-900 truncate max-w-[60%]">{analysis.name}</span>
-                                {canSeePrice() && <PriceDisplay analysisId={analysis.id} />}
+                                {canSeePrice() && <PriceDisplay analysis={analysis} />}
                               </div>
                             </button>
                           )
@@ -676,6 +675,94 @@ export function SchedulingFlow({
                   </div>
                 </RadioGroup>
               </div>
+
+              {/* NUEVO: CAMPOS DEPENDIENTES DEL TIPO DE SERVICIO */}
+              {formData.serviceType === "sede" && (
+                <div className="mt-4">
+                  <Label htmlFor="location" className="font-medium">
+                    Escoge la sede para la cita *
+                  </Label>
+                  <Select value={formData.location} onValueChange={handleSedeChange}>
+                    <SelectTrigger id="location" className="mt-1">
+                      <SelectValue placeholder="Selecciona una sede" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map((loc) => (
+                        <SelectItem key={loc} value={loc}>
+                          {loc}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {formData.serviceType === "domicilio" && (
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <Label htmlFor="address" className="font-medium">
+                      Dirección completa *
+                    </Label>
+                    <Input
+                      id="address"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      placeholder="Ingresa tu dirección completa"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="district" className="font-medium">
+                      Distrito *
+                    </Label>
+                    <Select
+                      value={formData.district}
+                      onValueChange={(value) => setFormData({ ...formData, district: value })}
+                    >
+                      <SelectTrigger id="district" className="mt-1">
+                        <SelectValue placeholder="Selecciona un distrito" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {districts.map((d) => (
+                          <SelectItem key={d} value={d}>
+                            {d}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="addressDetails" className="font-medium">
+                      Detalles de la dirección
+                    </Label>
+                    <Input
+                      id="addressDetails"
+                      name="addressDetails"
+                      value={formData.addressDetails}
+                      onChange={handleInputChange}
+                      placeholder="Piso, departamento, etc."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="reference" className="font-medium">
+                      Referencia
+                    </Label>
+                    <Input
+                      id="reference"
+                      name="reference"
+                      value={formData.reference}
+                      onChange={handleInputChange}
+                      placeholder="Cerca a..."
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+              )}
               </>
               )}
 

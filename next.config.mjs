@@ -22,7 +22,7 @@ const nextConfig = {
   },
   webpack: (config) => {
     // Evitar WebAssembly md4 hash que falla en Node 20.10
-    config.output.hashFunction = 'xxhash64'
+    config.output.hashFunction = 'sha256'
     return config
   },
   poweredByHeader: false,

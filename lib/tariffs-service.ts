@@ -40,7 +40,7 @@ export class TariffsService {
         return { success: false, error: error.message }
       }
 
-      return { success: true, data: data as unknown as Tariff[] }
+      return { success: true, data: (data || []) as unknown as Tariff[] }
     } catch (error) {
       console.error('Unexpected error fetching tariffs:', error)
       return { success: false, error: 'Error inesperado al obtener tarifas' }
@@ -167,20 +167,18 @@ export class TariffsService {
           tariff:tariffs(*),
           exam:analyses(id, name, category)
         `)
-        .order('id') // Cambiar ordenamiento para evitar problemas con relaciones
+        .order('id')
 
       if (error) {
         console.error('❌ Error fetching all tariff prices:', error)
         return { success: false, error: error.message }
       }
 
-      if (!data || data.length === 0) {
-        console.log("⚠️ No hay precios de tarifa configurados")
-        return { success: true, data: [] }
-      }
-
-      console.log(`✅ ${data.length} precios de tarifa cargados correctamente`)
-      return { success: true, data: data as unknown as TariffPrice[] }
+      // Ensure data is an array and handle null/undefined
+      const safeData = Array.isArray(data) ? data : []
+      console.log(`✅ ${safeData.length} precios de tarifa cargados correctamente`)
+      
+      return { success: true, data: safeData as unknown as TariffPrice[] }
     } catch (error) {
       console.error('❌ Unexpected error fetching all tariff prices:', error)
       return { success: false, error: 'Error inesperado al obtener todos los precios' }
@@ -652,7 +650,7 @@ export class TariffsService {
       }
 
       if (!tariffId) {
-        console.error('No tariff found for exam pricing - no hay tarifas configuradas')
+        console.warn('No tariff found for exam pricing - no hay tarifas configuradas')
         return null
       }
 
