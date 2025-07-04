@@ -44,6 +44,8 @@ export function SuccessDialog({
 
   const whatsappMessage = useMemo(() => {
     if (!showWhatsAppButton || !items?.length) return ""
+
+    // Construir lista con viñetas y precios
     const list = items
       .map((it) => {
         const qty = it.quantity ?? 1
@@ -51,12 +53,17 @@ export function SuccessDialog({
         const linePrice = it.price ? ` - S/. ${(it.price * qty).toFixed(2)}` : ""
         return `• ${label}${linePrice}`
       })
-      .join("%0A")
-    const totalLine = totalPrice ? `%0A%0ATotal: S/. ${totalPrice.toFixed(2)}` : ""
-    return encodeURIComponent(
-      `Hola, quisiera solicitar el recojo de las siguientes pruebas:%0A${list}${totalLine}`
-    )
-  }, [items, totalPrice, showWhatsAppButton])
+      .join("\n")
+
+    // Encabezado personalizado según se tenga nombre del paciente
+    const greeting = patientName
+      ? `Hola, quisiera solicitar el recojo de las siguientes pruebas para ${patientName}:\n`
+      : `Hola, quisiera solicitar el recojo de las siguientes pruebas:\n`
+
+    const totalLine = totalPrice ? `\n\nTotal: S/. ${totalPrice.toFixed(2)}` : ""
+
+    return encodeURIComponent(`${greeting}${list}${totalLine}`)
+  }, [items, totalPrice, showWhatsAppButton, patientName])
 
   const { user } = useAuth()
   const whatsappLabel = user ? "Enviar solicitud de recojo" : "Solicitar servicio a domicilio"

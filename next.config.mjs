@@ -1,3 +1,26 @@
+import crypto from 'node:crypto'
+
+class SafeHash {
+  constructor () {
+    this._hash = crypto.createHash('sha256')
+  }
+  update (data) {
+    this._hash.update(data ?? '')
+    return this
+  }
+  digest (enc) {
+    return this._hash.digest(enc)
+  }
+  copy () {
+    const copy = new SafeHash()
+    // copy internal state if available (Node18+)
+    if (typeof this._hash.copy === 'function') {
+      copy._hash = this._hash.copy()
+    }
+    return copy
+  }
+}
+
 let userConfig = undefined
 try {
   userConfig = await import('./v0-user-next.config')
@@ -21,8 +44,9 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   webpack: (config) => {
-    // Evitar WebAssembly md4 hash que falla en Node 20.10
-    config.output.hashFunction = 'sha256'
+    // Evitar fallo "data argument must be ... Received undefined" cuando Webpack genera el hash.
+    // Usamos función personalizada que garantiza que siempre se pasa string (al menos vacío).
+    config.output.hashFunction = SafeHash
     return config
   },
   poweredByHeader: false,

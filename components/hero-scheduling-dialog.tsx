@@ -219,10 +219,15 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
   const handleNext = () => {
     if (!selectedAnalyses?.length) return
 
-    // Si ya existe programación previa, saltamos el modal de horarios
-    if (typeof window !== 'undefined' && localStorage.getItem('scheduling-data')) {
+    // Para usuarios logeados que ya completaron una programación en esta sesión, podemos saltar el formulario
+    const hasPreviousScheduling =
+      typeof window !== 'undefined' && localStorage.getItem('scheduling-data')
+
+    if (user && hasPreviousScheduling) {
+      // 🔄 Usuario autenticado con datos guardados: agregar directo al carrito
       addAnalysesDirectlyToCart()
     } else {
+      // 📝 Visitantes (o usuarios sin programación previa) deben completar Paso 1 y Paso 2
       onClose()
       setIsSchedulingOpen(true)
     }
@@ -524,7 +529,7 @@ export function HeroSchedulingDialog({ isOpen, onClose }: HeroSchedulingDialogPr
           window.location.href = "/carrito"
         }}
         items={quotationItems}
-        showWhatsAppButton={!user || user?.user_type === 'patient'}
+        showWhatsAppButton={!user || user?.user_type !== 'admin'}
       />
     </>
   )
